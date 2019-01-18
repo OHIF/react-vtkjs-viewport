@@ -5,7 +5,9 @@ import './VTKViewport.css';
 const EVENT_RESIZE = 'resize';
 
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
-import vtkInteractorStyleTrackballCamera from 'vtk.js/Sources/Interaction/Style/InteractorStyleTrackballCamera';
+import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
+
+// TODO: Is there one in VTK.js for this?
 import CustomSliceInteractorStyle from './vtkCustomSliceInteractor.js';
 
 /* One ultimate experiment might be to use one large render window for all viewports
@@ -136,28 +138,19 @@ class VTKViewport extends Component {
       const renderer = this.genericRenderWindow.getRenderer();
 
       renderer.resetCamera();
-      renderer.getActiveCamera().setViewUp(0, 0, 1);
 
-      const bounds = actors[0].getBounds();
-      const center = [
-        (bounds[0] + bounds[1]) / 2,
-        (bounds[2] + bounds[3]) / 2,
-        (bounds[4] + bounds[5]) / 2
-      ];
-      const position = center.slice();
-      position[1] -= 4.25 * (-bounds[2] - center[1]);
-
-      renderer.getActiveCamera().setPosition(...position);
-      renderer.getActiveCamera().setFocalPoint(...center);
-      renderer.updateLightsGeometryToFollowCamera();
-
-      const istyle = vtkInteractorStyleTrackballCamera.newInstance();
-      istyle.get().autoAdjustCameraClippingRange = false;
-
-      console.warn('Hard coding clipping range');
-      renderer.getActiveCamera().setClippingRange([645, 647]);
-
+      const istyle = vtkInteractorStyleMPRSlice.newInstance();
       interactor.setInteractorStyle(istyle);
+
+      const actor = actors[0];
+      const mapper = actor.getMapper();
+
+      // set interactor style volume mapper after mapper sets input data
+      istyle.setVolumeMapper(mapper);
+      istyle.setSliceNormal(0, 0, 1);
+
+      const range = istyle.getSliceRange();
+      istyle.setSlice((range[0] + range[1]) / 2);
     } else {
       throw new Error(`setVTKInteractorStyle: bad style '${style}'`);
     }
