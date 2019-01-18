@@ -33,12 +33,14 @@ vtkRenderWindows: [
 class VTKViewport extends Component {
   static defaultProps = {
     background: [0, 0, 0],
-    vtkVolumeActors: []
+    vtkVolumeActors: [],
+    vtkActors: []
   };
 
   static propTypes = {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
-    vtkVolumeActors: PropTypes.arrayOf(PropTypes.object).isRequired
+    vtkVolumeActors: PropTypes.arrayOf(PropTypes.object).isRequired,
+    interactorStyle: PropTypes.string
   };
 
   componentDidMount() {
@@ -56,38 +58,49 @@ class VTKViewport extends Component {
     const renderWindow = genericRenderWindow.getRenderWindow();
     renderWindow.render();
 
-    this.interactorStyle = 'rotate';
+    this.renderWindow = renderWindow;
 
-    this.setVTKInteractorStyle(
-      this.interactorStyle,
-      renderWindow,
-      vtkVolumeActors
-    );
+    this.setInteractorStyleFromProps();
   }
+
+  setInteractorStyleFromProps = () => {
+    if (this.props.interactorStyle) {
+      this.setVTKInteractorStyle(
+        this.props.interactorStyle,
+        this.renderWindow,
+        this.props.vtkVolumeActors
+      );
+    }
+  };
 
   addActors = () => {
     const renderer = this.genericRenderWindow.getRenderer();
-    renderer.resetCamera();
-    renderer.getActiveCamera().setViewUp(0, 0, 1);
+    //renderer.getActiveCamera().setViewUp(0, 0, 1);
 
-    const { vtkVolumeActors } = this.props;
+    const { vtkVolumeActors, vtkActors } = this.props;
 
     vtkVolumeActors.forEach(actor => {
       renderer.addVolume(actor);
     });
 
+    vtkActors.forEach(actor => {
+      renderer.addActor(actor);
+    });
+
     const renderWindow = this.genericRenderWindow.getRenderWindow();
     renderWindow.render();
 
-    this.setVTKInteractorStyle(
-      this.interactorStyle,
-      renderWindow,
-      vtkVolumeActors
-    );
+    renderer.resetCamera();
+    renderer.resetCameraClippingRange();
+
+    this.setInteractorStyleFromProps();
   };
 
   componentDidUpdate(prevProps) {
-    if (this.props.vtkVolumeActors !== prevProps.vtkVolumeActors) {
+    if (
+      this.props.vtkVolumeActors !== prevProps.vtkVolumeActors ||
+      this.props.vtkActors !== prevProps.vtkActors
+    ) {
       this.addActors();
     }
   }

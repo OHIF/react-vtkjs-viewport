@@ -1,71 +1,91 @@
 import React from 'react';
 import { Component } from 'react';
-//import PropTypes from 'prop-types';
 import VTKViewport from 'react-vtkjs-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
-import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
-import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
+import vtkImageSlice from 'vtk.js/Sources/Rendering/Core/ImageSlice';
+import vtkImageMapper from 'vtk.js/Sources/Rendering/Core/ImageMapper';
 
 class VTKBasicExample extends Component {
   state = {
     vtkVolumeActors: []
   }
 
+  addSliceViews = (data) => {
+    const imageActorI = vtkImageSlice.newInstance();
+    const imageActorJ = vtkImageSlice.newInstance();
+    const imageActorK = vtkImageSlice.newInstance();
+
+    const imageMapperK = vtkImageMapper.newInstance();
+    imageMapperK.setInputData(data);
+    imageMapperK.setKSlice(30);
+    imageActorK.setMapper(imageMapperK);
+
+    const imageMapperJ = vtkImageMapper.newInstance();
+    imageMapperJ.setInputData(data);
+    imageMapperJ.setJSlice(30);
+    imageActorJ.setMapper(imageMapperJ);
+
+    const imageMapperI = vtkImageMapper.newInstance();
+    imageMapperI.setInputData(data);
+    imageMapperI.setISlice(30);
+    imageActorI.setMapper(imageMapperI);
+
+    const dataRange = data
+      .getPointData()
+      .getScalars()
+      .getRange();
+    //const extent = data.getExtent();
+
+    const level = (dataRange[0] + dataRange[1]) / 2;
+    const window = dataRange[0] + dataRange[1];
+
+    imageActorI.getProperty().setColorLevel(level);
+    imageActorJ.getProperty().setColorLevel(level);
+    imageActorK.getProperty().setColorLevel(level);
+
+    imageActorI.getProperty().setColorWindow(window);
+    imageActorJ.getProperty().setColorWindow(window);
+    imageActorK.getProperty().setColorWindow(window);
+
+    this.setState({
+      vtkActors: [imageActorI, imageActorJ, imageActorK]
+    });
+  }
+
   componentWillMount() {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
     });
-
     const actor = vtkVolume.newInstance();
     const mapper = vtkVolumeMapper.newInstance();
 
-    mapper.setInputConnection(reader.getOutputPort());
-    mapper.setSampleDistance(1.1);
     actor.setMapper(mapper);
 
-    // Create color and opacity transfer functions
-    const ctfun = vtkColorTransferFunction.newInstance();
-    ctfun.addRGBPoint(0, 85 / 255.0, 0, 0);
-    ctfun.addRGBPoint(95, 1.0, 1.0, 1.0);
-    ctfun.addRGBPoint(225, 0.66, 0.66, 0.5);
-    ctfun.addRGBPoint(255, 0.3, 1.0, 0.5);
+    reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
+      const data = reader.getOutputData();
+      mapper.setInputData(data);
 
-    const ofun = vtkPiecewiseFunction.newInstance();
-    ofun.addPoint(0.0, 0.0);
-    ofun.addPoint(255.0, 1.0);
-
-    actor.getProperty().setRGBTransferFunction(0, ctfun);
-    actor.getProperty().setScalarOpacity(0, ofun);
-    actor.getProperty().setScalarOpacityUnitDistance(0, 3.0);
-    actor.getProperty().setInterpolationTypeToLinear();
-    actor.getProperty().setUseGradientOpacity(0, true);
-    actor.getProperty().setGradientOpacityMinimumValue(0, 2);
-    actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
-    actor.getProperty().setGradientOpacityMaximumValue(0, 20);
-    actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
-    actor.getProperty().setShade(true);
-    actor.getProperty().setAmbient(0.2);
-    actor.getProperty().setDiffuse(0.7);
-    actor.getProperty().setSpecular(0.3);
-    actor.getProperty().setSpecularPower(8.0);
-
-    reader.setUrl('/LIDC2.vti').then(() => {
-      reader.loadData().then(() => {
-        const image = reader.getOutputData();
-
-        this.setState({
-          vtkVolumeActors: [actor]
-        });
+      this.setState({
+        vtkVolumeActors: [actor]
       });
+
+      this.addSliceViews(data);
     });
   }
 
   render() {
-    return (
-      <VTKViewport vtkVolumeActors={this.state.vtkVolumeActors}/>
-    );
+    return (<React.Fragment>
+      <VTKViewport
+        background={[0.2,0,0]}
+        interactorStyle={'rotate'}
+        vtkVolumeActors={this.state.vtkVolumeActors}
+      />
+      <VTKViewport
+        background={[0,0,0.2]}
+        vtkActors={this.state.vtkActors}/>
+    </React.Fragment>);
   }
 }
 
