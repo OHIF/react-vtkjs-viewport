@@ -6,10 +6,12 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkImageSlice from 'vtk.js/Sources/Rendering/Core/ImageSlice';
 import vtkImageMapper from 'vtk.js/Sources/Rendering/Core/ImageMapper';
+import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
+import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 
 class VTKBasicExample extends Component {
   state = {
-    vtkVolumeActors: []
+    renderWindowData: []
   }
 
   addSliceViews = (data) => {
@@ -49,8 +51,20 @@ class VTKBasicExample extends Component {
     imageActorJ.getProperty().setColorWindow(window);
     imageActorK.getProperty().setColorWindow(window);
 
+    const renderWindowData = this.state.renderWindowData;
+    const paintWidget = vtkPaintWidget.newInstance();
+
+    renderWindowData.push({
+      background: [0,0,0.2],
+      vtkActors: [imageActorI, imageActorJ, imageActorK],
+      widgets: {
+        vtkWidget: paintWidget,
+        viewType: ViewTypes.SLICE
+      }
+    })
+
     this.setState({
-      vtkActors: [imageActorI, imageActorJ, imageActorK]
+      renderWindowData
     });
   }
 
@@ -58,17 +72,29 @@ class VTKBasicExample extends Component {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
     });
-    const actor = vtkVolume.newInstance();
-    const mapper = vtkVolumeMapper.newInstance();
+    const volumeActor = vtkVolume.newInstance();
+    const volumeMapper = vtkVolumeMapper.newInstance();
 
-    actor.setMapper(mapper);
+    volumeActor.setMapper(volumeMapper);
 
     reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
       const data = reader.getOutputData();
-      mapper.setInputData(data);
+      volumeMapper.setInputData(data);
+
+      const paintWidget = vtkPaintWidget.newInstance();
+      const renderWindowData = this.state.renderWindowData;
+      renderWindowData[0] = {
+        background: [0.2,0,0],
+        interactorStyle: 'rotate',
+        vtkVolumeActors: [volumeActor],
+        widgets: {
+          vtkWidget: paintWidget,
+          viewType: ViewTypes.VOLUME
+        }
+      };
 
       this.setState({
-        vtkVolumeActors: [actor]
+        renderWindowData
       });
 
       this.addSliceViews(data);
@@ -78,13 +104,8 @@ class VTKBasicExample extends Component {
   render() {
     return (<React.Fragment>
       <VTKViewport
-        background={[0.2,0,0]}
-        interactorStyle={'rotate'}
-        vtkVolumeActors={this.state.vtkVolumeActors}
+        renderWindowData={this.state.renderWindowData}
       />
-      <VTKViewport
-        background={[0,0,0.2]}
-        vtkActors={this.state.vtkActors}/>
     </React.Fragment>);
   }
 }
