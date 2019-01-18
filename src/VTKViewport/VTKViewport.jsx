@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import './VTKViewport.css';
 const EVENT_RESIZE = 'resize';
 
-import vtkActor from 'vtk.js/Sources/Rendering/Core/Actor';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkInteractorStyleTrackballCamera from 'vtk.js/Sources/Interaction/Style/InteractorStyleTrackballCamera';
 import CustomSliceInteractorStyle from './vtkCustomSliceInteractor.js';
@@ -33,36 +32,64 @@ vtkRenderWindows: [
 
 class VTKViewport extends Component {
   static defaultProps = {
-    background: [0, 0, 1],
-    vtkActors: []
+    background: [0, 0, 0],
+    vtkVolumeActors: []
   };
 
   static propTypes = {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
-    vtkActors: PropTypes.arrayOf(PropTypes.object).isRequired
+    vtkVolumeActors: PropTypes.arrayOf(PropTypes.object).isRequired
   };
 
   componentDidMount() {
-    const { background, vtkActors } = this.props;
+    const { background, vtkVolumeActors } = this.props;
     const genericRenderWindow = vtkGenericRenderWindow.newInstance({
       background
     });
 
-    genericRenderWindow.setContainer(this.element);
+    genericRenderWindow.setContainer(this.container);
+
     this.genericRenderWindow = genericRenderWindow;
 
+    this.addActors();
+
     const renderWindow = genericRenderWindow.getRenderWindow();
-    const renderer = genericRenderWindow.getRenderer();
-
-    vtkActors.forEach(actor => {
-      renderer.addActor(actor);
-    });
-
     renderWindow.render();
 
-    const style = 'rotate';
+    this.interactorStyle = 'rotate';
 
-    this.setVTKInteractorStyle(style, renderWindow, vtkActors);
+    this.setVTKInteractorStyle(
+      this.interactorStyle,
+      renderWindow,
+      vtkVolumeActors
+    );
+  }
+
+  addActors = () => {
+    const renderer = this.genericRenderWindow.getRenderer();
+    renderer.resetCamera();
+    renderer.getActiveCamera().setViewUp(0, 0, 1);
+
+    const { vtkVolumeActors } = this.props;
+
+    vtkVolumeActors.forEach(actor => {
+      renderer.addVolume(actor);
+    });
+
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    renderWindow.render();
+
+    this.setVTKInteractorStyle(
+      this.interactorStyle,
+      renderWindow,
+      vtkVolumeActors
+    );
+  };
+
+  componentDidUpdate(prevProps) {
+    if (this.props.vtkVolumeActors !== prevProps.vtkVolumeActors) {
+      this.addActors();
+    }
   }
 
   render() {
@@ -70,7 +97,7 @@ class VTKViewport extends Component {
       <div
         className={'VTKViewport'}
         ref={input => {
-          this.element = input;
+          this.container = input;
         }}
       />
     );

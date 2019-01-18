@@ -1,13 +1,13 @@
-# react-cornerstone-viewport
+# react-vtkjs-viewport
 
-> Cornerstone medical image viewport component for React
+> VTK.js image viewport component for React
 
-[![NPM](https://img.shields.io/npm/v/react-cornerstone-viewport.svg)](https://www.npmjs.com/package/react-cornerstone-viewport)
+[![NPM](https://img.shields.io/npm/v/react-vtkjs-viewport.svg)](https://www.npmjs.com/package/react-vtkjs-viewport)
 
 ## Install
 
 ```bash
-npm install --save react-cornerstone-viewport
+npm install --save react-vtkjs-viewport
 ```
 
 ## Usage

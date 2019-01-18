@@ -1,5 +1,5 @@
 import React from 'react';
-import { PureComponent } from 'react';
+import { Component } from 'react';
 //import PropTypes from 'prop-types';
 import VTKViewport from 'react-vtkjs-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
@@ -8,15 +8,22 @@ import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
 
-class VTKBasicExample extends PureComponent {
+class VTKBasicExample extends Component {
   state = {
-    vtkActors: []
+    vtkVolumeActors: []
   }
 
   componentWillMount() {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
     });
+
+    const actor = vtkVolume.newInstance();
+    const mapper = vtkVolumeMapper.newInstance();
+
+    mapper.setInputConnection(reader.getOutputPort());
+    mapper.setSampleDistance(1.1);
+    actor.setMapper(mapper);
 
     // Create color and opacity transfer functions
     const ctfun = vtkColorTransferFunction.newInstance();
@@ -29,7 +36,6 @@ class VTKBasicExample extends PureComponent {
     ofun.addPoint(0.0, 0.0);
     ofun.addPoint(255.0, 1.0);
 
-    const actor = vtkVolume.newInstance();
     actor.getProperty().setRGBTransferFunction(0, ctfun);
     actor.getProperty().setScalarOpacity(0, ofun);
     actor.getProperty().setScalarOpacityUnitDistance(0, 3.0);
@@ -45,24 +51,20 @@ class VTKBasicExample extends PureComponent {
     actor.getProperty().setSpecular(0.3);
     actor.getProperty().setSpecularPower(8.0);
 
-    reader.setUrl('/LIDC2.vti', { loadData: true }).then(() => {
-      const data = reader.getOutputData();
-      const mapper = vtkVolumeMapper.newInstance();
+    reader.setUrl('/LIDC2.vti').then(() => {
+      reader.loadData().then(() => {
+        const image = reader.getOutputData();
 
-      mapper.setSampleDistance(1.1);
-      mapper.setInputData(data);
-
-      actor.setMapper(mapper);
-
-      this.setState({
-        vtkActors: [actor]
+        this.setState({
+          vtkVolumeActors: [actor]
+        });
       });
     });
   }
 
   render() {
     return (
-      <VTKViewport vtkActors={this.state.vtkActors}/>
+      <VTKViewport vtkVolumeActors={this.state.vtkVolumeActors}/>
     );
   }
 }
