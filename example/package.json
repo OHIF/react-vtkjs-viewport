@@ -1,0 +1,21 @@
+{
+  "name": "react-cornerstone-viewport-example",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "prop-types": "^15.6.2",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "react-scripts": "^2.1.1",
+    "react-vtkjs-viewport": "link:..",
+    "vtk.js": "^8.3.3"
+  },
+  "scripts": {
+    "version": "node -p -e \"'export default \\'' + require('./package.json').version + '\\';'\" > src/version.js",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
