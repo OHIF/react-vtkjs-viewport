@@ -53,13 +53,14 @@ class VTKBasicExample extends Component {
 
     const renderWindowData = this.state.renderWindowData;
     const paintWidget = vtkPaintWidget.newInstance();
+    paintWidget.setRadius(100);
 
     renderWindowData.push({
-      background: [0,0,0.2],
+      background: [0,0,0],
       vtkActors: [imageActorI, imageActorJ, imageActorK],
       widgets: {
         vtkWidget: paintWidget,
-        viewType: ViewTypes.SLICE
+        viewType: ViewTypes.VOLUME
       }
     })
 
@@ -84,7 +85,7 @@ class VTKBasicExample extends Component {
       const paintWidget = vtkPaintWidget.newInstance();
       const renderWindowData = this.state.renderWindowData;
       renderWindowData[0] = {
-        background: [0.2,0,0],
+        background: [1,1,1],
         interactorStyle: 'rotate',
         vtkVolumeActors: [volumeActor],
         widgets: {

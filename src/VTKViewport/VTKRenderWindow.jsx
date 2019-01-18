@@ -50,6 +50,7 @@ class VTKViewport extends Component {
   componentDidMount() {
     const { background, vtkVolumeActors, scopedRenderWindow } = this.props;
     this.scopedRenderWindow = scopedRenderWindow;
+    scopedRenderWindow.resize();
     scopedRenderWindow.setBackground(background);
 
     // TODO: Later on we can try to return null from this component and instead
@@ -79,6 +80,10 @@ class VTKViewport extends Component {
     widgets.forEach(widget => {
       widgetManager.addWidget(widget.vtkWidget, widget.viewType);
     });
+
+    // TODO: Allow the developer to send in the active
+    widgetManager.grabFocus(widgets[0].vtkWidget);
+    widgetManager.disablePicking();
   }
 
   setInteractorStyleFromProps = () => {
