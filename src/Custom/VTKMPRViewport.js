@@ -22,7 +22,8 @@ class VTKMPRViewport extends Component {
 
   static propTypes = {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
-    inputData: PropTypes.object.isRequired
+    inputData: PropTypes.object.isRequired,
+    focusedWidgetId: PropTypes.string
   };
 
   componentDidMount() {
@@ -77,8 +78,6 @@ class VTKMPRViewport extends Component {
     });
 
     const interactorOnModified = interactorStyle => {
-      console.log('interactorOnModified');
-
       const position = [0, 0, 0];
       const normal = interactorStyle.getSliceNormal();
       const slice = interactorStyle.getSlice();
@@ -87,22 +86,24 @@ class VTKMPRViewport extends Component {
       console.log(`slice: ${slice}`);
 
       // Obtain position
-      const origin = interactorStyle.getSliceNormal().slice();
+      const origin = normal.slice();
       vtkMath.multiplyScalar(origin, slice);
       paintWidget.getManipulator().setOrigin(origin);
 
       // The PlaneWidget exposes a 'manipulator' which is a circle
       // displayed over the viewport. It's location is set in IJK
       // coordinates
-      const inverted = interactorStyle.getSliceNormal().slice();
-      vtkMath.multiplyScalar(inverted, -1);
-      paintWidget.getManipulator().setNormal(inverted);
+      console.log(`setting paintWidget normal: ${normal}`);
+      paintWidget.getManipulator().setNormal(normal);
 
       const handle = paintWidget.getWidgetState().getHandle();
-      handle.rotateFromDirections(handle.getDirection(), inverted);
+      handle.rotateFromDirections(handle.getDirection(), normal);
     };
 
+    const PAINT_WIDGET_ID = 'PaintWidget';
+
     const paintWidgetSetup = {
+      id: PAINT_WIDGET_ID,
       vtkWidget: paintWidget,
       viewType: ViewTypes.SLICE,
       callbacks: {
@@ -131,12 +132,24 @@ class VTKMPRViewport extends Component {
         }
       },
       vtkVolumeActors: [volumeActor, labelMap.actor],
-      widgets: [paintWidgetSetup]
+      widgets: [paintWidgetSetup],
+      focusedWidgetId: this.props.focusedWidgetId
     };
 
     this.setState({
       renderWindowData
     });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.focusedWidgetId !== prevProps.focusedWidgetId) {
+      const { renderWindowData } = this.state;
+      const updatedRenderWindowData = renderWindowData.slice();
+      updatedRenderWindowData[0].focusedWidgetId = this.props.focusedWidgetId;
+      this.setState({
+        renderWindowData: updatedRenderWindowData
+      });
+    }
   }
 
   render() {

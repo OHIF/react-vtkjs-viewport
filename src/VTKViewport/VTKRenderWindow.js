@@ -45,7 +45,8 @@ class VTKViewport extends Component {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
     vtkVolumeActors: PropTypes.arrayOf(PropTypes.object).isRequired,
     interactorStyle: PropTypes.object,
-    widgets: PropTypes.arrayOf(PropTypes.object)
+    widgets: PropTypes.arrayOf(PropTypes.object),
+    focusedWidgetId: PropTypes.string
   };
 
   componentDidMount() {
@@ -67,6 +68,18 @@ class VTKViewport extends Component {
     this.addWidgets();
   }
 
+  setFocusedWidget = () => {
+    const { focusedWidgetId, widgets } = this.props;
+    if (focusedWidgetId === null) {
+      this.widgetManager.releaseFocus();
+    }
+
+    const focusedWidget = widgets.find(widget => widget.id === focusedWidgetId);
+    if (focusedWidget) {
+      this.widgetManager.grabFocus(focusedWidget.vtkWidget);
+    }
+  };
+
   addWidgets() {
     const renderer = this.scopedRenderWindow.getRenderer();
 
@@ -76,6 +89,7 @@ class VTKViewport extends Component {
     }
 
     const widgetManager = vtkWidgetManager.newInstance();
+    this.widgetManager = widgetManager;
     widgetManager.setRenderer(renderer);
 
     widgets.forEach(widget => {
@@ -94,8 +108,9 @@ class VTKViewport extends Component {
     });
 
     // TODO: Allow the developer to send in the active
-    widgetManager.grabFocus(widgets[0].vtkWidget);
-    widgetManager.disablePicking();
+    this.setFocusedWidget();
+
+    //widgetManager.disablePicking();
   }
 
   setInteractorStyleFromProps = () => {
@@ -110,7 +125,6 @@ class VTKViewport extends Component {
 
   addActors = () => {
     const renderer = this.scopedRenderWindow.getRenderer();
-    //renderer.getActiveCamera().setViewUp(0, 0, 1);
 
     const { vtkVolumeActors, vtkActors } = this.props;
 
@@ -137,6 +151,10 @@ class VTKViewport extends Component {
       this.props.vtkActors !== prevProps.vtkActors
     ) {
       this.addActors();
+    }
+
+    if (this.props.focusedWidgetId !== prevProps.focusedWidgetId) {
+      this.setFocusedWidget();
     }
   }
 
@@ -167,27 +185,17 @@ class VTKViewport extends Component {
       istyle = CustomSliceInteractorStyle.newInstance();
       istyle.setCurrentVolumeNumber(0); // background volume
       istyle.setSlicingMode(1, true); // force set slice mode
-      istyle.setSlice(40);
 
       interactor.setInteractorStyle(istyle);
     } else if (style === 'rotate') {
-      // Use the vtk standard style with custom settings
-      const renderer = this.scopedRenderWindow.getRenderer();
-
-      renderer.resetCamera();
-
       istyle = vtkInteractorStyleMPRSlice.newInstance();
       interactor.setInteractorStyle(istyle);
 
       const actor = actors[0];
       const mapper = actor.getMapper();
 
-      // set interactor style volume mapper after mapper sets input data
+      // Set interactor style volume mapper after mapper sets input data
       istyle.setVolumeMapper(mapper);
-      istyle.setSliceNormal(0, 0, 1);
-
-      const range = istyle.getSliceRange();
-      istyle.setSlice((range[0] + range[1]) / 2);
     }
 
     if (interactorObj.callbacks) {
@@ -196,6 +204,14 @@ class VTKViewport extends Component {
 
         istyle[name](() => callback(istyle));
       });
+
+      // This is a bit hacky, but we need to run some setup to ensure painting
+      // works properly before any interaction with the camera in MPR view.
+      // There might be a better way to include this code.
+      const ON_MODIFIED = 'onModified';
+      if (Object.keys(interactorObj.callbacks).includes(ON_MODIFIED)) {
+        interactorObj.callbacks[ON_MODIFIED](istyle);
+      }
     }
   }
 }
