@@ -6,6 +6,7 @@ const EVENT_RESIZE = 'resize';
 
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
+import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 
 // TODO: Is there one in VTK.js for this?
 import CustomSliceInteractorStyle from './vtkCustomSliceInteractor.js';
@@ -43,7 +44,7 @@ class VTKViewport extends Component {
   static propTypes = {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
     vtkVolumeActors: PropTypes.arrayOf(PropTypes.object).isRequired,
-    interactorStyle: PropTypes.string,
+    interactorStyle: PropTypes.object,
     widgets: PropTypes.arrayOf(PropTypes.object)
   };
 
@@ -78,7 +79,18 @@ class VTKViewport extends Component {
     widgetManager.setRenderer(renderer);
 
     widgets.forEach(widget => {
-      widgetManager.addWidget(widget.vtkWidget, widget.viewType);
+      const widgetHandle = widgetManager.addWidget(
+        widget.vtkWidget,
+        widget.viewType
+      );
+
+      if (widget.callbacks) {
+        Object.keys(widget.callbacks).forEach(name => {
+          const callback = widget.callbacks[name];
+
+          widgetHandle[name](() => callback(widgetHandle));
+        });
+      }
     });
 
     // TODO: Allow the developer to send in the active
@@ -141,16 +153,18 @@ class VTKViewport extends Component {
     );
   }
 
-  setVTKInteractorStyle(style = 'slice', renderWindow, actors) {
+  setVTKInteractorStyle(interactorObj, renderWindow, actors) {
     if (!actors.length) {
       return;
     }
 
+    const style = interactorObj.name;
     const interactor = renderWindow.getInteractor();
+    let istyle;
 
     if (style === 'slice') {
       // use our custom style
-      const istyle = CustomSliceInteractorStyle.newInstance();
+      istyle = CustomSliceInteractorStyle.newInstance();
       istyle.setCurrentVolumeNumber(0); // background volume
       istyle.setSlicingMode(1, true); // force set slice mode
       istyle.setSlice(40);
@@ -162,7 +176,7 @@ class VTKViewport extends Component {
 
       renderer.resetCamera();
 
-      const istyle = vtkInteractorStyleMPRSlice.newInstance();
+      istyle = vtkInteractorStyleMPRSlice.newInstance();
       interactor.setInteractorStyle(istyle);
 
       const actor = actors[0];
@@ -174,8 +188,14 @@ class VTKViewport extends Component {
 
       const range = istyle.getSliceRange();
       istyle.setSlice((range[0] + range[1]) / 2);
-    } else {
-      throw new Error(`setVTKInteractorStyle: bad style '${style}'`);
+    }
+
+    if (interactorObj.callbacks) {
+      Object.keys(interactorObj.callbacks).forEach(name => {
+        const callback = interactorObj.callbacks[name];
+
+        istyle[name](() => callback(istyle));
+      });
     }
   }
 }

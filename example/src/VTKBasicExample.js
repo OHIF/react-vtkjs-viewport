@@ -53,15 +53,16 @@ class VTKBasicExample extends Component {
 
     const renderWindowData = this.state.renderWindowData;
     const paintWidget = vtkPaintWidget.newInstance();
-    paintWidget.setRadius(100);
+    paintWidget.setRadius(30);
+    paintWidget.setColor([1,0,0]);
 
     renderWindowData.push({
       background: [0,0,0],
       vtkActors: [imageActorI, imageActorJ, imageActorK],
-      widgets: {
+      widgets: [{
         vtkWidget: paintWidget,
         viewType: ViewTypes.VOLUME
-      }
+      }]
     })
 
     this.setState({
@@ -83,15 +84,18 @@ class VTKBasicExample extends Component {
       volumeMapper.setInputData(data);
 
       const paintWidget = vtkPaintWidget.newInstance();
+      paintWidget.setRadius(30);
+      paintWidget.setColor([1,0,0]);
+
       const renderWindowData = this.state.renderWindowData;
       renderWindowData[0] = {
         background: [1,1,1],
-        interactorStyle: 'rotate',
+        //interactorStyle: 'rotate',
         vtkVolumeActors: [volumeActor],
-        widgets: {
+        widgets: [{
           vtkWidget: paintWidget,
           viewType: ViewTypes.VOLUME
-        }
+        }]
       };
 
       this.setState({

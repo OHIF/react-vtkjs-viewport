@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import VTKBasicExample from './VTKBasicExample.js';
+import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 
 export default class App extends Component {
   render () {
@@ -19,7 +20,7 @@ export default class App extends Component {
             </p>
           </div>
           <div className='col-xs-12 col-lg-6' style={style}>
-            <VTKBasicExample/>
+            <VTKMPRPaintingExample/>
           </div>
         </div>
       </div>

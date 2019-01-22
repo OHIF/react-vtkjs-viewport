@@ -5,11 +5,10 @@ import './VTKViewport.css';
 const EVENT_RESIZE = 'resize';
 
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
-import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
 
 // TODO: Is there one in VTK.js for this?
 import CustomSliceInteractorStyle from './vtkCustomSliceInteractor.js';
-import VTKRenderWindow from './VTKRenderWindow.jsx';
+import VTKRenderWindow from './VTKRenderWindow';
 
 /* One ultimate experiment might be to use one large render window for all viewports
    which just sits behind the layout in html and renders each viewport based on the position
