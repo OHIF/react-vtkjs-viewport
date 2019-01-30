@@ -66,7 +66,8 @@
   },
   "scripts": {
     "version": "node -p -e \"'export default \\'' + require('./package.json').version + '\\';'\" > src/version.js",
-    "start": "node scripts/start.js",
+    "copy:webworkers": "cp node_modules/cornerstone-wado-image-loader/dist/*.min.js* public",
+    "start": "npm run copy:webworkers && node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom"
   },
