@@ -90,16 +90,23 @@ class VTKViewport extends Component {
     }
   }
 
+  getScopes = () => {
+    return this.scopes;
+  };
+
   render() {
     const scopes = [];
     const contents = this.props.renderWindowData.map((data, index) => {
       const scopedRenderWindow = this.createRenderWindowScope(this.container);
-      scopes.push({
-        renderWindow: scopedRenderWindow
-      });
+      const scope = {
+        renderWindow: scopedRenderWindow,
+        ref: React.createRef()
+      };
+      scopes.push(scope);
 
       return (
         <VTKRenderWindow
+          ref={scope.ref}
           key={index}
           {...data}
           scopedRenderWindow={scopedRenderWindow}
@@ -109,6 +116,8 @@ class VTKViewport extends Component {
 
     // TODO: Not sure if this should be in the render function
     VTKViewport.linkAllInteractors(scopes);
+
+    this.scopes = scopes;
 
     return (
       <div

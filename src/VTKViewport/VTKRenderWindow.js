@@ -33,7 +33,7 @@ vtkRenderWindows: [
 ]
 */
 
-class VTKViewport extends Component {
+class VTKRenderWindow extends Component {
   static defaultProps = {
     background: [0, 0, 0],
     vtkVolumeActors: [],
@@ -137,6 +137,7 @@ class VTKViewport extends Component {
     });
 
     const renderWindow = this.scopedRenderWindow.getRenderWindow();
+    this.renderWindow = renderWindow;
     renderWindow.render();
 
     renderer.resetCamera();
@@ -216,4 +217,4 @@ class VTKViewport extends Component {
   }
 }
 
-export default VTKViewport;
+export default VTKRenderWindow;

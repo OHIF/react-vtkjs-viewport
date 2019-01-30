@@ -31,24 +31,25 @@ function determineOrientationIndex(orientation) {
 // patient. Also, determine the average spacing along that axis, and
 // return the index (0,1,2) of the z axis.
 export function computeZAxis(orientation, metaData) {
-  var ippArray = [];
+  const ippArray = [];
   let index = determineOrientationIndex(orientation);
 
   for (var value of metaData.values()) {
     let ipp = value.imagePositionPatient;
     if (index === 0) {
-      ippArray.push(ipp.x);
+      ippArray.push(ipp[0]);
     } else if (index === 1) {
-      ippArray.push(ipp.y);
+      ippArray.push(ipp[1]);
     } else {
-      ippArray.push(ipp.z);
+      ippArray.push(ipp[2]);
     }
   }
 
   ippArray.sort(function(a, b) {
     return a - b;
   });
-  let meanSpacing = mean(diff(ippArray));
+
+  const meanSpacing = mean(diff(ippArray));
 
   var obj = {
     spacing: meanSpacing,

@@ -80,6 +80,8 @@
     "dist"
   ],
   "dependencies": {
+    "cornerstone-core": "^2.2.8",
+    "cornerstone-math": "^0.1.8",
     "vtk.js": "^8.3.3"
   }
 }

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import VTKBasicExample from './VTKBasicExample.js';
 import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
+import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
 
 export default class App extends Component {
   render () {
@@ -19,8 +20,9 @@ export default class App extends Component {
             <p>This is a set of re-usable components for displaying data with <a href="https://github.com/Kitware/vtk-js" target="_blank" rel="noopener noreferrer">VTK.js.</a>
             </p>
           </div>
-          <div className='col-xs-12 col-lg-6' style={style}>
-            <VTKMPRPaintingExample/>
+          <div className='col-xs-12 col-lg-12' style={style}>
+            {/*<VTKMPRPaintingExample/>*/}
+            <VTKCornerstonePaintingSyncExample/>
           </div>
         </div>
       </div>

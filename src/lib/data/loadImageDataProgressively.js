@@ -3,7 +3,7 @@ import { insertSlice } from './insertSlice.js';
 
 function callAllCallbacks(callbacks) {
   callbacks.forEach(callback => {
-    callback.func(callback.view);
+    callback();
   });
 }
 
@@ -12,7 +12,8 @@ export function loadImageDataProgressively(
   imageData,
   metaDataMap,
   zAxis,
-  callbacks = []
+  callbacks = [],
+  cornerstone
 ) {
   const loadImagePromises = imageIds.map(imageId =>
     cornerstone.loadAndCacheImage(imageId)
@@ -29,7 +30,7 @@ export function loadImageDataProgressively(
         const pixels = image.getPixelData();
 
         insertSlice(imageData, pixels, sliceIndex);
-        callAllCallbacks(callbacks);
+        //callAllCallbacks(callbacks);
       })
       .catch(error => {
         throw new Error(error);

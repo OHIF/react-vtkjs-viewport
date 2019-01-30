@@ -12,15 +12,15 @@ export function computeIPP(imageDataObject) {
   const z = [];
 
   for (let i = 0; i < dimensions[0]; i++) {
-    x.push(metaData0.imagePositionPatient.x + i * spacing[0]);
+    x.push(metaData0.imagePositionPatient[0] + i * spacing[0]);
   }
 
   for (let i = 0; i < dimensions[1]; i++) {
-    y.push(metaData0.imagePositionPatient.y + i * spacing[1]);
+    y.push(metaData0.imagePositionPatient[1] + i * spacing[1]);
   }
 
   for (let i = 0; i < dimensions[2]; i++) {
-    z.push(metaData0.imagePositionPatient.z + i * spacing[2]);
+    z.push(metaData0.imagePositionPatient[2] + i * spacing[2]);
   }
 
   return {

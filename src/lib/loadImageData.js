@@ -1,12 +1,13 @@
 import { loadImageDataProgressively } from './data/loadImageDataProgressively.js';
 
-export function loadImageData(imageDataObject, callbacks) {
+export default function loadImageData(imageDataObject, callbacks, cornerstone) {
   return loadImageDataProgressively(
     imageDataObject.imageIds,
     imageDataObject.vtkImageData,
     imageDataObject.metaDataMap,
     imageDataObject.zAxis,
-    callbacks
+    callbacks,
+    cornerstone
   ).then(() => {
     imageDataObject.loaded = true;
   });

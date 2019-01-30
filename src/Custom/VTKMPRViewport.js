@@ -23,10 +23,14 @@ class VTKMPRViewport extends Component {
   static propTypes = {
     background: PropTypes.arrayOf(PropTypes.number).isRequired,
     inputData: PropTypes.object.isRequired,
-    focusedWidgetId: PropTypes.string
+    labelMapInputData: PropTypes.object,
+    focusedWidgetId: PropTypes.string,
+    paintWidgetCallbacks: PropTypes.object
   };
 
   componentDidMount() {
+    this.vtkViewportRef = React.createRef();
+
     const { inputData, background } = this.props;
 
     const volumeActor = vtkVolume.newInstance();
@@ -38,7 +42,6 @@ class VTKMPRViewport extends Component {
     const radius = 10;
     const paintWidget = vtkPaintWidget.newInstance();
     paintWidget.setRadius(radius);
-
     paintWidget.setColor([1, 0, 0]);
 
     // Paint filter
@@ -63,6 +66,10 @@ class VTKMPRViewport extends Component {
     labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
     labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
 
+    if (this.props.labelMapInputData) {
+      paintFilter.setLabelMap(this.props.labelMapInputData);
+    }
+
     // update paint filter
     paintFilter.setBackgroundImage(inputData);
     // don't set to 0, since that's our empty label color from our pwf
@@ -71,19 +78,19 @@ class VTKMPRViewport extends Component {
     // set custom threshold
     const threshold = 1;
     paintFilter.setVoxelFunc((bgValue, label, idx) => {
-      if (bgValue > threshold) {
+      return label;
+
+      /*if (bgValue > 0) {
         return label;
-      }
-      return null;
+      }*/
+
+      //return null;
     });
 
     const interactorOnModified = interactorStyle => {
       const position = [0, 0, 0];
       const normal = interactorStyle.getSliceNormal();
       const slice = interactorStyle.getSlice();
-
-      console.log(`normal: ${normal}`);
-      console.log(`slice: ${slice}`);
 
       // Obtain position
       const origin = normal.slice();
@@ -93,11 +100,10 @@ class VTKMPRViewport extends Component {
       // The PlaneWidget exposes a 'manipulator' which is a circle
       // displayed over the viewport. It's location is set in IJK
       // coordinates
-      console.log(`setting paintWidget normal: ${normal}`);
-      paintWidget.getManipulator().setNormal(normal);
+      // paintWidget.getManipulator().setNormal(normal);
 
-      const handle = paintWidget.getWidgetState().getHandle();
-      handle.rotateFromDirections(handle.getDirection(), normal);
+      // const handle = paintWidget.getWidgetState().getHandle();
+      // handle.rotateFromDirections(handle.getDirection(), normal);
     };
 
     const PAINT_WIDGET_ID = 'PaintWidget';
@@ -110,14 +116,35 @@ class VTKMPRViewport extends Component {
         onStartInteractionEvent: () => {
           paintFilter.startStroke();
           paintFilter.addPoint(paintWidget.getWidgetState().getTrueOrigin());
+
+          if (
+            this.props.paintWidgetCallbacks &&
+            this.props.paintWidgetCallbacks.onStartInteractionEvent
+          ) {
+            this.props.paintWidgetCallbacks.onStartInteractionEvent();
+          }
         },
         onInteractionEvent: widgetHandle => {
           if (widgetHandle.getPainting()) {
             paintFilter.addPoint(paintWidget.getWidgetState().getTrueOrigin());
+
+            if (
+              this.props.paintWidgetCallbacks &&
+              this.props.paintWidgetCallbacks.onInteractionEvent
+            ) {
+              this.props.paintWidgetCallbacks.onInteractionEvent();
+            }
           }
         },
         onEndInteractionEvent: () => {
           paintFilter.endStroke();
+
+          if (
+            this.props.paintWidgetCallbacks &&
+            this.props.paintWidgetCallbacks.onEndInteractionEvent
+          ) {
+            this.props.paintWidgetCallbacks.onEndInteractionEvent();
+          }
         }
       }
     };
@@ -145,7 +172,9 @@ class VTKMPRViewport extends Component {
     if (this.props.focusedWidgetId !== prevProps.focusedWidgetId) {
       const { renderWindowData } = this.state;
       const updatedRenderWindowData = renderWindowData.slice();
+
       updatedRenderWindowData[0].focusedWidgetId = this.props.focusedWidgetId;
+
       this.setState({
         renderWindowData: updatedRenderWindowData
       });
@@ -153,7 +182,12 @@ class VTKMPRViewport extends Component {
   }
 
   render() {
-    return <VTKViewport renderWindowData={this.state.renderWindowData} />;
+    return (
+      <VTKViewport
+        ref={this.vtkViewportRef}
+        renderWindowData={this.state.renderWindowData}
+      />
+    );
   }
 }
 

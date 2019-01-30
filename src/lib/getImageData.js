@@ -1,21 +1,36 @@
 import { buildMetadata } from './data/buildMetadata.js';
 import { determineOrientation } from './data/determineOrientation.js';
 import { computeZAxis } from './data/computeZAxis.js';
+import imageDataCache from './data/imageDataCache.js';
+import { Vector3 } from 'cornerstone-math';
+import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
+import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
-export function getImageData(displaySet) {
-  const { displaySetInstanceUid } = displaySet;
-  const { imageDataCache } = OHIF.plugins.VTKDataCache;
+export default function getImageData(
+  imageIds,
+  displaySetInstanceUid,
+  cornerstone
+) {
   const cachedImageDataObject = imageDataCache.get(displaySetInstanceUid);
 
   if (cachedImageDataObject) {
     return cachedImageDataObject;
   }
 
-  const { metaData0, metaDataMap, imageIds, imageMetaData0 } = buildMetadata(
-    displaySet
+  const { metaData0, metaDataMap, imageMetaData0 } = buildMetadata(
+    imageIds,
+    cornerstone
   );
+
   const { rowCosines, columnCosines } = metaData0;
-  const crossProduct = columnCosines.crossVectors(columnCosines, rowCosines);
+  const rowCosineVec = new Vector3(rowCosines[0], rowCosines[1], rowCosines[2]);
+  const colCosineVec = new Vector3(
+    columnCosines[0],
+    columnCosines[1],
+    columnCosines[2]
+  );
+  const crossProduct = colCosineVec.cross(rowCosineVec);
+
   const orientation = determineOrientation(crossProduct);
   const zAxis = computeZAxis(orientation, metaDataMap);
   const xSpacing = metaData0.columnPixelSpacing;
@@ -57,16 +72,16 @@ export function getImageData(displaySet) {
       break;
   }
 
-  const scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
+  const scalarArray = vtkDataArray.newInstance({
     name: 'Pixels',
     numberOfComponents: 1,
     values: pixelArray
   });
 
-  const imageData = vtk.Common.DataModel.vtkImageData.newInstance();
+  const imageData = vtkImageData.newInstance();
 
-  imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
-  imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
+  imageData.setDimensions(xVoxels, yVoxels, zVoxels);
+  imageData.setSpacing(xSpacing, ySpacing, zSpacing);
   imageData.getPointData().setScalars(scalarArray);
 
   const imageDataObject = {
