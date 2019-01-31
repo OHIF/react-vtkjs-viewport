@@ -169,12 +169,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
         console.log('measurementsChanged');
 
-        // const vtkViewport = this.vtkViewportRef.current;
-        // console.log(vtkViewport);
-
-        // debugger;
         labelMapInputData.modified();
-        // vtkViewport.vtkViewportRef.current.getScopes()[0].renderWindow.getRenderWindow().render();
       }
 
       this.setState({

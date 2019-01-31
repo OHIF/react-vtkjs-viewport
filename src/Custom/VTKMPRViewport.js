@@ -152,7 +152,8 @@ export default class VtkMpr extends React.Component {
       // You can update the labelmap externally just by calling modified()
       this.paintFilter.setLabelMap(this.props.labelmap);
       this.subs.labelmap.sub(
-        this.props.labelmap.modified(() => {
+        this.props.labelmap.onModified(() => {
+          this.labelPipeline.mapper.modified();
           this.renderWindow.render();
         })
       );
