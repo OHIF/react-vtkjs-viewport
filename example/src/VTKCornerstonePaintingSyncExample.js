@@ -66,6 +66,9 @@ function setupSyncedBrush(imageDataObject, element) {
     values: threeDimensionalPixelData,
   });
   labelMap.getPointData().setScalars(dataArray);
+  labelMap.setSpacing(...imageDataObject.vtkImageData.getSpacing());
+  labelMap.setOrigin(...imageDataObject.vtkImageData.getOrigin());
+  labelMap.setDirection(...imageDataObject.vtkImageData.getDirection());
 
   return labelMap;
 }
