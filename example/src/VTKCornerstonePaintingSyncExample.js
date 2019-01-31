@@ -166,12 +166,12 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
         console.log('measurementsChanged');
 
-        const vtkViewport = this.vtkViewportRef.current;
-        console.log(vtkViewport);
+        // const vtkViewport = this.vtkViewportRef.current;
+        // console.log(vtkViewport);
 
-        debugger;
+        // debugger;
         labelMapInputData.modified();
-        vtkViewport.vtkViewportRef.current.getScopes()[0].renderWindow.getRenderWindow().render();
+        // vtkViewport.vtkViewportRef.current.getScopes()[0].renderWindow.getRenderWindow().render();
       }
 
       this.setState({
@@ -195,6 +195,14 @@ class VTKCornerstonePaintingSyncExample extends Component {
         //debugger;
       }
     }
+  }
+
+  invalidateBrush() {
+    console.log('onInteractionEvent');
+
+    const enabledElement = cornerstone.getEnabledElements()[0];
+    const enabledElementUid = enabledElement.uuid;
+    BaseBrushTool.invalidateBrushOnEnabledElement(enabledElementUid);
   }
 
   setWidget = (event) => {
@@ -235,12 +243,10 @@ class VTKCornerstonePaintingSyncExample extends Component {
       <div className="col-xs-6">
         {this.state.vtkImageData &&
         <VTKMPRViewport
-          ref={this.vtkViewportRef}
-          inputData={this.state.vtkImageData}
-          labelMapInputData={this.state.labelMapInputData}
-          background={[0.1, 0.1, 0.1]}
-          focusedWidgetId={this.state.focusedWidgetId}
-          paintWidgetCallbacks={this.paintWidgetCallbacks}
+          data={this.state.vtkImageData}
+          labelmap={this.state.labelMapInputData}
+          painting={this.state.focusedWidgetId === 'PaintWidget'}
+          onPaint={this.invalidateBrush}
         />
         }
       </div>
