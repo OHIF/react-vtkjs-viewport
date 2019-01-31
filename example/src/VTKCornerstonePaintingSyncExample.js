@@ -1,7 +1,7 @@
 import React from 'react';
 import { Component } from 'react';
 
-import { VTKMPRViewport, getImageData, loadImageData } from 'react-vtkjs-viewport';
+import { VTKMPRViewport, VTK3DViewport, getImageData, loadImageData } from 'react-vtkjs-viewport';
 import CornerstoneViewport from 'react-cornerstone-viewport';
 import vtkImageData from "vtk.js/Sources/Common/DataModel/ImageData";
 import vtkDataArray from "vtk.js/Sources/Common/Core/DataArray";
@@ -259,7 +259,13 @@ class VTKCornerstonePaintingSyncExample extends Component {
           />
         }
       </div>
-    </React.Fragment>);
+      <div className="col-xs-6">
+        {this.state.vtkImageData &&
+        <VTK3DViewport
+          data={this.state.labelMapInputData}
+        />
+        }
+      </div>    </React.Fragment>);
   }
 }
 
