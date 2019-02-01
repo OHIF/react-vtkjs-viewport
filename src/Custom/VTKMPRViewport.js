@@ -9,10 +9,24 @@ import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
+import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 
 import { createSub } from './util';
+
+function linkCameras(src, dst) {
+  const pos = src.getReferenceByName('position');
+  const fp = src.getReferenceByName('focalPoint');
+  const vu = src.getReferenceByName('viewUp');
+  const va = src.getReferenceByName('viewAngle');
+  const cr = src.getReferenceByName('clippingRange');
+  dst.setPosition(...pos);
+  dst.setFocalPoint(...fp);
+  dst.setViewUp(...vu);
+  dst.setViewAngle(va);
+  dst.setClippingRange(cr[0] + 10, cr[1] - 10);
+}
 
 function createPipeline() {
   const mapper = vtkVolumeMapper.newInstance();
@@ -73,13 +87,13 @@ export default class VtkMpr extends React.Component {
 
   updatePaintbrush() {
     const manip = this.paintWidget.getManipulator();
-    manip.setNormal(
-      ...this.renderWindow
-        .getInteractor()
-        .getInteractorStyle()
-        .getSliceNormal()
-    );
+    const normal = this.renderWindow
+      .getInteractor()
+      .getInteractorStyle()
+      .getSliceNormal();
+    manip.setNormal(...normal);
     manip.setOrigin(...this.renderer.getActiveCamera().getFocalPoint());
+    handle.rotateFromDirections(handle.getDirection(), normal);
   }
 
   componentDidMount() {
@@ -90,18 +104,39 @@ export default class VtkMpr extends React.Component {
     this.renderer = this.fullScreenRenderer.getRenderer();
     this.renderWindow = this.fullScreenRenderer.getRenderWindow();
 
+    this.rendererTop = vtkRenderer.newInstance();
+    this.rendererTop.setViewport(0, 0, 1, 1);
+    this.renderWindow.addRenderer(this.rendererTop);
+    if (this.renderWindow.getNumberOfLayers() < 2) {
+      this.renderWindow.setNumberOfLayers(2);
+    }
+    this.rendererTop.setLayer(this.renderWindow.getNumberOfLayers() - 1);
+    this.rendererTop.setInteractive(false);
+    this.rendererTop.getActiveCamera().setFreezeFocalPoint(true);
+    this.renderWindow.render();
+
+    this.subs.interactor.sub(
+      this.renderWindow.getInteractor().onAnimation(() => {
+        linkCameras(
+          this.renderer.getActiveCamera(),
+          this.rendererTop.getActiveCamera()
+        );
+      })
+    );
+
     const istyle = vtkInteractorStyleMPRSlice.newInstance();
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
     this.pipeline = createPipeline();
     this.labelPipeline = createLabelPipeline();
 
-    this.widgetManager.setRenderer(this.renderer);
+    this.widgetManager.setRenderer(this.rendererTop);
     this.paintWidget = vtkPaintWidget.newInstance();
 
     this.paintFilter = vtkPaintFilter.newInstance();
     this.paintFilter.setLabel(1);
     this.paintFilter.setRadius(10);
+    this.paintWidget.setRadius(10);
     this.labelPipeline.mapper.setInputConnection(
       this.paintFilter.getOutputPort()
     );
