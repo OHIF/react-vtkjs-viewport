@@ -14,21 +14,10 @@ function createPipeline() {
   const actor = vtkVolume.newInstance();
   actor.setMapper(mapper);
 
-  const cfun = vtkColorTransferFunction.newInstance();
-  const ofun = vtkPiecewiseFunction.newInstance();
-
-  // set up labelMap color and opacity mapping
-  cfun.addRGBPoint(1, 0, 0, 1); // label "1" will be blue
-  ofun.addPoint(0, 0); // our background value, 0, will be invisible
-  ofun.addPoint(1, 1); // all values above 1 will be fully opaque
-
-  actor.getProperty().setRGBTransferFunction(0, cfun);
-  actor.getProperty().setScalarOpacity(0, ofun);
-
   return { mapper, actor };
 }
 
-export default class VtkMpr extends React.Component {
+export default class Vtk3D extends React.Component {
   constructor(props) {
     super(props);
 
@@ -89,6 +78,34 @@ export default class VtkMpr extends React.Component {
         }
 
         this.renderWindow.render();
+      }
+    }
+
+    if (prevProps.colorMap !== this.props.colorMap) {
+      if (this.props.colorMap) {
+        const cfun = vtkColorTransferFunction.newInstance();
+
+        Object.keys(this.props.colorMap).forEach(label => {
+          const color = this.props.colorMap[label];
+          cfun.addRGBPoint(label, ...color);
+        });
+        this.pipeline.actor.getProperty().setRGBTransferFunction(0, cfun);
+      } else {
+        this.pipeline.actor.getProperty().setRGBTransferFunction(0, null);
+      }
+    }
+
+    if (prevProps.opacityMap !== this.props.opacityMap) {
+      if (this.props.opacityMap) {
+        const ofun = vtkPiecewiseFunction.newInstance();
+
+        Object.keys(this.props.opacityMap).forEach(label => {
+          const opacity = this.props.opacityMap[label];
+          ofun.addPoint(label, opacity);
+        });
+        this.pipeline.actor.getProperty().setScalarOpacity(0, ofun);
+      } else {
+        this.pipeline.actor.getProperty().setScalarOpacity(0, null);
       }
     }
   }

@@ -263,6 +263,13 @@ class VTKCornerstonePaintingSyncExample extends Component {
         {this.state.vtkImageData &&
         <VTK3DViewport
           data={this.state.labelMapInputData}
+          colorMap={{
+            1: [0, 1, 0],
+          }}
+          opacityMap={{
+            0: 0,
+            1: 1,
+          }}
         />
         }
       </div>    </React.Fragment>);
