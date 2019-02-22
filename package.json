@@ -16,6 +16,7 @@
     "start": "webpack --watch --progress --colors --mode development",
     "prepare": "npm run build",
     "predeploy": "cd example && npm install && npm run build",
+    "prepublishOnly": "npm run build",
     "deploy": "gh-pages -d example/build",
     "generateStaticSite": "./generateStaticSite.sh"
   },
