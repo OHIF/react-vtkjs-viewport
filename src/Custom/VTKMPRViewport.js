@@ -1,6 +1,6 @@
 import React from 'react';
 
-import vtkFullScreenRenderWindow from 'vtk.js/Sources/Rendering/Misc/FullScreenRenderWindow';
+import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
@@ -48,7 +48,7 @@ export default class VtkMpr extends React.Component {
   constructor(props) {
     super(props);
 
-    this.fullScreenRenderer = null;
+    this.genericRenderer = null;
     this.widgetManager = vtkWidgetManager.newInstance();
     this.container = React.createRef();
     this.subs = {
@@ -83,12 +83,20 @@ export default class VtkMpr extends React.Component {
   }
 
   componentDidMount() {
-    this.fullScreenRenderer = vtkFullScreenRenderWindow.newInstance({
-      rootContainer: this.container.current,
-      containerStyle: {}
+    this.genericRenderer = vtkGenericRenderWindow.newInstance({
+      background: [0, 0, 0]
     });
-    this.renderer = this.fullScreenRenderer.getRenderer();
-    this.renderWindow = this.fullScreenRenderer.getRenderWindow();
+
+    // TODO: Later on we can try to return null from this component and instead
+    // have the parent draw all the windows in one canvas
+
+    // TODO: File an issue on VTKjs? Setting container in constructor
+    // doesn't do the same thing as setContainer?
+    // Looks like   model.openGLRenderWindow.setContainer(model.container); is never called
+    this.genericRenderer.setContainer(this.container.current);
+
+    this.renderer = this.genericRenderer.getRenderer();
+    this.renderWindow = this.genericRenderer.getRenderWindow();
 
     const istyle = vtkInteractorStyleMPRSlice.newInstance();
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
@@ -121,6 +129,9 @@ export default class VtkMpr extends React.Component {
       this.updatePaintbrush();
     });
     this.updatePaintbrush();
+
+    // TODO: Not sure why this is necessary to force the initial draw
+    this.genericRenderer.resize();
   }
 
   componentDidUpdate(prevProps) {
@@ -219,6 +230,7 @@ export default class VtkMpr extends React.Component {
   }
 
   render() {
-    return <div ref={this.container} />;
+    const style = { width: '100%', height: '100%' };
+    return <div ref={this.container} style={style} />;
   }
 }
