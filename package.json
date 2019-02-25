@@ -1,6 +1,6 @@
 {
   "name": "react-vtkjs-viewport",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "VTK.js image viewport component for React",
   "author": "OHIF Contributors",
   "license": "MIT",
@@ -14,7 +14,7 @@
     "build": "webpack --progress --colors --mode development",
     "build:release": "webpack --progress --colors --mode production",
     "start": "webpack --watch --progress --colors --mode development",
-    "prepare": "npm run build",
+    "prepare": "npm run build:release",
     "predeploy": "cd example && npm install && npm run build",
     "prepublishOnly": "npm run build",
     "deploy": "gh-pages -d example/build",
@@ -83,6 +83,6 @@
   "dependencies": {
     "cornerstone-core": "^2.2.8",
     "cornerstone-math": "^0.1.8",
-    "vtk.js": "^8.3.3"
+    "vtk.js": "^8.3.10"
   }
 }

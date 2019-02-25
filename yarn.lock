@@ -8007,10 +8007,10 @@ vm-browserify@0.0.4:
   dependencies:
     indexof "0.0.1"
 
-vtk.js@^8.3.3:
-  version "8.3.3"
-  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-8.3.3.tgz#1406858c3c2daaf358bb0302461ac9c84f59b667"
-  integrity sha512-A/6x80Xb+iRiSPfun6lemM41jzUjRXlPcPwrmW+DVHywCBBgaisz+/cCUo83fFBhgFU0PphLElfM0cJcH4+oRQ==
+vtk.js@^8.3.10:
+  version "8.3.10"
+  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-8.3.10.tgz#d5f99940ea46b7f54de49bce3482b9afb7c3ca83"
+  integrity sha512-pF71oKAjfMNKiP3RNw49dgT3Y50zSwAfCqM4Z1+ggx+So8Nf/0XZZe7I8SV+t/QntX8NaSzvbRDxG/fqnRrZ8w==
   dependencies:
     base64-js "1.2.1"
     blueimp-md5 "2.10.0"

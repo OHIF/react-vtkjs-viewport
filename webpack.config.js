@@ -14,19 +14,28 @@ module.exports = {
   output: {
     path: outputPath,
     filename: 'index.js',
-    library: 'VTKViewport',
+    library: 'ReactVTKjsViewport',
     libraryTarget: 'umd'
   },
   module: {
     rules: [
       { test: /\.html$/, loader: 'html-loader' },
       {
+        test: /\.glsl$/i,
+        loader: 'shader-loader',
+      },
+      {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: ['babel-loader']
-      }
+      },
+      {
+        test: /\.worker\.js$/,
+        use: [
+          { loader: 'worker-loader', options: { inline: true, fallback: false } },
+        ],
+      },
     ].concat(vtkRules).concat(cssRules),
-
   },
   resolve: {
     modules: [
