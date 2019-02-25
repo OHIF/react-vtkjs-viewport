@@ -1,6 +1,6 @@
 {
   "name": "react-vtkjs-viewport",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "VTK.js image viewport component for React",
   "author": "OHIF Contributors",
   "license": "MIT",
@@ -43,6 +43,7 @@
     "eslint-plugin-react": "^7.11.1",
     "gh-pages": "^2.0.1",
     "husky": "^1.2.1",
+    "kw-web-suite": "^8.0.0",
     "lint-staged": "^8.1.0",
     "postcss-loader": "^3.0.0",
     "prettier": "^1.15.3",

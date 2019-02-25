@@ -35,7 +35,7 @@ module.exports = {
           { loader: 'worker-loader', options: { inline: true, fallback: false } },
         ],
       },
-    ].concat(vtkRules).concat(cssRules),
+    ].concat(cssRules),
   },
   resolve: {
     modules: [
