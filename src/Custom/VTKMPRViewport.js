@@ -1,5 +1,5 @@
-import React from 'react';
-
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
@@ -10,16 +10,19 @@ import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
 
+import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
-
 import { createSub } from './util';
 
 function createPipeline() {
-  const mapper = vtkVolumeMapper.newInstance();
-  const actor = vtkVolume.newInstance();
-  actor.setMapper(mapper);
+  const data = {
+    mapper: vtkVolumeMapper.newInstance(),
+    actor: vtkVolume.newInstance()
+  };
 
-  return { mapper, actor };
+  data.actor.setMapper(data.mapper);
+
+  return data;
 }
 
 function createLabelPipeline() {
@@ -44,7 +47,23 @@ function createLabelPipeline() {
   return labelMap;
 }
 
-export default class VtkMpr extends React.Component {
+export default class VtkMpr extends Component {
+  static propTypes = {
+    data: PropTypes.object.isRequired,
+    painting: PropTypes.bool.isRequired,
+    labelmap: PropTypes.object,
+    onPaint: PropTypes.func,
+    onPaintStart: PropTypes.func,
+    onPaintEnd: PropTypes.func,
+    sliceNormal: PropTypes.array.isRequired,
+    dataDetails: PropTypes.object
+  };
+
+  static defaultProps = {
+    painting: false,
+    sliceNormal: [0, 0, 1]
+  };
+
   constructor(props) {
     super(props);
 
@@ -99,6 +118,7 @@ export default class VtkMpr extends React.Component {
     this.renderWindow = this.genericRenderer.getRenderWindow();
 
     const istyle = vtkInteractorStyleMPRSlice.newInstance();
+    this.istyle = istyle;
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
     this.pipeline = createPipeline();
@@ -143,6 +163,7 @@ export default class VtkMpr extends React.Component {
 
         if (!prevProps.data && this.props.data) {
           this.renderer.addVolume(this.pipeline.actor);
+
           // re-render if data has updated
           this.subs.data.sub(
             this.props.data.onModified(() => this.renderWindow.render())
@@ -221,6 +242,16 @@ export default class VtkMpr extends React.Component {
         this.viewWidget = null;
       }
     }
+
+    if (prevProps.sliceNormal !== this.props.sliceNormal) {
+      const istyle = this.istyle;
+      istyle.setSliceNormal(...this.props.sliceNormal);
+
+      const range = istyle.getSliceRange();
+      istyle.setSlice((range[0] + range[1]) / 2);
+
+      this.renderWindow.render();
+    }
   }
 
   componentWillUnmount() {
@@ -231,6 +262,31 @@ export default class VtkMpr extends React.Component {
 
   render() {
     const style = { width: '100%', height: '100%' };
-    return <div ref={this.container} style={style} />;
+
+    let voi = {
+      windowCenter: 0,
+      windowWidth: 0
+    };
+    if (this.pipeline) {
+      const actor = this.pipeline.actor;
+
+      // Note: This controls window/level
+      const rgbTransferFunction = actor.getProperty().getRGBTransferFunction(0);
+      const range = rgbTransferFunction.getMappingRange();
+      const windowWidth = range[0] + range[1];
+      const windowCenter = range[0] + windowWidth / 2;
+
+      voi = {
+        windowCenter,
+        windowWidth
+      };
+    }
+
+    return (
+      <div style={style}>
+        <div ref={this.container} style={style} />
+        <ViewportOverlay {...this.props.dataDetails} voi={voi} />
+      </div>
+    );
   }
 }
