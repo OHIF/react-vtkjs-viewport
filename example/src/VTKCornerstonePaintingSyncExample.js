@@ -76,7 +76,11 @@ function setupSyncedBrush(imageDataObject, element) {
   // Find a way to call .modified() on the Mapper when Cornerstone paints
   // When VTK paints, find a way to call cornerstone.updateImage()
 
-let ROOT_URL = 'localhost:3000';
+const ROOT_URL = window.location.hostname === 'localhost' 
+  ? window.location.host
+  : window.location.hostname;
+
+
 
 const imageIds = [
     //'dicomweb://s3.amazonaws.com/lury/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032220.10.dcm',
