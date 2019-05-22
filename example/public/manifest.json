@@ -1,6 +1,6 @@
 {
-  "short_name": "react-cornerstone-viewport",
-  "name": "react-cornerstone-viewport",
+  "short_name": "react-vtkjs-viewport",
+  "name": "react-vtkjs-viewport",
   "start_url": "./index.html",
   "display": "standalone",
   "theme_color": "#000000",

@@ -268,16 +268,20 @@ module.exports = {
         include: paths.appSrc,
       },
       {
-        test: /\.worker\.js$/,
-        use: [
-          { loader: 'worker-loader', options: { inline: true, fallback: false } },
-        ],
-      },
-      {
         // "oneOf" will traverse all following loaders until one will
         // match the requirements. When no loader matches it will fall
         // back to the "file" loader at the end of the loader list.
         oneOf: [
+          {
+            test: /\.worker\.js$/,
+            use: [
+              { loader: 'worker-loader', options: { inline: true, fallback: false } },
+            ],
+          },
+          {
+            test: /\.glsl$/i,
+            loader: 'shader-loader',
+          },
           // "url" loader works just like "file" loader but it also embeds
           // assets smaller than specified size as data URLs to avoid requests.
           {

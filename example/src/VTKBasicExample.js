@@ -1,76 +1,28 @@
 import React from 'react';
 import { Component } from 'react';
-import VTKViewport from 'react-vtkjs-viewport';
+import { View2D, vtkInteractorStyleMPRWindowLevel } from 'react-vtkjs-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
-import vtkImageSlice from 'vtk.js/Sources/Rendering/Core/ImageSlice';
-import vtkImageMapper from 'vtk.js/Sources/Rendering/Core/ImageMapper';
-import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
-import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 
+const PRESETS = {
+  BONE: {
+    windowWidth: 100,
+    windowCenter: 500
+  },
+  HEAD: {
+    windowWidth: 1000,
+    windowCenter: 300
+  }
+}
 class VTKBasicExample extends Component {
   state = {
-    renderWindowData: []
+    volumes: []
   }
 
-  addSliceViews = (data) => {
-    const imageActorI = vtkImageSlice.newInstance();
-    const imageActorJ = vtkImageSlice.newInstance();
-    const imageActorK = vtkImageSlice.newInstance();
+  componentDidMount() {
+    this.components = {};
 
-    const imageMapperK = vtkImageMapper.newInstance();
-    imageMapperK.setInputData(data);
-    imageMapperK.setKSlice(30);
-    imageActorK.setMapper(imageMapperK);
-
-    const imageMapperJ = vtkImageMapper.newInstance();
-    imageMapperJ.setInputData(data);
-    imageMapperJ.setJSlice(30);
-    imageActorJ.setMapper(imageMapperJ);
-
-    const imageMapperI = vtkImageMapper.newInstance();
-    imageMapperI.setInputData(data);
-    imageMapperI.setISlice(30);
-    imageActorI.setMapper(imageMapperI);
-
-    const dataRange = data
-      .getPointData()
-      .getScalars()
-      .getRange();
-    //const extent = data.getExtent();
-
-    const level = (dataRange[0] + dataRange[1]) / 2;
-    const window = dataRange[0] + dataRange[1];
-
-    imageActorI.getProperty().setColorLevel(level);
-    imageActorJ.getProperty().setColorLevel(level);
-    imageActorK.getProperty().setColorLevel(level);
-
-    imageActorI.getProperty().setColorWindow(window);
-    imageActorJ.getProperty().setColorWindow(window);
-    imageActorK.getProperty().setColorWindow(window);
-
-    const renderWindowData = this.state.renderWindowData;
-    const paintWidget = vtkPaintWidget.newInstance();
-    paintWidget.setRadius(30);
-    paintWidget.setColor([1,0,0]);
-
-    renderWindowData.push({
-      background: [0,0,0],
-      vtkActors: [imageActorI, imageActorJ, imageActorK],
-      widgets: [{
-        vtkWidget: paintWidget,
-        viewType: ViewTypes.VOLUME
-      }]
-    })
-
-    this.setState({
-      renderWindowData
-    });
-  }
-
-  componentWillMount() {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
     });
@@ -83,35 +35,125 @@ class VTKBasicExample extends Component {
       const data = reader.getOutputData();
       volumeMapper.setInputData(data);
 
-      const paintWidget = vtkPaintWidget.newInstance();
-      paintWidget.setRadius(30);
-      paintWidget.setColor([1,0,0]);
-
-      const renderWindowData = this.state.renderWindowData;
-      renderWindowData[0] = {
-        background: [1,1,1],
-        //interactorStyle: 'rotate',
-        vtkVolumeActors: [volumeActor],
-        widgets: [{
-          vtkWidget: paintWidget,
-          viewType: ViewTypes.VOLUME
-        }]
-      };
-
       this.setState({
-        renderWindowData
+        volumes: [volumeActor]
       });
-
-      this.addSliceViews(data);
     });
   }
 
+  setWLPreset = (preset) => {
+    const voi = PRESETS[preset];
+
+    const volume = this.state.volumes[0];
+    const rgbTransferFunction = volume.getProperty().getRGBTransferFunction(0);
+    const low = voi.windowCenter - voi.windowWidth / 2;
+    const high = voi.windowCenter + voi.windowWidth / 2;
+
+    rgbTransferFunction.setMappingRange(low, high);
+
+    this.updateAllViewports();
+  }
+
+  updateAllViewports = () => {
+    Object.keys(this.components).forEach(viewportIndex => {
+      const component = this.components[viewportIndex];
+
+      component.genericRenderWindow.getRenderWindow().render();
+    });
+  }
+
+  linkInteractors(renderWindow1, renderWindow2) {
+    const i1 = renderWindow1.getInteractor();
+    const i2 = renderWindow2.getInteractor();
+    const sync = {};
+
+    let src = null;
+
+    function linkOneWay(from, to) {
+      from.onStartAnimation(() => {
+        if (!src) {
+          src = from;
+          to.requestAnimation(sync);
+        }
+      });
+
+      from.onEndAnimation(() => {
+        if (src === from) {
+          src = null;
+          to.cancelAnimation(sync);
+          // roughly wait for widgetManager.capture() to finish
+          setTimeout(to.render, 1000);
+        }
+      });
+    }
+
+    linkOneWay(i1, i2);
+    linkOneWay(i2, i1);
+  }
+
+  linkAllInteractors(renderWindows) {
+    if (renderWindows.length < 2) {
+      return;
+    }
+
+    for (let i = 0; i < renderWindows.length - 1; i++) {
+      for (let j = i + 1; j < renderWindows.length; j++) {
+        this.linkInteractors(renderWindows[i], renderWindows[j]);
+      }
+    }
+  }
+
+  saveRenderWindow = (viewportIndex) => {
+    return (component) => {
+      this.components[viewportIndex] = component;
+
+      if (viewportIndex === 1) {
+        const renderWindow = component.genericRenderWindow.getRenderWindow()
+
+        // TODO: This is a hacky workaround because disabling the vtkInteractorStyleMPRSlice is currently
+        // broken. The camera.onModified is never removed.
+        renderWindow.getInteractor().getInteractorStyle().setVolumeMapper(null)
+
+        const istyle = vtkInteractorStyleMPRWindowLevel.newInstance();
+
+        renderWindow.getInteractor().setInteractorStyle(istyle)
+        istyle.setVolumeMapper(component.volumes[0])
+
+        const renderWindows = Object.values(this.components).map(a => a.genericRenderWindow.getRenderWindow());
+        this.linkAllInteractors(renderWindows)
+      }
+    }
+  }
+
   render() {
-    return (<React.Fragment>
-      <VTKViewport
-        renderWindowData={this.state.renderWindowData}
-      />
-    </React.Fragment>);
+    if (!this.state.volumes || !this.state.volumes.length) {
+      return <h4>Loading...</h4>
+    }
+
+    return (<div className="row">
+      <div className="col-xs-12">
+        <p>This example demonstrates how to use the <code>onCreated</code> prop to obtain access to the VTK render window for one or more component. It also shows how to provide an array of vtkVolumes to the component for rendering. When we change the RGB Transfer Function for the volume using the Window/Level buttons, we can see that this is applied inside both components.</p>
+      </div>
+      <div className="col-xs-12">
+        <h5>Set a Window/Level Preset</h5>
+        <div className="btn-group">
+          <button className="btn btn-primary" onClick={() => this.setWLPreset("BONE")}>Bone</button>
+          <button className="btn btn-primary" onClick={() => this.setWLPreset("HEAD")}>Head</button>
+        </div>
+      </div>
+      <div className="col-xs-12 col-sm-6">
+        <View2D
+          volumes={this.state.volumes}
+          onCreated={this.saveRenderWindow(0)}
+        />
+      </div>
+      <div className="col-xs-12 col-sm-6">
+        <View2D
+          volumes={this.state.volumes}
+          onCreated={this.saveRenderWindow(1)}
+        />
+      </div>
+    </div>);
   }
 }
 

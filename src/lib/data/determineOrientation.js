@@ -1,22 +1,22 @@
 // Based on David Clunie's various postings
 // on the dicom google groupd.
-export function determineOrientation(v) {
-  let axis;
-  const oX = v.x < 0 ? 'R' : 'L';
-  const oY = v.y < 0 ? 'A' : 'P';
-  const oZ = v.z < 0 ? 'I' : 'S';
+export default function determineOrientation(v) {
+  let axis
+  const oX = v.x < 0 ? 'R' : 'L'
+  const oY = v.y < 0 ? 'A' : 'P'
+  const oZ = v.z < 0 ? 'I' : 'S'
 
-  const aX = Math.abs(v.x);
-  const aY = Math.abs(v.y);
-  const aZ = Math.abs(v.z);
-  const obliqueThreshold = 0.8;
+  const aX = Math.abs(v.x)
+  const aY = Math.abs(v.y)
+  const aZ = Math.abs(v.z)
+  const obliqueThreshold = 0.8
   if (aX > obliqueThreshold && aX > aY && aX > aZ) {
-    axis = oX;
+    axis = oX
   } else if (aY > obliqueThreshold && aY > aX && aY > aZ) {
-    axis = oY;
+    axis = oY
   } else if (aZ > obliqueThreshold && aZ > aX && aZ > aY) {
-    axis = oZ;
+    axis = oZ
   }
 
-  return axis;
+  return axis
 }
