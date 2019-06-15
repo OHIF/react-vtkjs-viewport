@@ -1,15 +1,21 @@
-import VTKViewport from './VTKViewport/VTKViewport';
+import View2D from './VTKViewport/View2D';
+import View3D from './VTKViewport/View3D';
+import vtkInteractorStyleMPRSlice from './VTKViewport/vtkInteractorStyleMPRSlice.js';
+import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMPRWindowLevel.js';
+import vtkInteractorStyleMPRCrosshairs from './VTKViewport/vtkInteractorStyleMPRCrosshairs.js';
 import ViewportOverlay from './ViewportOverlay/ViewportOverlay.js';
-import VTKMPRViewport from './Custom/VTKMPRViewport';
 import getImageData from './lib/getImageData.js';
 import loadImageData from './lib/loadImageData.js';
 
 export {
-  VTKViewport,
-  VTKMPRViewport,
+  View2D,
+  View3D,
   ViewportOverlay,
   getImageData,
-  loadImageData
+  loadImageData,
+  vtkInteractorStyleMPRSlice,
+  vtkInteractorStyleMPRWindowLevel,
+  vtkInteractorStyleMPRCrosshairs,
 };
 
-export default VTKViewport;
+export default View2D;

@@ -10,22 +10,6 @@
 npm install --save react-vtkjs-viewport
 ```
 
-## Usage
-
-```jsx
-import React, { Component } from 'react'
-
-import CornerstoneViewport from 'react-cornerstone-viewport'
-
-class Example extends Component {
-  render () {
-    return (
-      <CornerstoneViewport />
-    )
-  }
-}
-```
-
 ## License
 
 MIT © [OHIF](https://github.com/OHIF)

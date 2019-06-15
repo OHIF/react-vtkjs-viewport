@@ -29,7 +29,7 @@ cornerstoneTools.toolColors.setActiveColor('rgb(0, 255, 0)');
 cornerstoneTools.store.state.touchProximity = 40;
 
 const config = {
-  maxWebWorkers: Math.max(navigator.hardwareConcurrency - 1, 1),
+  maxWebWorkers: 4,//Math.max(navigator.hardwareConcurrency - 1, 1),
   startWebWorkersOnDemand: true,
   webWorkerPath: '/cornerstoneWADOImageLoaderWebWorker.min.js',
   taskConfiguration: {

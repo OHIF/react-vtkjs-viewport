@@ -1,60 +1,51 @@
-import { mean } from '../math/mean.js';
-import { diff } from '../math/diff.js';
+import { mean } from '../math/mean.js'
+import { diff } from '../math/diff.js'
 
 // given the text orientation, determine the index (0,1,2)
 // of the z axis
 function determineOrientationIndex(orientation) {
-  var o = orientation;
-  var index = undefined;
-  switch (o) {
+  switch (orientation) {
     case 'A':
     case 'P':
-      index = 1;
-      break;
+      return 1
+      break
     case 'L':
     case 'R':
-      index = 0;
-      break;
+      return 0
+      break
     case 'S':
     case 'I':
-      index = 2;
-      break;
+      return 2
+      break
     default:
-      console.assert(false, ' OBLIQUE NOT SUPPORTED');
-      break;
+      throw new Error('Oblique acquisitions are not currently supported.')
+      break
   }
-  return index;
 }
 
 // Given the orientation, determine the coordinates of the z axis
 // i.e. the z axis per the DICOM xray or other device relative to the
 // patient. Also, determine the average spacing along that axis, and
 // return the index (0,1,2) of the z axis.
-export function computeZAxis(orientation, metaData) {
-  const ippArray = [];
-  let index = determineOrientationIndex(orientation);
-
-  for (var value of metaData.values()) {
-    let ipp = value.imagePositionPatient;
-    if (index === 0) {
-      ippArray.push(ipp[0]);
-    } else if (index === 1) {
-      ippArray.push(ipp[1]);
-    } else {
-      ippArray.push(ipp[2]);
+export default function computeZAxis(orientation, metaData) {
+  const xyzIndex = determineOrientationIndex(orientation)
+  const ippArray = Array.from(metaData.values()).map(value => {
+    return {
+      z: value.imagePositionPatient[xyzIndex],
+      imagePositionPatient: value.imagePositionPatient,
     }
-  }
+  })
 
   ippArray.sort(function(a, b) {
-    return a - b;
-  });
+    return a.z - b.z
+  })
 
-  const meanSpacing = mean(diff(ippArray));
+  const positions = ippArray.map(a => a.z)
 
-  var obj = {
-    spacing: meanSpacing,
-    positions: ippArray,
-    xyzIndex: index
-  };
-  return obj;
+  return {
+    spacing: mean(diff(positions)),
+    positions,
+    origin: ippArray[0].imagePositionPatient,
+    xyzIndex,
+  }
 }
