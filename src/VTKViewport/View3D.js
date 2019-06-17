@@ -336,7 +336,7 @@ export default class View3D extends Component {
       return null;
     }
 
-    const style = { width: '100%', height: '100%' };
+    const style = { width: '100%', height: '100%', position: 'relative' };
 
     let voi = {
       windowCenter: 0,

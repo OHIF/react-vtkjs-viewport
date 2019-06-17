@@ -62,27 +62,26 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
     updateScrollManipulator();
   }
 
-  const superHandleMouseMove = publicAPI.handleMouseMove;
-  publicAPI.handleMouseMove = callData => {
+  function launchCallback(callData) {
     const pos = [callData.position.x, callData.position.y];
     const renderer = callData.pokedRenderer;
+    const callback = publicAPI.getCallback();
+    const dPos = vtkCoordinate.newInstance();
+    dPos.setCoordinateSystemToDisplay();
+    dPos.setValue(pos[0], pos[1], 0);
+    const worldPos = dPos.getComputedWorldValue(renderer);
 
+    if (worldPos.length) {
+      callback({ worldPos, displayPos: pos });
+    }
+
+    publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
+  }
+
+  const superHandleMouseMove = publicAPI.handleMouseMove;
+  publicAPI.handleMouseMove = callData => {
     if (model.state === States.IS_WINDOW_LEVEL) {
-      const callback = publicAPI.getCallback();
-
-      const dPos = vtkCoordinate.newInstance();
-      const worldPos = [];
-      dPos.setCoordinateSystemToDisplay();
-      dPos.setValue(pos[0], pos[1]);
-      worldPos[0] = dPos.getComputedWorldValue(renderer)[0];
-      worldPos[1] = dPos.getComputedWorldValue(renderer)[1];
-      worldPos[2] = dPos.getComputedWorldValue(renderer)[2];
-
-      if (worldPos.length) {
-        callback(worldPos);
-      }
-
-      publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
+      launchCallback(callData);
     }
 
     if (superHandleMouseMove) {
@@ -94,6 +93,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
   publicAPI.handleLeftButtonPress = callData => {
     if (!callData.shiftKey && !callData.controlKey) {
       if (model.volumeMapper) {
+        launchCallback(callData);
         publicAPI.startWindowLevel();
       }
     } else if (superHandleLeftButtonPress) {
