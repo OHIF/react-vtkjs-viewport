@@ -361,7 +361,7 @@ export default class View2D extends Component {
       return null;
     }
 
-    const style = { width: '100%', height: '100%' };
+    const style = { width: '100%', height: '100%', position: 'relative' };
 
     const voi = this.getVOI(this.props.volumes[0]);
 

@@ -4,6 +4,7 @@ import VTKBasicExample from './VTKBasicExample.js';
 import VTKFusionExample from './VTKFusionExample.js';
 import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
+import VTKCrosshairsExample from './VTKCrosshairsExample.js';
 
 function LinkOut({href, text}) {
   return (
@@ -46,6 +47,11 @@ function Index() {
       title: 'Syncing VTK Labelmap with Cornerstone Brush Tool Data',
       url: '/cornerstone-sync-painting',
       text: 'Demonstrates how to set up a labelmap volume which can be edited in both VTK.js and Cornerstone simultaneously using a shared ArrayBuffer.'
+    },
+    {
+      title: 'MPR Crosshairs Example',
+      url: '/crosshairs',
+      text: 'Demonstrates how to set up the Crosshairs interactor style and SVG Widget'
     }
   ];
 
@@ -93,6 +99,7 @@ function AppRouter() {
   const fusion = () => Example({ children: <VTKFusionExample/>});
   const painting = () => Example({ children: <VTKMPRPaintingExample/>});
   const synced = () => Example({ children: <VTKCornerstonePaintingSyncExample/>});
+  const crosshairs = () => Example({ children: <VTKCrosshairsExample/>});
 
   return (
     <Router>
@@ -102,6 +109,7 @@ function AppRouter() {
         <Route exact path="/fusion/" render={fusion} />
         <Route exact path="/painting" render={painting} />
         <Route exact path="/cornerstone-sync-painting" render={synced} />
+        <Route exact path="/crosshairs" render={crosshairs} />
         <Route exact component={Index}/>
       </Switch>
     </Router>
