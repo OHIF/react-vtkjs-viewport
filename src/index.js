@@ -5,6 +5,7 @@ import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMP
 import vtkInteractorStyleMPRCrosshairs from './VTKViewport/vtkInteractorStyleMPRCrosshairs.js';
 import vtkSVGWidgetManager from './VTKViewport/vtkSVGWidgetManager.js';
 import vtkSVGCrosshairsWidget from './VTKViewport/vtkSVGCrosshairsWidget.js';
+import vtkSVGRotateReferenceLinesWidget from './VTKViewport/vtkSVGRotateReferenceLinesWidget.js';
 import ViewportOverlay from './ViewportOverlay/ViewportOverlay.js';
 import getImageData from './lib/getImageData.js';
 import loadImageData from './lib/loadImageData.js';
@@ -20,6 +21,7 @@ export {
   vtkInteractorStyleMPRCrosshairs,
   vtkSVGWidgetManager,
   vtkSVGCrosshairsWidget,
+  vtkSVGRotateReferenceLinesWidget,
 };
 
 export default View2D;
