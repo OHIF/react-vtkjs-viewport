@@ -2,10 +2,11 @@ import macro from 'vtk.js/Sources/macro';
 
 let instanceId = 1;
 
+const xmlns = 'http://www.w3.org/2000/svg';
 function getWidgetNode(svgContainer, widgetId) {
   let node = svgContainer.querySelector(`#${widgetId}`);
   if (!node) {
-    node = document.createElement('g');
+    node = document.createElementNS(xmlns, 'g');
     node.setAttribute('id', widgetId);
     svgContainer.appendChild(node);
   }
@@ -41,10 +42,6 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
     const right = [width / scale, height / scale / 2];
     const bottom = [width / scale / 2, height / scale];
     node.innerHTML = `
-<g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
- <g>
- <!-- TODO: Why is this <svg> necessary?? </svg> If I don't include it, nothing renders !-->
- <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
  <!-- Top !-->
   <line
     x1="${p[0]}"
@@ -93,9 +90,7 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
     stroke-linejoin="round"
     stroke-width=${strokeWidth}
   ></line>
- </g>
-</g>
-      `;
+    `;
   };
 }
 
@@ -106,7 +101,7 @@ const DEFAULT_VALUES = {
   strokeColor: '#00ff00',
   strokeWidth: 1,
   strokeDashArray: '',
-  padding: 20,
+  padding: 20
 };
 
 // ----------------------------------------------------------------------------
@@ -119,7 +114,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   macro.setGet(publicAPI, model, [
     'strokeColor',
     'strokeWidth',
-    'strokeDashArray',
+    'strokeDashArray'
   ]);
   macro.setGetArray(publicAPI, model, ['point', 'padding'], 2);
 
