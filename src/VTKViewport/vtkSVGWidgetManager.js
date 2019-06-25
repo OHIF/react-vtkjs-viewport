@@ -3,15 +3,16 @@ import macro from 'vtk.js/Sources/macro';
 const { vtkErrorMacro } = macro;
 let instanceId = 1;
 
+const xmlns = 'http://www.w3.org/2000/svg';
 function createSVGRoot(id) {
-  const el = document.createElement('svg');
+  const el = document.createElementNS(xmlns, 'svg');
   el.setAttribute('id', id);
   el.setAttribute(
     'style',
     'position: absolute; top: 0; left: 0; width: 100%; height: 100%;'
   );
   el.setAttribute('version', '1.1');
-  el.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  el.setAttribute('xmlns', xmlns);
 
   return el;
 }
@@ -92,7 +93,7 @@ function vtkSVGWidgetManager(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  scale: 0.5,
+  scale: 0.5
 };
 
 // ----------------------------------------------------------------------------
