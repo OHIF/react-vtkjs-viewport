@@ -44,7 +44,7 @@ function createActorMapper(imageData) {
 
 function createCT2dPipeline(imageData) {
   const { actor, mapper } = createActorMapper(imageData)
-  mapper.setSampleDistance(20.0)
+  mapper.setSampleDistance(5.0)
 
   return actor
 }
@@ -75,29 +75,81 @@ function createPET2dPipeline(imageData, petColorMapId) {
   return actor
 }
 
+function getShiftRange(colorTransferArray) {
+  // Credit to paraview-glance
+  // https://github.com/Kitware/paraview-glance/blob/3fec8eeff31e9c19ad5b6bff8e7159bd745e2ba9/src/components/controls/ColorBy/script.js#L133
+
+  // shift range is original rgb/opacity range centered around 0
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < colorTransferArray.length; i += 4) {
+    min = Math.min(min, colorTransferArray[i]);
+    max = Math.max(max, colorTransferArray[i]);
+  }
+
+  const center = (max - min) / 2;
+
+  return {
+    shiftRange: [-center, center],
+    min,
+    max
+  };
+}
+
+function applyPointsToPiecewiseFunction(points, range, pwf) {
+  const width = range[1] - range[0];
+  const rescaled = points.map(([x, y]) => [x * width + range[0], y]);
+
+  pwf.removeAllPoints();
+  rescaled.forEach(([x, y]) => pwf.addPoint(x, y));
+
+  return rescaled;
+}
+
+function applyPointsToRGBFunction(points, range, cfun) {
+  const width = range[1] - range[0];
+  const rescaled = points.map(([x, r,g,b]) => [x * width + range[0], r,g,b]);
+
+  cfun.removeAllPoints();
+  rescaled.forEach(([x, r,g,b]) => cfun.addRGBPoint(x, r,g,b));
+
+  return rescaled;
+}
+
 function applyPreset(actor, preset) {
+  /*const imageData = actor.getMapper().getInputData()
+  const dataRange = imageData
+    .getPointData()
+    .getScalars()
+    .getRange()*/
+
   // Create color transfer function
   const colorTransferArray = preset.colorTransfer
     .split(' ')
     .splice(1)
     .map(parseFloat)
 
+  const { shiftRange }  = getShiftRange(colorTransferArray);
+  let min = shiftRange[0];
+  const width = shiftRange[1] - shiftRange[0];
+
+  // TODO: Something about the rescaling is still very wrong
+  const shift = -1000;//dataRange[0];
+  min += shift;
+
   const cfun = vtkColorTransferFunction.newInstance()
-  for (let i = 0; i < colorTransferArray.length; i++) {
-    const value = colorTransferArray[i]
+  const normColorTransferValuePoints = [];
+  for (let i = 0; i < colorTransferArray.length; i+=4) {
+    let value = colorTransferArray[i]
     const r = colorTransferArray[i + 1]
     const g = colorTransferArray[i + 2]
     const b = colorTransferArray[i + 3]
 
-    i = i + 3
-
-    cfun.addRGBPoint(value, r, g, b)
+    value = (value - min) / width
+    normColorTransferValuePoints.push([value, r, g, b])
   }
 
-  // TODO: Not sure this is the right way to use effective range.
-  // Doesn't seem to exist in vtk.js
-  // const [rangeMin, rangeMax] = preset.effectiveRange.split(' ').map(parseFloat)
-  //cfun.setMappingRange(rangeMin, rangeMax)
+  applyPointsToRGBFunction(normColorTransferValuePoints, shiftRange, cfun)
 
   actor.getProperty().setRGBTransferFunction(0, cfun)
 
@@ -105,17 +157,20 @@ function applyPreset(actor, preset) {
   const scalarOpacityArray = preset.scalarOpacity
     .split(' ')
     .splice(1)
-    .map(parseFloat)
+    .map(parseFloat);
 
   const ofun = vtkPiecewiseFunction.newInstance()
-  for (let i = 0; i < scalarOpacityArray.length; i++) {
-    const value = scalarOpacityArray[i]
+  const normPoints = [];
+  for (let i = 0; i < scalarOpacityArray.length; i+=2) {
+    let value = scalarOpacityArray[i]
     const opacity = scalarOpacityArray[i + 1]
 
-    i = i + 1
+    value = (value - min) / width
 
-    ofun.addPoint(value, opacity)
+    normPoints.push([value, opacity]);
   }
+
+  applyPointsToPiecewiseFunction(normPoints, shiftRange, ofun);
 
   actor.getProperty().setScalarOpacity(0, ofun)
 
@@ -155,7 +210,7 @@ function applyPreset(actor, preset) {
 
 function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
   const { actor, mapper } = createActorMapper(imageData)
-  mapper.setSampleDistance(20.0)
+  mapper.setSampleDistance(2.0)
 
   const preset = presets.find(
     preset => preset.id === ctTransferFunctionPresetId
@@ -186,7 +241,7 @@ function createPET3dPipeline(imageData, petColorMapId) {
   // Create scalar opacity function
   const ofun = vtkPiecewiseFunction.newInstance()
   ofun.addPoint(0.0, 0.0)
-  ofun.addPoint(range[1] / 4, 0.2)
+  ofun.addPoint(range[1] / 3, 0.2)
 
   actor.getProperty().setScalarOpacity(0, ofun)
 
@@ -248,12 +303,12 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     )
-    ctImageIds = ctImageIds.slice(0, 200)
+    ctImageIds = ctImageIds.slice(0, 100)
 
     let petImageIds = imageIds.filter(imageId =>
       imageId.includes(petSeriesInstanceUID)
     )
-    petImageIds = petImageIds.slice(0, 150)
+    petImageIds = petImageIds.slice(0, 100)
 
     const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet')
     const petImageDataPromise = loadDataset(petImageIds, 'petDisplaySet')

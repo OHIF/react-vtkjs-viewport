@@ -6,7 +6,7 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
-import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
+import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 

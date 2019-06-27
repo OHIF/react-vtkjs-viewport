@@ -6,8 +6,6 @@ import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
-//import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice'
-import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
@@ -122,6 +120,7 @@ export default class View3D extends Component {
     this.renderer = this.genericRenderWindow.getRenderer();
     this.renderWindow = this.genericRenderWindow.getRenderWindow();
 
+    this.widgetManager.disablePicking();
     this.widgetManager.setRenderer(this.renderer);
     this.paintWidget = vtkPaintWidget.newInstance();
     this.paintWidget.setRadius(radius);
