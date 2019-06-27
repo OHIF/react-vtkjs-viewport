@@ -7,8 +7,7 @@ import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
-//import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
-import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
+import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
@@ -38,7 +37,7 @@ function createLabelPipeline(
     const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
     const dataArray = vtkDataArray.newInstance({
       numberOfComponents: 1, // labelmap with single component
-      values
+      values,
     });
     labelMapData.getPointData().setScalars(dataArray);
   }
@@ -47,7 +46,7 @@ function createLabelPipeline(
     actor: vtkVolume.newInstance(),
     mapper: vtkVolumeMapper.newInstance(),
     cfun: vtkColorTransferFunction.newInstance(),
-    ofun: vtkPiecewiseFunction.newInstance()
+    ofun: vtkPiecewiseFunction.newInstance(),
   };
 
   // labelmap pipeline
@@ -80,11 +79,11 @@ export default class View2D extends Component {
     interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
-    onDestroyed: PropTypes.func
+    onDestroyed: PropTypes.func,
   };
 
   static defaultProps = {
-    painting: false
+    painting: false,
   };
 
   constructor(props) {
@@ -99,7 +98,7 @@ export default class View2D extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub()
+      paintEnd: createSub(),
     };
   }
 
@@ -115,7 +114,7 @@ export default class View2D extends Component {
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0]
+      background: [0, 0, 0],
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -160,13 +159,14 @@ export default class View2D extends Component {
         position,
         focalPoint,
         viewUp,
-        viewAngle
+        viewAngle,
       });
     };
     // TODO unsubscribe from this before component unmounts.
     inter.onAnimation(updateCameras);
     updateCameras();
 
+    this.widgetManager.disablePicking();
     this.widgetManager.setRenderer(this.paintRenderer);
     this.paintWidget = vtkPaintWidget.newInstance();
     this.paintWidget.setRadius(radius);
@@ -210,6 +210,16 @@ export default class View2D extends Component {
     interactor.setInteractorStyle(istyle);
     */
 
+    /*
+    TODO: Use for maintaining clipping range for MIP
+
+    const interactor = this.renderWindow.getInteractor();
+    //const clippingRange = renderer.getActiveCamera().getClippingRange();
+
+    interactor.onAnimation(() => {
+      renderer.getActiveCamera().setClippingRange(...r);
+    });*/
+
     const istyleVolumeMapper =
       this.props.interactorStyleVolumeMapper ||
       this.props.volumes[0].getMapper();
@@ -241,7 +251,7 @@ export default class View2D extends Component {
         filters,
         actors,
         volumes,
-        _component: this
+        _component: this,
       };
 
       this.props.onCreated(api);
@@ -388,7 +398,7 @@ export default class View2D extends Component {
 
     return {
       windowCenter,
-      windowWidth
+      windowWidth,
     };
   };
 
