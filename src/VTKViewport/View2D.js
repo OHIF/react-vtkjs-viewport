@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
+import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
@@ -37,7 +38,7 @@ function createLabelPipeline(
     const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
     const dataArray = vtkDataArray.newInstance({
       numberOfComponents: 1, // labelmap with single component
-      values,
+      values
     });
     labelMapData.getPointData().setScalars(dataArray);
   }
@@ -46,7 +47,7 @@ function createLabelPipeline(
     actor: vtkVolume.newInstance(),
     mapper: vtkVolumeMapper.newInstance(),
     cfun: vtkColorTransferFunction.newInstance(),
-    ofun: vtkPiecewiseFunction.newInstance(),
+    ofun: vtkPiecewiseFunction.newInstance()
   };
 
   // labelmap pipeline
@@ -79,11 +80,11 @@ export default class View2D extends Component {
     interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
-    onDestroyed: PropTypes.func,
+    onDestroyed: PropTypes.func
   };
 
   static defaultProps = {
-    painting: false,
+    painting: false
   };
 
   constructor(props) {
@@ -98,20 +99,23 @@ export default class View2D extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub(),
+      paintEnd: createSub()
     };
   }
 
   updatePaintbrush() {
     const manip = this.paintWidget.getManipulator();
-    const camera = this.renderer.getActiveCamera();
-    manip.setNormal(...camera.getDirectionOfProjection());
+    const handle = this.paintWidget.getWidgetState().getHandle();
+    const camera = this.paintRenderer.getActiveCamera();
+    const normal = camera.getDirectionOfProjection();
+    manip.setNormal(...normal);
     manip.setOrigin(...camera.getFocalPoint());
+    handle.rotateFromDirections(handle.getDirection(), normal);
   }
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0],
+      background: [0, 0, 0]
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -126,12 +130,44 @@ export default class View2D extends Component {
 
     this.renderer = this.genericRenderWindow.getRenderer();
     this.renderWindow = this.genericRenderWindow.getRenderWindow();
+    const oglrw = this.genericRenderWindow.getOpenGLRenderWindow();
+
+    // add paint renderer
+    this.paintRenderer = vtkRenderer.newInstance();
+    this.renderWindow.addRenderer(this.paintRenderer);
+    this.renderWindow.setNumberOfLayers(2);
+    this.paintRenderer.setLayer(1);
+    this.paintRenderer.setInteractive(false);
+
+    // update view node tree so that vtkOpenGLHardwareSelector can access
+    // the vtkOpenGLRenderer instance.
+    oglrw.buildPass(true);
 
     const istyle = vtkInteractorStyleMPRSlice.newInstance();
-    this.istyle = istyle;
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
-    this.widgetManager.setRenderer(this.renderer);
+    const inter = this.renderWindow.getInteractor();
+    const updateCameras = () => {
+      const baseCamera = this.renderer.getActiveCamera();
+      const paintCamera = this.paintRenderer.getActiveCamera();
+
+      const position = baseCamera.getReferenceByName('position');
+      const focalPoint = baseCamera.getReferenceByName('focalPoint');
+      const viewUp = baseCamera.getReferenceByName('viewUp');
+      const viewAngle = baseCamera.getReferenceByName('viewAngle');
+
+      paintCamera.set({
+        position,
+        focalPoint,
+        viewUp,
+        viewAngle
+      });
+    };
+    // TODO unsubscribe from this before component unmounts.
+    inter.onAnimation(updateCameras);
+    updateCameras();
+
+    this.widgetManager.setRenderer(this.paintRenderer);
     this.paintWidget = vtkPaintWidget.newInstance();
     this.paintWidget.setRadius(radius);
     this.paintFilter = vtkPaintFilter.newInstance();
@@ -205,7 +241,7 @@ export default class View2D extends Component {
         filters,
         actors,
         volumes,
-        _component: this,
+        _component: this
       };
 
       this.props.onCreated(api);
@@ -282,7 +318,7 @@ export default class View2D extends Component {
       if (this.props.painting) {
         this.viewWidget = this.widgetManager.addWidget(
           this.paintWidget,
-          ViewTypes.VOLUME
+          ViewTypes.SLICE
         );
         this.subs.paintStart.sub(
           this.viewWidget.onStartInteractionEvent(() => {
@@ -352,7 +388,7 @@ export default class View2D extends Component {
 
     return {
       windowCenter,
-      windowWidth,
+      windowWidth
     };
   };
 
