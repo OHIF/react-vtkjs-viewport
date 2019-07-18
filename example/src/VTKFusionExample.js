@@ -210,7 +210,16 @@ function applyPreset(actor, preset) {
 
 function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
   const { actor, mapper } = createActorMapper(imageData)
-  mapper.setSampleDistance(2.0)
+  const sampleDistance =
+      0.7 *
+      Math.sqrt(
+        imageData
+          .getSpacing()
+          .map((v) => v * v)
+          .reduce((a, b) => a + b, 0)
+      );
+
+  mapper.setSampleDistance(sampleDistance);
 
   const preset = presets.find(
     preset => preset.id === ctTransferFunctionPresetId
@@ -225,7 +234,16 @@ function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
 
 function createPET3dPipeline(imageData, petColorMapId) {
   const { actor, mapper } = createActorMapper(imageData)
-  mapper.setSampleDistance(50.0)
+  const sampleDistance =
+      0.7 *
+      Math.sqrt(
+        imageData
+          .getSpacing()
+          .map((v) => v * v)
+          .reduce((a, b) => a + b, 0)
+      );
+
+  mapper.setSampleDistance(sampleDistance);
 
   // Apply colormap
   const range = imageData
@@ -303,7 +321,7 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     )
-    ctImageIds = ctImageIds.slice(0, 100)
+    ctImageIds = ctImageIds//.slice(0, 100)
 
     let petImageIds = imageIds.filter(imageId =>
       imageId.includes(petSeriesInstanceUID)

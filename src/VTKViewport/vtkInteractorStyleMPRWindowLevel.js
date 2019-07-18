@@ -6,7 +6,7 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
-import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
+import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 
 const { States } = Constants;
@@ -79,6 +79,24 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     }
   };
 
+  const superSetVolumeMapper = publicAPI.setVolumeMapper;
+  publicAPI.setVolumeMapper = mapper => {
+    if (superSetVolumeMapper(mapper)) {
+      const renderer = model.interactor.getCurrentRenderer();
+      const camera = renderer.getActiveCamera();
+      if (mapper) {
+        // prevent zoom manipulator from messing with our focal point
+        camera.setFreezeFocalPoint(true);
+
+        // NOTE: Disabling this because it makes it more difficult to switch
+        // interactor styles. Need to find a better way to do this!
+        //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
+      } else {
+        camera.setFreezeFocalPoint(false);
+      }
+    }
+  };
+
   publicAPI.windowLevel = (renderer, pos) => {
     const rwi = model.interactor;
     if (model.volumeMapper) {
@@ -129,20 +147,6 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
       }
     } else if (superHandleLeftButtonPress) {
       superHandleLeftButtonPress(callData);
-    }
-  };
-
-  const superSetVolumeMapper = publicAPI.setVolumeMapper;
-  publicAPI.setVolumeMapper = mapper => {
-    if (superSetVolumeMapper(mapper)) {
-      const renderer = model.interactor.getCurrentRenderer();
-      const camera = renderer.getActiveCamera();
-      if (mapper) {
-        // prevent zoom manipulator from messing with our focal point
-        camera.setFreezeFocalPoint(true);
-      } else {
-        camera.setFreezeFocalPoint(false);
-      }
     }
   };
 
