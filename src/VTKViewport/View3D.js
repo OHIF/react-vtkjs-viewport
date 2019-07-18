@@ -40,12 +40,23 @@ function createLabelPipeline(
     labelMapData.getPointData().setScalars(dataArray);
   }
 
+  const sampleDistance =
+    0.7 *
+    Math.sqrt(
+      labelMapData
+        .getSpacing()
+        .map(v => v * v)
+        .reduce((a, b) => a + b, 0)
+    );
+
   const labelMap = {
     actor: vtkVolume.newInstance(),
     mapper: vtkVolumeMapper.newInstance(),
     cfun: vtkColorTransferFunction.newInstance(),
     ofun: vtkPiecewiseFunction.newInstance(),
   };
+
+  labelMap.mapper.setSampleDistance(sampleDistance);
 
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);

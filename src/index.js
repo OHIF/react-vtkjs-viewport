@@ -1,5 +1,6 @@
 import View2D from './VTKViewport/View2D';
 import View3D from './VTKViewport/View3D';
+import vtkInteractorStyleMPRSlice from './VTKViewport/vtkInteractorStyleMPRSlice.js';
 import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMPRWindowLevel.js';
 import vtkInteractorStyleMPRCrosshairs from './VTKViewport/vtkInteractorStyleMPRCrosshairs.js';
 import vtkSVGWidgetManager from './VTKViewport/vtkSVGWidgetManager.js';
@@ -16,6 +17,7 @@ export {
   loadImageData,
   vtkInteractorStyleMPRWindowLevel,
   vtkInteractorStyleMPRCrosshairs,
+  vtkInteractorStyleMPRSlice,
   vtkSVGWidgetManager,
   vtkSVGCrosshairsWidget,
 };

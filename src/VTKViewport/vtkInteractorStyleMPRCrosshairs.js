@@ -6,7 +6,7 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
-import vtkInteractorStyleMPRSlice from 'vtk.js/Sources/Interaction/Style/InteractorStyleMPRSlice';
+import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 
@@ -109,6 +109,10 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
       if (mapper) {
         // prevent zoom manipulator from messing with our focal point
         camera.setFreezeFocalPoint(true);
+
+        // NOTE: Disabling this because it makes it more difficult to switch
+        // interactor styles. Need to find a better way to do this!
+        //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
       } else {
         camera.setFreezeFocalPoint(false);
       }
