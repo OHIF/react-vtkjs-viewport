@@ -3,68 +3,14 @@ import PropTypes from 'prop-types';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
-import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
-import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
-import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
-import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
-import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
-import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
 
 import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
-
-// TODO: mostly duplicated in view3d...
-function createLabelPipeline(
-  backgroundImageData,
-  paintFilterLabelMapImageData
-) {
-  let labelMapData;
-
-  if (paintFilterLabelMapImageData) {
-    labelMapData = paintFilterLabelMapImageData;
-  } else {
-    // Create a labelmap image the same dimensions as our background volume.
-    labelMapData = vtkImageData.newInstance(
-      backgroundImageData.get('spacing', 'origin', 'direction')
-    );
-    labelMapData.setDimensions(backgroundImageData.getDimensions());
-    labelMapData.computeTransforms();
-
-    const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
-    const dataArray = vtkDataArray.newInstance({
-      numberOfComponents: 1, // labelmap with single component
-      values,
-    });
-    labelMapData.getPointData().setScalars(dataArray);
-  }
-
-  const labelMap = {
-    actor: vtkVolume.newInstance(),
-    mapper: vtkVolumeMapper.newInstance(),
-    cfun: vtkColorTransferFunction.newInstance(),
-    ofun: vtkPiecewiseFunction.newInstance(),
-  };
-
-  // labelmap pipeline
-  labelMap.actor.setMapper(labelMap.mapper);
-
-  // set up labelMap color and opacity mapping
-  labelMap.cfun.addRGBPoint(1, 0, 0, 1); // label "1" will be blue
-  labelMap.cfun.addRGBPoint(0, 1, 0, 2); // label "1" will be blue
-  labelMap.cfun.addRGBPoint(0, 0, 1, 3); // label "1" will be blue
-  labelMap.ofun.addPoint(0, 0);
-  labelMap.ofun.addPoint(1, 0.5);
-
-  labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
-  labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
-  labelMap.actor.getProperty().setInterpolationTypeToNearest();
-
-  return labelMap;
-}
+import createLabelPipeline from './createLabelPipeline';
 
 export default class View2D extends Component {
   static propTypes = {
@@ -79,11 +25,11 @@ export default class View2D extends Component {
     interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
-    onDestroyed: PropTypes.func,
+    onDestroyed: PropTypes.func
   };
 
   static defaultProps = {
-    painting: false,
+    painting: false
   };
 
   constructor(props) {
@@ -98,7 +44,7 @@ export default class View2D extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub(),
+      paintEnd: createSub()
     };
   }
 
@@ -114,7 +60,7 @@ export default class View2D extends Component {
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0],
+      background: [0, 0, 0]
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -159,7 +105,7 @@ export default class View2D extends Component {
         position,
         focalPoint,
         viewUp,
-        viewAngle,
+        viewAngle
       });
     };
     // TODO unsubscribe from this before component unmounts.
@@ -251,7 +197,7 @@ export default class View2D extends Component {
         filters,
         actors,
         volumes,
-        _component: this,
+        _component: this
       };
 
       this.props.onCreated(api);
@@ -398,7 +344,7 @@ export default class View2D extends Component {
 
     return {
       windowCenter,
-      windowWidth,
+      windowWidth
     };
   };
 
