@@ -17,7 +17,10 @@ import vtkColorMaps from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/Co
 
 import presets from './presets.js'
 
+window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
+
 const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs'
+//const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
 const client = new api.DICOMwebClient({ url })
 const studyInstanceUID =
   '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905'
@@ -43,8 +46,19 @@ function createActorMapper(imageData) {
 }
 
 function createCT2dPipeline(imageData) {
-  const { actor, mapper } = createActorMapper(imageData)
-  mapper.setSampleDistance(5.0)
+  const { actor } = createActorMapper(imageData)
+  const cfun = vtkColorTransferFunction.newInstance()
+  /*
+    0: { description: 'Soft tissue', window: 400, level: 40 },
+  1: { description: 'Lung', window: 1500, level: -600 },
+  2: { description: 'Liver', window: 150, level: 90 },
+  3: { description: 'Bone', window: 2500, level: 480 },
+  4: { description: 'Brain', window: 80, level: 40 },*/
+  const preset = vtkColorMaps.getPresetByName('Grayscale')
+  cfun.applyColorMap(preset)
+  cfun.setMappingRange(-360, 440)
+
+  actor.getProperty().setRGBTransferFunction(0, cfun)
 
   return actor
 }
@@ -53,22 +67,18 @@ function createPET2dPipeline(imageData, petColorMapId) {
   const { actor, mapper } = createActorMapper(imageData)
   mapper.setSampleDistance(5.0)
 
-  const range = imageData
-    .getPointData()
-    .getScalars()
-    .getRange()
-
   const cfun = vtkColorTransferFunction.newInstance()
   const preset = vtkColorMaps.getPresetByName(petColorMapId)
   cfun.applyColorMap(preset)
-  cfun.setMappingRange(range[0], (range[1] * 2) / 5)
+  cfun.setMappingRange(0, 5)
 
   actor.getProperty().setRGBTransferFunction(0, cfun)
 
   // Create scalar opacity function
   const ofun = vtkPiecewiseFunction.newInstance()
-  ofun.addPoint(0.0, 0.0)
-  ofun.addPoint(range[1] / 4, 0.3)
+  ofun.addPoint(0, 0.0)
+  ofun.addPoint(0.1, 0.9);
+  ofun.addPoint(5, 1.0);
 
   actor.getProperty().setScalarOpacity(0, ofun)
 
@@ -117,12 +127,6 @@ function applyPointsToRGBFunction(points, range, cfun) {
 }
 
 function applyPreset(actor, preset) {
-  /*const imageData = actor.getMapper().getInputData()
-  const dataRange = imageData
-    .getPointData()
-    .getScalars()
-    .getRange()*/
-
   // Create color transfer function
   const colorTransferArray = preset.colorTransfer
     .split(' ')
@@ -134,7 +138,7 @@ function applyPreset(actor, preset) {
   const width = shiftRange[1] - shiftRange[0];
 
   // TODO: Something about the rescaling is still very wrong
-  const shift = -1000;//dataRange[0];
+  const shift = shiftRange[0];
   min += shift;
 
   const cfun = vtkColorTransferFunction.newInstance()
@@ -161,7 +165,7 @@ function applyPreset(actor, preset) {
 
   const ofun = vtkPiecewiseFunction.newInstance()
   const normPoints = [];
-  for (let i = 0; i < scalarOpacityArray.length; i+=2) {
+  for (let i = 0; i < scalarOpacityArray.length; i += 2) {
     let value = scalarOpacityArray[i]
     const opacity = scalarOpacityArray[i + 1]
 
@@ -227,7 +231,7 @@ function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
 
   applyPreset(actor, preset)
 
-  actor.getProperty().setScalarOpacityUnitDistance(0, 4.5)
+  actor.getProperty().setScalarOpacityUnitDistance(0, 2.5)
 
   return actor
 }
@@ -246,22 +250,21 @@ function createPET3dPipeline(imageData, petColorMapId) {
   mapper.setSampleDistance(sampleDistance);
 
   // Apply colormap
-  const range = imageData
-    .getPointData()
-    .getScalars()
-    .getRange()
   const cfun = vtkColorTransferFunction.newInstance()
-  cfun.applyColorMap(vtkColorMaps.getPresetByName(petColorMapId))
-  cfun.setMappingRange(range[0], (range[1] * 3) / 5)
+  const preset = vtkColorMaps.getPresetByName(petColorMapId)
+  cfun.applyColorMap(preset)
+  cfun.setMappingRange(0, 5)
 
   actor.getProperty().setRGBTransferFunction(0, cfun)
 
   // Create scalar opacity function
   const ofun = vtkPiecewiseFunction.newInstance()
   ofun.addPoint(0.0, 0.0)
-  ofun.addPoint(range[1] / 3, 0.2)
+  ofun.addPoint(0.1, 0.1)
+  ofun.addPoint(5, 0.2)
 
   actor.getProperty().setScalarOpacity(0, ofun)
+  actor.getProperty().setScalarOpacityUnitDistance(0, 2.5)
 
   return actor
 }
@@ -321,12 +324,12 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     )
-    ctImageIds = ctImageIds//.slice(0, 100)
+    //ctImageIds = ctImageIds.slice(0, ctImageIds.length / 4)
 
     let petImageIds = imageIds.filter(imageId =>
       imageId.includes(petSeriesInstanceUID)
     )
-    petImageIds = petImageIds.slice(0, 100)
+    petImageIds = petImageIds.slice(0, petImageIds.length / 4)
 
     const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet')
     const petImageDataPromise = loadDataset(petImageIds, 'petDisplaySet')
@@ -378,19 +381,29 @@ class VTKFusionExample extends Component {
     const actor2d = this.state.volumes[1]
     const actor3d = this.state.volumeRenderingVolumes[1]
 
-    const imageData = actor2d.getMapper().getInputData()
-    const range = imageData
-      .getPointData()
-      .getScalars()
-      .getRange()
-
     const preset = vtkColorMaps
       .getPresetByName(petColorMapId);
 
-    [(actor2d, actor3d)].forEach(actor => {
+    [actor2d, actor3d].forEach(actor => {
+      if (!actor) {
+        return;
+      }
+
       const cfun = actor.getProperty().getRGBTransferFunction(0)
+
+      // TODO: Looks like this is returned by reference and mutated when
+      // applyColorMap is run, so we are copying the array with .slice().
+      // - Bit surprised we have to do this though. I wonder where else this is
+      // causing issues
+      const cRange = cfun.getMappingRange().slice();
       cfun.applyColorMap(preset)
-      cfun.setMappingRange(range[0], (range[1] * 2) / 5)
+
+      const newCfun = vtkColorTransferFunction.newInstance()
+      newCfun.applyColorMap(preset);
+      newCfun.setMappingRange(cRange[0], cRange[1])
+
+      // TODO: Why doesn't mutating the current RGBTransferFunction work?
+      actor.getProperty().setRGBTransferFunction(0, newCfun);
     })
 
     this.setState({
