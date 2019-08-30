@@ -339,7 +339,7 @@ export default class View2D extends Component {
     // TODO: Make this work reactively with onModified...
     const rgbTransferFunction = actor.getProperty().getRGBTransferFunction(0);
     const range = rgbTransferFunction.getMappingRange();
-    const windowWidth = range[0] + range[1];
+    const windowWidth = Math.abs(range[1] - range[0]);
     const windowCenter = range[0] + windowWidth / 2;
 
     return {

@@ -1,6 +1,6 @@
 {
   "name": "react-vtkjs-viewport",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "VTK.js image viewport component for React",
   "author": "OHIF Contributors",
   "license": "MIT",

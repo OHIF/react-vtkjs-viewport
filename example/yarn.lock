@@ -2135,11 +2135,6 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
 
-base64-js@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.2.1.tgz#a91947da1f4a516ea38e5b4ec0ec3773675e0886"
-  integrity sha512-dwVUVIXsBZXwTuwnXI9RK8sBmgq09NDHzyR9SAph9eqk76gKK2JSQmZARC2zRC81JC2QTtxD0ARU5qTS25gIGw==
-
 base64-js@^1.0.2:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.0.tgz#cab1e6118f051095e58b5281aea8c1cd22bfc0e3"
@@ -3012,31 +3007,32 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
-cornerstone-core@^2.2.8:
-  version "2.2.8"
-  resolved "https://registry.yarnpkg.com/cornerstone-core/-/cornerstone-core-2.2.8.tgz#5f10c65c80f8efa7623ee1dd5c9a9d4605f5467c"
-  integrity sha512-iJrmfXy1nvM4ZLTJawif2VYBPq8APQ1GYjRbUZAJPNqPYmfYfKWkToVyf9o/i8GMl81op7xLJ4ib3ZMSINKjjQ==
+cornerstone-core@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/cornerstone-core/-/cornerstone-core-2.3.0.tgz#b16430b0dc3883c795fbbd5f64d0f6357f91c889"
+  integrity sha512-1LiCfRIlQvR1j8OhF7/3pvvQvvnTYZUywEkuoEo5K5mMrlKdrQMS75uW1uXb/nXShQDJyyjtTCQSVGgv2yHA+w==
 
 cornerstone-math@0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/cornerstone-math/-/cornerstone-math-0.1.7.tgz#7c55536f02e7221b05fc49a4c780bb82c234ce39"
   integrity sha512-svsDSoqLNFM9niCV2AtV2DNmRkYztT1v80lVdbA5hkgdGdpWg5/h2On794zbqBK+aI3hNOHufERDsI4wdXGknA==
 
-cornerstone-tools@3.11.0:
-  version "3.11.0"
-  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-3.11.0.tgz#8d14537548ef4f0cc2f38fd55b343bc28d73f5a7"
-  integrity sha512-n1zeYr7rJ4wNCE3a9IJvb7wWnvYfMWOiiaKL0IN093VrYiJU2DBvjC+97gbQE+AboQyp02JbUV2ac4fhdyzMQg==
+cornerstone-tools@3.19.1:
+  version "3.19.1"
+  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-3.19.1.tgz#3a520cfa82bb9961e555048f75b19f0760c113d3"
+  integrity sha512-+CcUZlIXDKGl5lhaFeA9KaPPFVza8WbAKc4zWlppcj9OuDbcJPAktKbb2DgC6h/RD4g5vGEgvD4QtFkzdvaE2Q==
   dependencies:
     "@babel/runtime" "7.1.2"
     cornerstone-math "0.1.7"
     debug "4.1.1"
 
-cornerstone-wado-image-loader@^2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/cornerstone-wado-image-loader/-/cornerstone-wado-image-loader-2.2.3.tgz#2d4c06b5c87cd9198b52906c48e2d9dd145de986"
-  integrity sha512-0N5ykSEVoUx3zzfGn5Oaa7OJL/EHOthPUI2Kv8gSnMgf6ipcz5TcK8xGMOfu6grMkKlNb0SFJ/cEqsHR7bddKQ==
+cornerstone-wado-image-loader@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/cornerstone-wado-image-loader/-/cornerstone-wado-image-loader-3.0.0.tgz#250ba435379096815de52ed80629d6407e016841"
+  integrity sha512-T18aPcLBkYn2dg2qVbIgA6FQUVvwJVmyDlBdWXHdfOZgQnhbxd7Gz1V0hHqpGAfAv8mH1nlNzZ9ipFsNYHvXdA==
   dependencies:
-    dicom-parser "^1.8.1"
+    dicom-parser "^1.8.3"
+    pako "^1.0.10"
 
 cosmiconfig@^4.0.0:
   version "4.0.0"
@@ -3559,15 +3555,15 @@ detect-port-alt@1.1.6:
     address "^1.0.1"
     debug "^2.6.0"
 
-dicom-parser@^1.8.1, dicom-parser@^1.8.3:
+dicom-parser@^1.8.3:
   version "1.8.3"
   resolved "https://registry.yarnpkg.com/dicom-parser/-/dicom-parser-1.8.3.tgz#6e4b862898112304db30143147562011c1ce6a4d"
   integrity sha512-CMeUr+jea7Ml70N+/Z5Pd2MYtvLp6IU+TnvdLe6VRVKzZuTeYLYyuAQa9R+sFK4v4N39hig+hKHN+Wfi9sQ6GA==
 
-dicomweb-client@^0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/dicomweb-client/-/dicomweb-client-0.4.4.tgz#0ca0c7706556f3114330a3c40946ee66808148e4"
-  integrity sha512-5S7wLYxQgHnOyEgR1zlZlt79IjzOk+YDB/Jjzte6ijRZsAoj9RUiIZcsTyxvBD9gLMYs/954n2kYHdbz83Xbtw==
+dicomweb-client@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/dicomweb-client/-/dicomweb-client-0.5.2.tgz#aa5a4a6a5044b0702bb0a8a2662c86cd16901951"
+  integrity sha512-e11n2+g7HfBuMyopWq76W11eSZJ707g4U1XiO8URA+23aoe0g1kGAtlPB29NKXl7zX7RznTJ7wfRBxFkW6EJDA==
 
 diff-sequences@^24.3.0:
   version "24.3.0"
@@ -7471,6 +7467,11 @@ pako@1.0.6:
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.6.tgz#0101211baa70c4bca4a0f63f2206e97b7dfaf258"
   integrity sha512-lQe48YPsMJAig+yngZ87Lus+NF+3mtu7DVOBu6b/gHO1YpKwIj5AWjZ/TOS7i46HD/UixzWb1zeWDZfGZ3iYcg==
 
+pako@^1.0.10:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.10.tgz#4328badb5086a426aa90f541977d4955da5c9732"
+  integrity sha512-0DTvPVU3ed8+HNXOu5Bs+o//Mbdj9VNQMUOe9oKCwh8l0GNwpTDMKCWbRjgtD291AWnkAgkqA/LOnQS8AmS1tw==
+
 pako@~1.0.2:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.8.tgz#6844890aab9c635af868ad5fecc62e8acbba3ea4"
@@ -8689,10 +8690,10 @@ react-app-polyfill@^1.0.1:
     regenerator-runtime "0.13.2"
     whatwg-fetch "3.0.0"
 
-react-cornerstone-viewport@0.1.29:
-  version "0.1.29"
-  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.1.29.tgz#7ef3c2f3d7dc45339b14c17a53e05db367a28394"
-  integrity sha512-KUjdqjti53v4eNyFTT3tXJ4cTyb64eMW3QF1cQqd+1+Re8UXSF1+k9uku15vR/Qt/YOv9Bsh74PabBct7BxWog==
+react-cornerstone-viewport@0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.2.2.tgz#5860e35c48927d66839f66b59944442b8f6b5f67"
+  integrity sha512-NdfV3ZAxYJ6PhqO/NETWNWJ7WiV/jOCS0WkfMaA3FC2ySKXg/mtvQbwsDFKV6p+Y2/u5WANpgq13Gn++JhIHYA==
   dependencies:
     lodash.debounce "^4.0.8"
     moment "^2.23.0"
@@ -8788,10 +8789,9 @@ react-router@5.0.0:
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
 
-"react-vtkjs-viewport@file:..":
-  version "0.0.9"
-  dependencies:
-    moment "^2.24.0"
+"react-vtkjs-viewport@link:..":
+  version "0.0.0"
+  uid ""
 
 react@^16.8.6:
   version "16.8.6"
@@ -10566,12 +10566,11 @@ vm-browserify@0.0.4:
   dependencies:
     indexof "0.0.1"
 
-vtk.js@^8.5.8:
-  version "8.5.8"
-  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-8.5.8.tgz#2e3f0d1cebaacacfba255aa4c801dcb55cec6b91"
-  integrity sha512-ep0e6ZIks4S00jvliM5elyxHjJqBEVwwAAi2PoLHJZK7m2/BW3jtSURpLamZWiK/3plzMKpyBIuRzLjuSfyRdw==
+vtk.js@^11.0.1:
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.0.1.tgz#a22a499eaac96a31a30e48f30a9dd7ac51f5587b"
+  integrity sha512-v5f6ItYQrdwE0FomKEy//oNYrFpD6CWaKjxbI6N5+ttsKLVtKwGmpYtB8bii0Tww1c50g0uo9tcj6tvKTUv62Q==
   dependencies:
-    base64-js "1.2.1"
     blueimp-md5 "2.10.0"
     commander "2.11.0"
     gl-matrix "3.0.0"
