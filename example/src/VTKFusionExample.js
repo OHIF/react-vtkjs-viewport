@@ -324,12 +324,12 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     )
-    //ctImageIds = ctImageIds.slice(0, ctImageIds.length / 4)
+    ctImageIds = ctImageIds.slice(0, ctImageIds.length / 5)
 
     let petImageIds = imageIds.filter(imageId =>
       imageId.includes(petSeriesInstanceUID)
     )
-    petImageIds = petImageIds.slice(0, petImageIds.length / 4)
+    petImageIds = petImageIds.slice(0, petImageIds.length / 5)
 
     const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet')
     const petImageDataPromise = loadDataset(petImageIds, 'petDisplaySet')

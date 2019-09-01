@@ -2,12 +2,18 @@ import cornerstone from 'cornerstone-core';
 import getSliceIndex from './data/getSliceIndex.js';
 import insertSlice from './data/insertSlice.js';
 
-function loadImageDataProgressively(imageIds, imageData, metaDataMap, zAxis) {
+function loadImageDataProgressively(
+  imageIds,
+  imageData,
+  metaDataMap,
+  sortedDatasets
+) {
+  // TODO: Use cornerstoneTools requestPoolManager instead of launching all request simultaneously
   const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
 
   const insertPixelData = image => {
     const { imagePositionPatient } = metaDataMap.get(image.imageId);
-    const sliceIndex = getSliceIndex(zAxis, imagePositionPatient);
+    const sliceIndex = getSliceIndex(sortedDatasets, imagePositionPatient);
     const pixels = image.getPixelData();
     const { slope, intercept } = image;
     const numPixels = pixels.length;
@@ -129,11 +135,15 @@ function fracToDec(fractionalValue) {
 }
 
 export default function loadImageData(imageDataObject) {
+  const imageIds = imageDataObject.sortedDatasets.map(dataset => {
+    return dataset.imageId;
+  });
+
   return loadImageDataProgressively(
-    imageDataObject.imageIds,
+    imageIds,
     imageDataObject.vtkImageData,
     imageDataObject.metaDataMap,
-    imageDataObject.zAxis
+    imageDataObject.sortedDatasets
   ).then(() => {
     imageDataObject.loaded = true;
   });

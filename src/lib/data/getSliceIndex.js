@@ -1,8 +1,8 @@
-import { bsearch } from '../math/bsearch.js';
-import { compareReals } from '../math/compareReals.js';
-
-export default function getSliceIndex(zAxis, imagePositionPatient) {
-  const position = imagePositionPatient[zAxis.xyzIndex];
-
-  return bsearch(zAxis.positions, position, compareReals);
+export default function getSliceIndex(
+  distanceDatasetPairs,
+  imagePositionPatient
+) {
+  return distanceDatasetPairs.findIndex(pair => {
+    return pair.dataset.imagePositionPatient === imagePositionPatient;
+  });
 }
