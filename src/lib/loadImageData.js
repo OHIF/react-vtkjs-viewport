@@ -1,5 +1,4 @@
 import cornerstone from 'cornerstone-core';
-import getSliceIndex from './data/getSliceIndex.js';
 import insertSlice from './data/insertSlice.js';
 
 function loadImageDataProgressively(
@@ -13,7 +12,9 @@ function loadImageDataProgressively(
 
   const insertPixelData = image => {
     const { imagePositionPatient } = metaDataMap.get(image.imageId);
-    const sliceIndex = getSliceIndex(sortedDatasets, imagePositionPatient);
+    const sliceIndex = sortedDatasets.findIndex(
+      a => a.imagePositionPatient === imagePositionPatient
+    );
     const pixels = image.getPixelData();
     const { slope, intercept } = image;
     const numPixels = pixels.length;

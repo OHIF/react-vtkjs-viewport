@@ -7,6 +7,9 @@ export default function buildMetadata(imageIds) {
     'imagePixelModule',
     imageIds[0]
   );
+
+  //const numberOfFrames = cornerstone.metaData.get('numberOfFrames', imageIds[0]);
+
   const {
     pixelRepresentation,
     bitsAllocated,
