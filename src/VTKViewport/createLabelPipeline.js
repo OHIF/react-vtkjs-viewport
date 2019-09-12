@@ -29,6 +29,8 @@ export default function createLabelPipeline(
     });
     labelMapData.getPointData().setScalars(dataArray);
   }
+
+  const mapper = vtkVolumeMapper.newInstance();
   if (useSampleDistance) {
     const sampleDistance =
       0.7 *
@@ -39,12 +41,12 @@ export default function createLabelPipeline(
           .reduce((a, b) => a + b, 0)
       );
 
-    labelMap.mapper.setSampleDistance(sampleDistance);
+    mapper.setSampleDistance(sampleDistance);
   }
 
   const labelMap = {
     actor: vtkVolume.newInstance(),
-    mapper: vtkVolumeMapper.newInstance(),
+    mapper,
     cfun: vtkColorTransferFunction.newInstance(),
     ofun: vtkPiecewiseFunction.newInstance()
   };
