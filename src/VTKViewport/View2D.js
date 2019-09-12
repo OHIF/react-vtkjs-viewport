@@ -171,7 +171,7 @@ export default class View2D extends Component {
       this.props.volumes[0].getMapper();
 
     istyle.setVolumeMapper(istyleVolumeMapper);
-    istyle.setSliceNormal(0, 0, 1);
+    istyle.setSliceNormal([0, 0, 1]);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
 

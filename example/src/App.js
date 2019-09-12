@@ -5,6 +5,7 @@ import VTKFusionExample from './VTKFusionExample.js';
 import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
 import VTKCrosshairsExample from './VTKCrosshairsExample.js';
+import VTKMPRRotateExample from './VTKMPRRotateExample.js';
 
 function LinkOut({href, text}) {
   return (
@@ -52,6 +53,11 @@ function Index() {
       title: 'MPR Crosshairs Example',
       url: '/crosshairs',
       text: 'Demonstrates how to set up the Crosshairs interactor style and SVG Widget'
+    },
+    {
+      title: 'MPR Rotate Example',
+      url: '/rotate',
+      text: 'Demonstrates how to set up the MPR Rotate interactor style'
     }
   ];
 
@@ -100,6 +106,7 @@ function AppRouter() {
   const painting = () => Example({ children: <VTKMPRPaintingExample/>});
   const synced = () => Example({ children: <VTKCornerstonePaintingSyncExample/>});
   const crosshairs = () => Example({ children: <VTKCrosshairsExample/>});
+  const rotateMPR = () => Example({ children: <VTKMPRRotateExample/>});
 
   return (
     <Router>
@@ -110,6 +117,7 @@ function AppRouter() {
         <Route exact path="/painting" render={painting} />
         <Route exact path="/cornerstone-sync-painting" render={synced} />
         <Route exact path="/crosshairs" render={crosshairs} />
+        <Route exact path="/rotate" render={rotateMPR}/>
         <Route exact component={Index}/>
       </Switch>
     </Router>
