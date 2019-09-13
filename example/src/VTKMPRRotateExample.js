@@ -19,7 +19,8 @@ import './initCornerstone.js'
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
 //const url = 'http://localhost:44301/wadors'
-const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
+//const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
+const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs'
 const client = new api.DICOMwebClient({ url })
 const studyInstanceUID =
 // '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969';  
