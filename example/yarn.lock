@@ -3017,14 +3017,13 @@ cornerstone-math@0.1.7:
   resolved "https://registry.yarnpkg.com/cornerstone-math/-/cornerstone-math-0.1.7.tgz#7c55536f02e7221b05fc49a4c780bb82c234ce39"
   integrity sha512-svsDSoqLNFM9niCV2AtV2DNmRkYztT1v80lVdbA5hkgdGdpWg5/h2On794zbqBK+aI3hNOHufERDsI4wdXGknA==
 
-cornerstone-tools@3.19.1:
-  version "3.19.1"
-  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-3.19.1.tgz#3a520cfa82bb9961e555048f75b19f0760c113d3"
-  integrity sha512-+CcUZlIXDKGl5lhaFeA9KaPPFVza8WbAKc4zWlppcj9OuDbcJPAktKbb2DgC6h/RD4g5vGEgvD4QtFkzdvaE2Q==
+cornerstone-tools@^4.0.6:
+  version "4.0.6"
+  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-4.0.6.tgz#e59f97ddbd1f1337dadd7f4455f7d47bc6d73f10"
+  integrity sha512-WbjVfvkKYTit3JoeRkXaNoN2oobxBJejDmWdtq4L3BSH/TpxRsRFsqJOhUFNNRAKVsLh1V7zT6n6nVM2vWLQMg==
   dependencies:
     "@babel/runtime" "7.1.2"
     cornerstone-math "0.1.7"
-    debug "4.1.1"
 
 cornerstone-wado-image-loader@^3.0.0:
   version "3.0.0"
@@ -3394,7 +3393,7 @@ date-now@^0.1.4:
   resolved "https://registry.yarnpkg.com/date-now/-/date-now-0.1.4.tgz#eaf439fd4d4848ad74e5cc7dbef200672b9e345b"
   integrity sha1-6vQ5/U1ISK105cx9vvIAZyueNFs=
 
-debug@*, debug@4.1.1, debug@^4.0.1, debug@^4.1.1:
+debug@*, debug@^4.0.1, debug@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.1.1.tgz#3b72260255109c6b589cee050f1d516139664791"
   integrity sha512-pYAIzeRo8J6KPEaJ0VWOh5Pzkbw/RetuzehGM7QRRX5he4fPHx2rdKMB256ehJCkX+XRQm16eZLqLNS8RSZXZw==
@@ -8690,10 +8689,8 @@ react-app-polyfill@^1.0.1:
     regenerator-runtime "0.13.2"
     whatwg-fetch "3.0.0"
 
-react-cornerstone-viewport@0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.2.2.tgz#5860e35c48927d66839f66b59944442b8f6b5f67"
-  integrity sha512-NdfV3ZAxYJ6PhqO/NETWNWJ7WiV/jOCS0WkfMaA3FC2ySKXg/mtvQbwsDFKV6p+Y2/u5WANpgq13Gn++JhIHYA==
+"react-cornerstone-viewport@file:.yalc/react-cornerstone-viewport":
+  version "0.2.2-48618e7b"
   dependencies:
     lodash.debounce "^4.0.8"
     moment "^2.23.0"
@@ -8789,9 +8786,10 @@ react-router@5.0.0:
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
 
-"react-vtkjs-viewport@link:..":
-  version "0.0.0"
-  uid ""
+"react-vtkjs-viewport@file:..":
+  version "0.0.12"
+  dependencies:
+    moment "^2.24.0"
 
 react@^16.8.6:
   version "16.8.6"
