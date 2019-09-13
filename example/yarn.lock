@@ -8689,8 +8689,15 @@ react-app-polyfill@^1.0.1:
     regenerator-runtime "0.13.2"
     whatwg-fetch "3.0.0"
 
+<<<<<<< HEAD
 "react-cornerstone-viewport@file:.yalc/react-cornerstone-viewport":
   version "0.2.2-48618e7b"
+=======
+react-cornerstone-viewport@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.2.4.tgz#d553c97482e0286e0c7c3cd38595905932410791"
+  integrity sha512-PKDQZRJL94qKO6MVdxVf1c4xhs68FWhECYxftSHY83uAWn7yvSkVr+UtctX/6uKeE4T7FDn33QBji1ceTa+Hnw==
+>>>>>>> upstream/master
   dependencies:
     lodash.debounce "^4.0.8"
     moment "^2.23.0"
