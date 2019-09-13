@@ -8690,10 +8690,10 @@ react-app-polyfill@^1.0.1:
     regenerator-runtime "0.13.2"
     whatwg-fetch "3.0.0"
 
-react-cornerstone-viewport@0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.2.2.tgz#5860e35c48927d66839f66b59944442b8f6b5f67"
-  integrity sha512-NdfV3ZAxYJ6PhqO/NETWNWJ7WiV/jOCS0WkfMaA3FC2ySKXg/mtvQbwsDFKV6p+Y2/u5WANpgq13Gn++JhIHYA==
+react-cornerstone-viewport@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/react-cornerstone-viewport/-/react-cornerstone-viewport-0.2.4.tgz#d553c97482e0286e0c7c3cd38595905932410791"
+  integrity sha512-PKDQZRJL94qKO6MVdxVf1c4xhs68FWhECYxftSHY83uAWn7yvSkVr+UtctX/6uKeE4T7FDn33QBji1ceTa+Hnw==
   dependencies:
     lodash.debounce "^4.0.8"
     moment "^2.23.0"
@@ -8789,9 +8789,10 @@ react-router@5.0.0:
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
 
-"react-vtkjs-viewport@link:..":
-  version "0.0.0"
-  uid ""
+"react-vtkjs-viewport@file:..":
+  version "0.0.12"
+  dependencies:
+    moment "^2.24.0"
 
 react@^16.8.6:
   version "16.8.6"
