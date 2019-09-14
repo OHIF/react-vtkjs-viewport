@@ -1,13 +1,13 @@
-{
-  "presets": [
+module.exports = {
+  presets: [
     ["@babel/preset-env", {
-      "targets": {
-        "ie": "11"
+      targets: {
+        ie: "11"
       }
     }],
     "@babel/preset-react"
   ],
-  "plugins": [
+  plugins: [
     "@babel/plugin-proposal-class-properties",
     "@babel/plugin-transform-runtime"
   ]

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Component } from 'react';
-import { View2D, vtkInteractorStyleMPRCrosshairs, vtkSVGWidgetManager, vtkSVGCrosshairsWidget } from 'react-vtkjs-viewport';
+import { View2D, vtkInteractorStyleMPRCrosshairs, vtkSVGWidgetManager, vtkSVGCrosshairsWidget } from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';

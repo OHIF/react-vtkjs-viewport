@@ -1,69 +1,22 @@
-var path = require('path')
-var webpack = require('webpack')
-
+const path = require('path')
+const webpack = require('webpack')
 const autoprefixer = require('autoprefixer');
+// Plugins
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
-const cssRules = [
-  {
-    test: /\.css$/,
-    exclude: /\.module\.css$/,
-    use: [
-      'style-loader',
-      'css-loader',
-      {
-        loader: 'postcss-loader',
-        options: {
-          plugins: () => [autoprefixer('last 2 version', 'ie >= 10')],
-        },
-      },
-    ],
-  },
-  {
-    test: /\.glsl$/i,
-    include: /vtk\.js[\/\\]Sources/,
-    loader: 'shader-loader',
-  },
-  {
-  test: /\.worker\.js$/,
-  include: /vtk\.js[\/\\]Sources/,
-  use: [
-      {
-        loader: 'worker-loader',
-        options: { inline: true, fallback: false },
-      },
-    ],
-  },
-  {
-    test: /\.css$/,
-    include: /\.module\.css$/,
-    use: [
-      { loader: 'style-loader' },
-      {
-        loader: 'css-loader',
-        options: {
-          localIdentName: '[name]-[local]_[sha512:hash:base64:5]',
-          modules: true,
-        },
-      },
-      {
-        loader: 'postcss-loader',
-        options: {
-          plugins: () => [autoprefixer('last 2 version', 'ie >= 10')],
-        },
-      },
-    ],
-  },
-];
-
-var entry = path.join(__dirname, './src/index.js')
-const sourcePath = path.join(__dirname, './src')
-const outputPath = path.join(__dirname, './dist')
+const ENTRY_VTK_EXT = path.join(__dirname, './src/index.js')
+const SRC_PATH = path.join(__dirname, './src')
+const OUT_PATH = path.join(__dirname, './dist')
 
 module.exports = {
-  entry,
+  entry: {
+    vtkViewport: ENTRY_VTK_EXT,
+  },
+  devtool: 'source-map',
   output: {
-    path: outputPath,
-    filename: 'index.js',
+    path: OUT_PATH,
+    filename: '[name].umd.js',
     library: 'ReactVTKjsViewport',
     libraryTarget: 'umd',
     globalObject: 'this',
@@ -74,19 +27,38 @@ module.exports = {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: ['babel-loader'],
-      }
-    ].concat(cssRules),
+      },
+      {
+        test: /\.css$/,
+        exclude: /\.module\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins: () => [autoprefixer('last 2 version', 'ie >= 10')],
+            },
+          },
+        ],
+      },
+    ]
   },
   resolve: {
-    modules: [path.resolve(__dirname, 'node_modules'), sourcePath],
+    modules: [path.resolve(__dirname, 'node_modules'), SRC_PATH],
   },
-  externals: [{
+  externals: [
+    // :wave:
+    /\b(vtk.js)/,
+    // Used to build/load metadata
+    {
       'cornerstone-core': {
         commonjs: 'cornerstone-core',
         commonjs2: 'cornerstone-core',
         amd: 'cornerstone-core',
         root: 'cornerstone',
       },
+      // Vector 3 use
       'cornerstone-math': {
         commonjs: 'cornerstone-math',
         commonjs2: 'cornerstone-math',
@@ -94,6 +66,13 @@ module.exports = {
         root: 'cornerstoneMath',
       },
     },
-    /\b(vtk.js)/
+  ],
+  plugins: [
+    // Uncomment to generate bundle analyzer
+    new BundleAnalyzerPlugin(),
+    // Show build progress
+    new webpack.ProgressPlugin(),
+    // Clear dist between builds
+    new CleanWebpackPlugin(),
   ],
 }

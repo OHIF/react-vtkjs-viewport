@@ -1,7 +1,7 @@
 import React from 'react'
 import { Component } from 'react'
 import PropTypes from 'prop-types'
-import { View2D, View3D } from 'react-vtkjs-viewport'
+import { View2D, View3D } from '@vtk-viewport'
 
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader'
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume'

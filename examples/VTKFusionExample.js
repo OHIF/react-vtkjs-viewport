@@ -5,7 +5,7 @@ import {
   loadImageData,
   View2D,
   View3D,
-} from 'react-vtkjs-viewport'
+} from '@vtk-viewport'
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume'
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper'
 import { api } from 'dicomweb-client'

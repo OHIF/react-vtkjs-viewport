@@ -1,7 +1,7 @@
 import React from 'react'
 import { Component } from 'react'
 
-import { View2D, getImageData, loadImageData } from 'react-vtkjs-viewport'
+import { View2D, getImageData, loadImageData } from '@vtk-viewport'
 import CornerstoneViewport from 'react-cornerstone-viewport'
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData'
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray'
