@@ -430,6 +430,6 @@ const presets = [
     interpolation: '1',
     effectiveRange: '0 1',
   },
-]
+];
 
-export default presets
+export default presets;

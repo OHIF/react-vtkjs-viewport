@@ -8,17 +8,17 @@ import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 const PRESETS = {
   BONE: {
     windowWidth: 100,
-    windowCenter: 500
+    windowCenter: 500,
   },
   HEAD: {
     windowWidth: 1000,
-    windowCenter: 300
-  }
-}
+    windowCenter: 300,
+  },
+};
 class VTKBasicExample extends Component {
   state = {
-    volumes: []
-  }
+    volumes: [],
+  };
 
   componentDidMount() {
     this.components = {};
@@ -36,12 +36,12 @@ class VTKBasicExample extends Component {
       volumeMapper.setInputData(data);
 
       this.setState({
-        volumes: [volumeActor]
+        volumes: [volumeActor],
       });
     });
   }
 
-  setWLPreset = (preset) => {
+  setWLPreset = preset => {
     const voi = PRESETS[preset];
 
     const volume = this.state.volumes[0];
@@ -52,7 +52,7 @@ class VTKBasicExample extends Component {
     rgbTransferFunction.setMappingRange(low, high);
 
     this.updateAllViewports();
-  }
+  };
 
   updateAllViewports = () => {
     Object.keys(this.components).forEach(viewportIndex => {
@@ -60,7 +60,7 @@ class VTKBasicExample extends Component {
 
       component.genericRenderWindow.getRenderWindow().render();
     });
-  }
+  };
 
   linkInteractors(renderWindow1, renderWindow2) {
     const i1 = renderWindow1.getInteractor();
@@ -103,57 +103,81 @@ class VTKBasicExample extends Component {
     }
   }
 
-  saveRenderWindow = (viewportIndex) => {
-    return (component) => {
+  saveRenderWindow = viewportIndex => {
+    return component => {
       this.components[viewportIndex] = component;
 
       if (viewportIndex === 1) {
-        const renderWindow = component.genericRenderWindow.getRenderWindow()
+        const renderWindow = component.genericRenderWindow.getRenderWindow();
 
         // TODO: This is a hacky workaround because disabling the vtkInteractorStyleMPRSlice is currently
         // broken. The camera.onModified is never removed.
-        renderWindow.getInteractor().getInteractorStyle().setVolumeMapper(null)
+        renderWindow
+          .getInteractor()
+          .getInteractorStyle()
+          .setVolumeMapper(null);
 
         const istyle = vtkInteractorStyleMPRWindowLevel.newInstance();
 
-        renderWindow.getInteractor().setInteractorStyle(istyle)
-        istyle.setVolumeMapper(component.volumes[0])
+        renderWindow.getInteractor().setInteractorStyle(istyle);
+        istyle.setVolumeMapper(component.volumes[0]);
 
-        const renderWindows = Object.values(this.components).map(a => a.genericRenderWindow.getRenderWindow());
-        this.linkAllInteractors(renderWindows)
+        const renderWindows = Object.values(this.components).map(a =>
+          a.genericRenderWindow.getRenderWindow()
+        );
+        this.linkAllInteractors(renderWindows);
       }
-    }
-  }
+    };
+  };
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
-      return <h4>Loading...</h4>
+      return <h4>Loading...</h4>;
     }
 
-    return (<div className="row">
-      <div className="col-xs-12">
-        <p>This example demonstrates how to use the <code>onCreated</code> prop to obtain access to the VTK render window for one or more component. It also shows how to provide an array of vtkVolumes to the component for rendering. When we change the RGB Transfer Function for the volume using the Window/Level buttons, we can see that this is applied inside both components.</p>
-      </div>
-      <div className="col-xs-12">
-        <h5>Set a Window/Level Preset</h5>
-        <div className="btn-group">
-          <button className="btn btn-primary" onClick={() => this.setWLPreset("BONE")}>Bone</button>
-          <button className="btn btn-primary" onClick={() => this.setWLPreset("HEAD")}>Head</button>
+    return (
+      <div className="row">
+        <div className="col-xs-12">
+          <p>
+            This example demonstrates how to use the <code>onCreated</code> prop
+            to obtain access to the VTK render window for one or more component.
+            It also shows how to provide an array of vtkVolumes to the component
+            for rendering. When we change the RGB Transfer Function for the
+            volume using the Window/Level buttons, we can see that this is
+            applied inside both components.
+          </p>
+        </div>
+        <div className="col-xs-12">
+          <h5>Set a Window/Level Preset</h5>
+          <div className="btn-group">
+            <button
+              className="btn btn-primary"
+              onClick={() => this.setWLPreset('BONE')}
+            >
+              Bone
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => this.setWLPreset('HEAD')}
+            >
+              Head
+            </button>
+          </div>
+        </div>
+        <div className="col-xs-12 col-sm-6">
+          <View2D
+            volumes={this.state.volumes}
+            onCreated={this.saveRenderWindow(0)}
+          />
+        </div>
+        <div className="col-xs-12 col-sm-6">
+          <View2D
+            volumes={this.state.volumes}
+            onCreated={this.saveRenderWindow(1)}
+          />
         </div>
       </div>
-      <div className="col-xs-12 col-sm-6">
-        <View2D
-          volumes={this.state.volumes}
-          onCreated={this.saveRenderWindow(0)}
-        />
-      </div>
-      <div className="col-xs-12 col-sm-6">
-        <View2D
-          volumes={this.state.volumes}
-          onCreated={this.saveRenderWindow(1)}
-        />
-      </div>
-    </div>);
+    );
   }
 }
 

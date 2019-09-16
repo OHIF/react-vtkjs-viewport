@@ -1,6 +1,11 @@
 import React from 'react';
 import { Component } from 'react';
-import { View2D, vtkInteractorStyleMPRCrosshairs, vtkSVGWidgetManager, vtkSVGCrosshairsWidget } from '@vtk-viewport';
+import {
+  View2D,
+  vtkInteractorStyleMPRCrosshairs,
+  vtkSVGWidgetManager,
+  vtkSVGCrosshairsWidget,
+} from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
@@ -8,7 +13,7 @@ import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 
 function getCrosshairCallbackForIndex(apis, index) {
-  return ({worldPos}) => {
+  return ({ worldPos }) => {
     // Set camera focal point to world coordinate for linked views
     apis.forEach((api, viewportIndex) => {
       if (viewportIndex !== index) {
@@ -41,7 +46,10 @@ function getCrosshairCallbackForIndex(apis, index) {
 
       const displayPosition = wPos.getComputedDisplayValue(renderer);
       const { svgWidgetManager } = api;
-      api.svgWidgets.crosshairsWidget.setPoint(displayPosition[0], displayPosition[1]);
+      api.svgWidgets.crosshairsWidget.setPoint(
+        displayPosition[0],
+        displayPosition[1]
+      );
       svgWidgetManager.render();
     });
   };
@@ -49,8 +57,8 @@ function getCrosshairCallbackForIndex(apis, index) {
 
 class VTKCrosshairsExample extends Component {
   state = {
-    volumes: []
-  }
+    volumes: [],
+  };
 
   componentDidMount() {
     this.apis = [];
@@ -68,29 +76,34 @@ class VTKCrosshairsExample extends Component {
       volumeMapper.setInputData(data);
 
       this.setState({
-        volumes: [volumeActor]
+        volumes: [volumeActor],
       });
     });
   }
 
-  storeApi = (viewportIndex) => {
-    return (api) => {
+  storeApi = viewportIndex => {
+    return api => {
       this.apis[viewportIndex] = api;
 
-      const renderWindow = api.genericRenderWindow.getRenderWindow()
+      const renderWindow = api.genericRenderWindow.getRenderWindow();
       const renderer = api.genericRenderWindow.getRenderer();
       const camera = renderer.getActiveCamera();
 
       // TODO: This is a hacky workaround because disabling the vtkInteractorStyleMPRSlice is currently
       // broken. The camera.onModified is never removed.
-      renderWindow.getInteractor().getInteractorStyle().setVolumeMapper(null)
+      renderWindow
+        .getInteractor()
+        .getInteractorStyle()
+        .setVolumeMapper(null);
 
       const istyle = vtkInteractorStyleMPRCrosshairs.newInstance();
 
-      renderWindow.getInteractor().setInteractorStyle(istyle)
-      istyle.setVolumeMapper(api.volumes[0])
+      renderWindow.getInteractor().setInteractorStyle(istyle);
+      istyle.setVolumeMapper(api.volumes[0]);
 
-      istyle.setCallback(getCrosshairCallbackForIndex(this.apis, viewportIndex));
+      istyle.setCallback(
+        getCrosshairCallbackForIndex(this.apis, viewportIndex)
+      );
 
       const svgWidgetManager = vtkSVGWidgetManager.newInstance();
       svgWidgetManager.setRenderer(renderer);
@@ -103,7 +116,7 @@ class VTKCrosshairsExample extends Component {
 
       api.svgWidgetManager = svgWidgetManager;
       api.svgWidgets = {
-        crosshairsWidget
+        crosshairsWidget,
       };
 
       switch (viewportIndex) {
@@ -127,43 +140,37 @@ class VTKCrosshairsExample extends Component {
       }
 
       renderWindow.render();
-    }
-  }
+    };
+  };
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
-      return <h4>Loading...</h4>
+      return <h4>Loading...</h4>;
     }
 
-    return (<>
-    <div className="row">
-      <div className="col-xs-12">
-        <p>This example demonstrates how to use the Crosshairs manipulator.</p>
-      </div>
-      </div>
-      <div className="row">
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.storeApi(0)}
-          />
+    return (
+      <>
+        <div className="row">
+          <div className="col-xs-12">
+            <p>
+              This example demonstrates how to use the Crosshairs manipulator.
+            </p>
+          </div>
         </div>
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.storeApi(1)}
-          />
+        <div className="row">
+          <div className="col-xs-12 col-sm-6">
+            <View2D volumes={this.state.volumes} onCreated={this.storeApi(0)} />
+          </div>
+          <div className="col-xs-12 col-sm-6">
+            <View2D volumes={this.state.volumes} onCreated={this.storeApi(1)} />
+          </div>
         </div>
-      </div>
-      <div className="row">
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.storeApi(2)}
-          />
+        <div className="row">
+          <div className="col-xs-12 col-sm-6">
+            <View2D volumes={this.state.volumes} onCreated={this.storeApi(2)} />
+          </div>
         </div>
-      </div>
-    </>
+      </>
     );
   }
 }

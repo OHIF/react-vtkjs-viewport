@@ -1,103 +1,103 @@
-import React from 'react'
-import { Component } from 'react'
+import React from 'react';
+import { Component } from 'react';
 
-import { View2D, getImageData, loadImageData } from '@vtk-viewport'
-import CornerstoneViewport from 'react-cornerstone-viewport'
-import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData'
-import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray'
-import cornerstone from 'cornerstone-core'
-import cornerstoneTools from 'cornerstone-tools'
-import './initCornerstone.js'
-import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper'
-import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume'
+import { View2D, getImageData, loadImageData } from '@vtk-viewport';
+import CornerstoneViewport from 'react-cornerstone-viewport';
+import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
+import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
+import cornerstone from 'cornerstone-core';
+import cornerstoneTools from 'cornerstone-tools';
+import './initCornerstone.js';
+import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
+import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 
-const { EVENTS } = cornerstoneTools
+const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
 function setupSyncedBrush(imageDataObject, element) {
   // Create buffer the size of the 3D volume
-  const dimensions = imageDataObject.dimensions
-  const width = dimensions[0]
-  const height = dimensions[1]
-  const depth = dimensions[2]
-  const numVolumePixels = width * height * depth
+  const dimensions = imageDataObject.dimensions;
+  const width = dimensions[0];
+  const height = dimensions[1];
+  const depth = dimensions[2];
+  const numVolumePixels = width * height * depth;
 
   // If you want to load a segmentation labelmap, you would want to load
   // it into this array at this point.
-  const threeDimensionalPixelData = new Uint8ClampedArray(numVolumePixels)
+  const threeDimensionalPixelData = new Uint8ClampedArray(numVolumePixels);
 
-  const buffer = threeDimensionalPixelData.buffer
+  const buffer = threeDimensionalPixelData.buffer;
 
   // Slice buffer into 2d-sized pieces, which are added to Cornerstone ToolData
-  const toolType = 'brush'
-  const segmentationIndex = 0
-  const imageIds = imageDataObject.imageIds
+  const toolType = 'brush';
+  const segmentationIndex = 0;
+  const imageIds = imageDataObject.imageIds;
   if (imageIds.length !== depth) {
-    throw new Error('Depth should match the number of imageIds')
+    throw new Error('Depth should match the number of imageIds');
   }
 
-  const { globalImageIdSpecificToolStateManager } = cornerstoneTools
+  const { globalImageIdSpecificToolStateManager } = cornerstoneTools;
 
   for (let i = 0; i < imageIds.length; i++) {
-    const imageId = imageIds[i]
-    const byteOffset = width * height * i
-    const length = width * height
-    const slicePixelData = new Uint8ClampedArray(buffer, byteOffset, length)
+    const imageId = imageIds[i];
+    const byteOffset = width * height * i;
+    const length = width * height;
+    const slicePixelData = new Uint8ClampedArray(buffer, byteOffset, length);
 
-    const toolData = []
+    const toolData = [];
     toolData[segmentationIndex] = {
       pixelData: slicePixelData,
       invalidated: true,
-    }
+    };
 
     const toolState =
-      globalImageIdSpecificToolStateManager.saveImageIdToolState(imageId) || {}
+      globalImageIdSpecificToolStateManager.saveImageIdToolState(imageId) || {};
 
     toolState[toolType] = {
       data: toolData,
-    }
+    };
 
     globalImageIdSpecificToolStateManager.restoreImageIdToolState(
       imageId,
       toolState
-    )
+    );
   }
 
   // Create VTK Image Data with buffer as input
-  const labelMap = vtkImageData.newInstance()
+  const labelMap = vtkImageData.newInstance();
 
   // right now only support 256 labels
   const dataArray = vtkDataArray.newInstance({
     numberOfComponents: 1, // labelmap with single component
     values: threeDimensionalPixelData,
-  })
+  });
 
-  labelMap.getPointData().setScalars(dataArray)
-  labelMap.setDimensions(...dimensions)
-  labelMap.setSpacing(...imageDataObject.vtkImageData.getSpacing())
-  labelMap.setOrigin(...imageDataObject.vtkImageData.getOrigin())
-  labelMap.setDirection(...imageDataObject.vtkImageData.getDirection())
+  labelMap.getPointData().setScalars(dataArray);
+  labelMap.setDimensions(...dimensions);
+  labelMap.setSpacing(...imageDataObject.vtkImageData.getSpacing());
+  labelMap.setOrigin(...imageDataObject.vtkImageData.getOrigin());
+  labelMap.setDirection(...imageDataObject.vtkImageData.getDirection());
 
-  return labelMap
+  return labelMap;
 }
 
 function createActorMapper(imageData) {
-  const mapper = vtkVolumeMapper.newInstance()
-  mapper.setInputData(imageData)
+  const mapper = vtkVolumeMapper.newInstance();
+  mapper.setInputData(imageData);
 
-  const actor = vtkVolume.newInstance()
-  actor.setMapper(mapper)
+  const actor = vtkVolume.newInstance();
+  actor.setMapper(mapper);
 
   return {
     actor,
     mapper,
-  }
+  };
 }
 
 const ROOT_URL =
   window.location.hostname === 'localhost'
     ? window.location.host
-    : window.location.hostname
+    : window.location.hostname;
 
 const imageIds = [
   //'dicomweb://s3.amazonaws.com/lury/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032220.10.dcm',
@@ -108,7 +108,7 @@ const imageIds = [
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.3.dcm`,
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.4.dcm`,
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
-]
+];
 
 // Pre-retrieve the images for demo purposes
 // Note: In a real application you wouldn't need to do this
@@ -117,10 +117,10 @@ const imageIds = [
 // read and store all of their metadata and subsequently the 'getImageData'
 // can run properly (it requires metadata).
 const promises = imageIds.map(imageId => {
-  return cornerstone.loadAndCacheImage(imageId)
-})
+  return cornerstone.loadAndCacheImage(imageId);
+});
 
-const BaseBrushTool = cornerstoneTools.import('base/BaseBrushTool')
+const BaseBrushTool = cornerstoneTools.import('base/BaseBrushTool');
 
 class VTKCornerstonePaintingSyncExample extends Component {
   state = {
@@ -128,103 +128,103 @@ class VTKCornerstonePaintingSyncExample extends Component {
     vtkImageData: null,
     cornerstoneViewportData: null,
     focusedWidgetId: null,
-    isSetup: false
-  }
+    isSetup: false,
+  };
 
   componentDidMount() {
-    this.components = {}
-    this.cornerstoneElements = {}
+    this.components = {};
+    this.cornerstoneElements = {};
 
     Promise.all(promises).then(
       () => {
-        const displaySetInstanceUid = '12345'
+        const displaySetInstanceUid = '12345';
         const cornerstoneViewportData = {
           stack: {
             imageIds,
             currentImageIdIndex: 0,
           },
           displaySetInstanceUid,
-        }
+        };
 
-        const imageDataObject = getImageData(imageIds, displaySetInstanceUid)
-        const labelMapInputData = setupSyncedBrush(imageDataObject)
+        const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+        const labelMapInputData = setupSyncedBrush(imageDataObject);
 
         this.onMeasurementModified = event => {
           if (event.type !== EVENTS.MEASUREMENT_MODIFIED) {
-            return
+            return;
           }
 
-          labelMapInputData.modified()
+          labelMapInputData.modified();
 
-          this.rerenderAllVTKViewports()
-        }
+          this.rerenderAllVTKViewports();
+        };
 
         loadImageData(imageDataObject).then(() => {
-          const { actor } = createActorMapper(imageDataObject.vtkImageData)
+          const { actor } = createActorMapper(imageDataObject.vtkImageData);
           this.setState({
             vtkImageData: imageDataObject.vtkImageData,
             volumes: [actor],
             cornerstoneViewportData,
             labelMapInputData,
-          })
-        })
+          });
+        });
       },
       error => {
-        throw new Error(error)
+        throw new Error(error);
       }
-    )
+    );
   }
 
   invalidateBrush = () => {
-    const element = this.cornerstoneElements[0]
-    const enabledElement = cornerstone.getEnabledElement(element)
-    const enabledElementUid = enabledElement.uuid
+    const element = this.cornerstoneElements[0];
+    const enabledElement = cornerstone.getEnabledElement(element);
+    const enabledElementUid = enabledElement.uuid;
 
     // Note: This calls updateImage internally
     // TODO: Find out why it's not very quick to update...
-    BaseBrushTool.invalidateBrushOnEnabledElement(enabledElementUid)
-  }
+    BaseBrushTool.invalidateBrushOnEnabledElement(enabledElementUid);
+  };
 
   rerenderAllVTKViewports = () => {
     // TODO: Find out why this is not quick to update either
     Object.keys(this.components).forEach(viewportIndex => {
       const renderWindow = this.components[
         viewportIndex
-      ].genericRenderWindow.getRenderWindow()
+      ].genericRenderWindow.getRenderWindow();
 
-      renderWindow.render()
-    })
-  }
+      renderWindow.render();
+    });
+  };
 
   saveComponentReference = viewportIndex => {
     return component => {
-      this.components[viewportIndex] = component
+      this.components[viewportIndex] = component;
 
-      const paintFilter = component.filters[0]
+      const paintFilter = component.filters[0];
 
-      paintFilter.setRadius(10)
-    }
-  }
+      paintFilter.setRadius(10);
+    };
+  };
 
   saveCornerstoneElements = viewportIndex => {
     return event => {
-      this.cornerstoneElements[viewportIndex] = event.detail.element
-    }
-  }
+      this.cornerstoneElements[viewportIndex] = event.detail.element;
+    };
+  };
 
   setWidget = event => {
-    const widgetId = event.target.value
+    const widgetId = event.target.value;
 
     if (widgetId === 'rotate') {
       this.setState({
         focusedWidgetId: null,
-      })
+      });
     } else {
       this.setState({
         focusedWidgetId: widgetId,
-      })
+      });
     }
-  }
+  };
 
   render() {
     return (
@@ -295,8 +295,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default VTKCornerstonePaintingSyncExample
+export default VTKCornerstonePaintingSyncExample;

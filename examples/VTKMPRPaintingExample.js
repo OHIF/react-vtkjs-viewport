@@ -1,56 +1,55 @@
-import React from 'react'
-import { Component } from 'react'
-import PropTypes from 'prop-types'
-import { View2D, View3D } from '@vtk-viewport'
+import React from 'react';
+import { Component } from 'react';
+import PropTypes from 'prop-types';
+import { View2D, View3D } from '@vtk-viewport';
 
-import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader'
-import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume'
-import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper'
-import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData'
-import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray'
-import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction'
-import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction'
-
+import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
+import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
+import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
+import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
+import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
+import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
+import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
 
 function createVolumeRenderingActor(imageData) {
-  const mapper = vtkVolumeMapper.newInstance()
-  mapper.setInputData(imageData)
+  const mapper = vtkVolumeMapper.newInstance();
+  mapper.setInputData(imageData);
 
-  const actor = vtkVolume.newInstance()
-  actor.setMapper(mapper)
+  const actor = vtkVolume.newInstance();
+  actor.setMapper(mapper);
 
-  const rgbTransferFunction = actor.getProperty().getRGBTransferFunction(0)
+  const rgbTransferFunction = actor.getProperty().getRGBTransferFunction(0);
   const range = imageData
     .getPointData()
     .getScalars()
-    .getRange()
-  rgbTransferFunction.setMappingRange(range[0], range[1])
+    .getRange();
+  rgbTransferFunction.setMappingRange(range[0], range[1]);
 
   // create color and opacity transfer functions
-  const cfun = vtkColorTransferFunction.newInstance()
-  cfun.addRGBPoint(range[0], 0.4, 0.2, 0.0)
-  cfun.addRGBPoint(range[1], 1.0, 1.0, 1.0)
+  const cfun = vtkColorTransferFunction.newInstance();
+  cfun.addRGBPoint(range[0], 0.4, 0.2, 0.0);
+  cfun.addRGBPoint(range[1], 1.0, 1.0, 1.0);
 
-  const ofun = vtkPiecewiseFunction.newInstance()
-  ofun.addPoint(0.0, 0.0)
-  ofun.addPoint(1000.0, 0.3)
-  ofun.addPoint(6000.0, 0.9)
+  const ofun = vtkPiecewiseFunction.newInstance();
+  ofun.addPoint(0.0, 0.0);
+  ofun.addPoint(1000.0, 0.3);
+  ofun.addPoint(6000.0, 0.9);
 
-  actor.getProperty().setRGBTransferFunction(0, cfun)
-  actor.getProperty().setScalarOpacity(0, ofun)
-  actor.getProperty().setScalarOpacityUnitDistance(0, 4.5)
-  actor.getProperty().setInterpolationTypeToLinear()
-  actor.getProperty().setUseGradientOpacity(0, true)
-  actor.getProperty().setGradientOpacityMinimumValue(0, 15)
-  actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0)
-  actor.getProperty().setGradientOpacityMaximumValue(0, 100)
-  actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0)
-  actor.getProperty().setAmbient(0.7)
-  actor.getProperty().setDiffuse(0.7)
-  actor.getProperty().setSpecular(0.3)
-  actor.getProperty().setSpecularPower(8.0)
+  actor.getProperty().setRGBTransferFunction(0, cfun);
+  actor.getProperty().setScalarOpacity(0, ofun);
+  actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
+  actor.getProperty().setInterpolationTypeToLinear();
+  actor.getProperty().setUseGradientOpacity(0, true);
+  actor.getProperty().setGradientOpacityMinimumValue(0, 15);
+  actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
+  actor.getProperty().setGradientOpacityMaximumValue(0, 100);
+  actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
+  actor.getProperty().setAmbient(0.7);
+  actor.getProperty().setDiffuse(0.7);
+  actor.getProperty().setSpecular(0.3);
+  actor.getProperty().setSpecularPower(8.0);
 
-  return actor
+  return actor;
 }
 
 /**
@@ -61,18 +60,18 @@ function createVolumeRenderingActor(imageData) {
 function createLabelMapImageData(backgroundImageData) {
   const labelMapData = vtkImageData.newInstance(
     backgroundImageData.get('spacing', 'origin', 'direction')
-  )
-  labelMapData.setDimensions(backgroundImageData.getDimensions())
-  labelMapData.computeTransforms()
+  );
+  labelMapData.setDimensions(backgroundImageData.getDimensions());
+  labelMapData.computeTransforms();
 
-  const values = new Uint8Array(backgroundImageData.getNumberOfPoints())
+  const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
   const dataArray = vtkDataArray.newInstance({
     numberOfComponents: 1, // labelmap with single component
     values,
-  })
-  labelMapData.getPointData().setScalars(dataArray)
+  });
+  labelMapData.getPointData().setScalars(dataArray);
 
-  return labelMapData
+  return labelMapData;
 }
 
 class VTKMPRPaintingExample extends Component {
@@ -83,103 +82,105 @@ class VTKMPRPaintingExample extends Component {
     paintFilterBackgroundImageData: null,
     paintFilterLabelMapImageData: null,
     threshold: 1500,
-  }
+  };
 
   static propTypes = {
     volumes: PropTypes.array,
     focusedWidgetId: PropTypes.string,
-  }
+  };
 
   componentDidMount() {
-    this.components = {}
+    this.components = {};
 
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
-    })
-    const volumeActor = vtkVolume.newInstance()
-    const volumeMapper = vtkVolumeMapper.newInstance()
+    });
+    const volumeActor = vtkVolume.newInstance();
+    const volumeMapper = vtkVolumeMapper.newInstance();
 
-    volumeActor.setMapper(volumeMapper)
+    volumeActor.setMapper(volumeMapper);
 
     reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
-      const data = reader.getOutputData()
-      volumeMapper.setInputData(data)
+      const data = reader.getOutputData();
+      volumeMapper.setInputData(data);
 
-      const rgbTransferFunction = volumeActor.getProperty().getRGBTransferFunction(0);
-      rgbTransferFunction.setMappingRange(500, 3000)
+      const rgbTransferFunction = volumeActor
+        .getProperty()
+        .getRGBTransferFunction(0);
+      rgbTransferFunction.setMappingRange(500, 3000);
 
-      const labelMapImageData = createLabelMapImageData(data)
-      const volumeRenderingActor = createVolumeRenderingActor(data)
+      const labelMapImageData = createLabelMapImageData(data);
+      const volumeRenderingActor = createVolumeRenderingActor(data);
 
       this.setState({
         volumes: [volumeActor],
         volumeRenderingVolumes: [volumeRenderingActor],
         paintFilterBackgroundImageData: data,
         paintFilterLabelMapImageData: labelMapImageData,
-      })
-    })
+      });
+    });
   }
 
   setWidget = event => {
-    const widgetId = event.target.value
+    const widgetId = event.target.value;
 
     if (widgetId === 'rotate') {
       this.setState({
         focusedWidgetId: null,
-      })
+      });
     } else {
       this.setState({
         focusedWidgetId: widgetId,
-      })
+      });
     }
-  }
+  };
 
   setThreshold = event => {
     if (!event.target.value) {
-      return
+      return;
     }
 
     const threshold = parseFloat(event.target.value);
 
-    this.setThresholdFromValue(threshold)
-  }
+    this.setThresholdFromValue(threshold);
+  };
 
   setThresholdFromValue = threshold => {
     Object.keys(this.components).forEach(viewportIndex => {
-      const paintFilter = this.components[viewportIndex].filters[0]
+      const paintFilter = this.components[viewportIndex].filters[0];
 
       paintFilter.setVoxelFunc((bgValue, idx) => {
-        return bgValue[0] > threshold
+        return bgValue[0] > threshold;
       });
     });
 
     this.setState({
-      threshold
+      threshold,
     });
-  }
+  };
 
   clearLabelMap = () => {
-    const labelMapImageData = this.state.paintFilterLabelMapImageData
-    const numberOfPoints = labelMapImageData.getNumberOfPoints()
-    const values = new Uint8Array(numberOfPoints)
+    const labelMapImageData = this.state.paintFilterLabelMapImageData;
+    const numberOfPoints = labelMapImageData.getNumberOfPoints();
+    const values = new Uint8Array(numberOfPoints);
     const dataArray = vtkDataArray.newInstance({
       numberOfComponents: 1, // labelmap with single component
       values,
-    })
-    labelMapImageData.getPointData().setScalars(dataArray)
+    });
+    labelMapImageData.getPointData().setScalars(dataArray);
 
-    labelMapImageData.modified()
+    labelMapImageData.modified();
 
-    this.rerenderAllViewports()
-  }
+    this.rerenderAllViewports();
+  };
 
   saveComponentReference = viewportIndex => {
     return component => {
-      this.components[viewportIndex] = component
+      this.components[viewportIndex] = component;
 
       this.setThresholdFromValue(this.state.threshold);
-    }
-  }
+    };
+  };
 
   rerenderAllViewports = () => {
     // Update all render windows, since the automatic re-render might not
@@ -187,15 +188,15 @@ class VTKMPRPaintingExample extends Component {
     Object.keys(this.components).forEach(viewportIndex => {
       const renderWindow = this.components[
         viewportIndex
-      ].genericRenderWindow.getRenderWindow()
+      ].genericRenderWindow.getRenderWindow();
 
-      renderWindow.render()
-    })
-  }
+      renderWindow.render();
+    });
+  };
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
-      return null
+      return null;
     }
 
     return (
@@ -227,7 +228,7 @@ class VTKMPRPaintingExample extends Component {
             <strong>Note:</strong> The PaintWidget (circle on hover) is not
             currently visible in the 2D View component.
           </p>
-          <hr/>
+          <hr />
         </div>
         <div className="col-xs-12">
           <label>
@@ -291,8 +292,8 @@ class VTKMPRPaintingExample extends Component {
           />
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default VTKMPRPaintingExample
+export default VTKMPRPaintingExample;
