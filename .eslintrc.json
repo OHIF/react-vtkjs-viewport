@@ -17,5 +17,10 @@
   "globals": {
     "context": true,
     "assert": true
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-undef": "warn",
+    "no-unused-vars": "warn"
   }
 }

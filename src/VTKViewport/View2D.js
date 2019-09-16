@@ -25,11 +25,11 @@ export default class View2D extends Component {
     interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
-    onDestroyed: PropTypes.func
+    onDestroyed: PropTypes.func,
   };
 
   static defaultProps = {
-    painting: false
+    painting: false,
   };
 
   constructor(props) {
@@ -44,7 +44,7 @@ export default class View2D extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub()
+      paintEnd: createSub(),
     };
   }
 
@@ -60,7 +60,7 @@ export default class View2D extends Component {
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0]
+      background: [0, 0, 0],
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -105,7 +105,7 @@ export default class View2D extends Component {
         position,
         focalPoint,
         viewUp,
-        viewAngle
+        viewAngle,
       });
     };
     // TODO unsubscribe from this before component unmounts.
@@ -197,7 +197,7 @@ export default class View2D extends Component {
         filters,
         actors,
         volumes,
-        _component: this
+        _component: this,
       };
 
       this.props.onCreated(api);
@@ -344,7 +344,7 @@ export default class View2D extends Component {
 
     return {
       windowCenter,
-      windowWidth
+      windowWidth,
     };
   };
 

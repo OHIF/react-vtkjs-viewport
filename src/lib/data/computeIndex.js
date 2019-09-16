@@ -5,5 +5,5 @@ export default function computeIndex(extent, incs, xyz) {
       (xyz[1] - extent[2]) * incs[1] +
       (xyz[2] - extent[4]) * incs[2]) |
     0
-  )
+  );
 }

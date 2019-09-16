@@ -1,6 +1,6 @@
 import { parse, format } from 'date-fns';
 
-export default function formatTM(time, format = 'HH:mm:ss') {
+export default function formatTM(time, strFormat = 'HH:mm:ss') {
   if (!time) {
     return;
   }
@@ -14,5 +14,5 @@ export default function formatTM(time, format = 'HH:mm:ss') {
   // See MomentJS: http://momentjs.com/docs/#/parsing/string-format/
   const parsedDateTime = parse(time, 'HHmmss.SSS');
 
-  return format(parsedDateTime, format);
+  return format(parsedDateTime, strFormat);
 }
