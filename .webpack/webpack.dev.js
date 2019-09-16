@@ -1,39 +1,44 @@
 /**
  * vtkRules contains three rules:
- * 
+ *
  * - shader-loader
  * - babel-loader
  * - worker-loader
- * 
- * The defaults work fine for us here, but it's worth noting that...
+ *
+ * The defaults work fine for us here, but it's worth noting that for a UMD build,
+ * we would like likely want to inline web workers. An application consuming this package
+ * will likely want to use a non-default loader option:
+ *
+ * {
+ *   test: /\.worker\.js$/,
+ *   include: /vtk\.js[\/\\]Sources/,
+ *   use: [
+ *     {
+ *       loader: 'worker-loader',
+ *       options: { inline: true, fallback: false },
+ *     },
+ *   ],
+ * },
  */
-// test: /\.worker\.js$/,
-// include: /vtk\.js[\/\\]Sources/,
-// use: [
-//     {
-//       loader: 'worker-loader',
-//       options: { inline: true, fallback: false },
-//     },
-//   ],
-// },
 
-const path = require('path')
-const webpack = require('webpack')
+const path = require('path');
+const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
-const vtkRules = require('vtk.js/Utilities/config/dependency.js').webpack.core.rules;
+const vtkRules = require('vtk.js/Utilities/config/dependency.js').webpack.core
+  .rules;
 // Plugins
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const ENTRY_VTK_EXT = path.join(__dirname, './src/index.js')
-const ENTRY_EXAMPLES = path.join(__dirname, './examples/index.js')
-const SRC_PATH = path.join(__dirname, './src')
-const OUT_PATH = path.join(__dirname, './dist')
+const ENTRY_VTK_EXT = path.join(__dirname, './../src/index.js');
+const ENTRY_EXAMPLES = path.join(__dirname, './../examples/index.js');
+const SRC_PATH = path.join(__dirname, './../src');
+const OUT_PATH = path.join(__dirname, './../dist');
 
 module.exports = {
   entry: {
-    examples: ENTRY_EXAMPLES
+    examples: ENTRY_EXAMPLES,
   },
   devtool: 'source-map',
   output: {
@@ -67,10 +72,10 @@ module.exports = {
     ].concat(vtkRules),
   },
   resolve: {
-    modules: [path.resolve(__dirname, 'node_modules'), SRC_PATH],
+    modules: [path.resolve(__dirname, './../node_modules'), SRC_PATH],
     alias: {
-      '@vtk-viewport': ENTRY_VTK_EXT
-    }
+      '@vtk-viewport': ENTRY_VTK_EXT,
+    },
   },
   plugins: [
     // Show build progress
@@ -80,12 +85,12 @@ module.exports = {
     // Generate `index.html` with injected build assets
     new HtmlWebpackPlugin({
       filename: 'index.html',
-      template: path.resolve(__dirname, 'public', 'index.html'),
+      template: path.resolve(__dirname, '..', 'public', 'index.html'),
     }),
     // Copy "Public" Folder to Dist (test data)
     new CopyWebpackPlugin([
       {
-        from: path.resolve(__dirname, 'public'),
+        from: path.resolve(__dirname, '..', 'public'),
         to: OUT_PATH,
         toType: 'dir',
         ignore: ['index.html', '.DS_Store'],
@@ -99,5 +104,5 @@ module.exports = {
     open: true,
     port: 3000,
     historyApiFallback: true,
-  }
-}
+  },
+};

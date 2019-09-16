@@ -11,18 +11,21 @@
     "npm": ">=5"
   },
   "scripts": {
-    "build": "webpack --progress --colors --mode development",
-    "build:release": "webpack --progress --colors --mode production",
-    "dev": "webpack-dev-server --config ./webpack.dev-server.js --watch",
+    "build": "webpack --progress --colors --config ./.webpack/webpack.config.js -d",
+    "build:release": "webpack --progress --colors --config ./.webpack/webpack.config.js -p",
+    "dev": "webpack-dev-server --config ./webpack.dev.js --watch",
     "start": "yarn run dev",
     "predeploy": "cd example && yarn install && yarn run build:release",
-    "prepublishOnly": "yarn run build:release",
+    "prepublishOnly": "yarn run build && yarn run build:release",
     "deploy": "gh-pages -d example/build",
     "generateStaticSite": "./generateStaticSite.sh"
   },
   "peerDependencies": {
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
+  },
+  "dependencies": {
+    "date-fns": "^2.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.4.5",
@@ -87,19 +90,13 @@
       "git add"
     ]
   },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
   "browserslist": [
     ">0.2%",
     "not dead",
-    "not ie <= 11",
+    "not ie < 11",
     "not op_mini all"
   ],
   "files": [
     "dist"
-  ],
-  "dependencies": {
-    "date-fns": "^2.2.1"
-  }
+  ]
 }
