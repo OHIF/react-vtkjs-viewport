@@ -23,7 +23,8 @@
   },
   "peerDependencies": {
     "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react-dom": "^16.8.6",
+    "vtk.js": "^11.1.3"
   },
   "dependencies": {
     "date-fns": "^2.2.1"
