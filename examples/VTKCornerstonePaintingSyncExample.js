@@ -233,7 +233,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
           <h1>Syncing VTK Labelmap with Cornerstone Brush Tool Data</h1>
           <p>
             This example demonstrates how to keep painting in VTK, which is
-            performed in 3D, in sync with Cornerstone's tool data, which is
+            performed in 3D, in sync with Cornerstone&apos;s tool data, which is
             accessed in 2D.
           </p>
           <p>

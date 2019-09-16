@@ -204,7 +204,7 @@ class VTKMPRPaintingExample extends Component {
         <div className="col-xs-12">
           <h1>Image Segmentation via Paint Widget</h1>
           <p>
-            This example demonstrates how to use VTK's PaintWidget and
+            This example demonstrates how to use VTK&apos;s PaintWidget and
             PaintFilter to perform manual segmentation.
           </p>
           <p>
@@ -220,9 +220,9 @@ class VTKMPRPaintingExample extends Component {
             rendering.
           </p>
           <p>
-            A "Clear label map" button is provided to demonstrate how to
-            interact with the labelmap externally from the components, e.g. to
-            load a previously-created segmentation map.
+            A &quot;Clear label map&quot; button is provided to demonstrate how
+            to interact with the labelmap externally from the components, e.g.
+            to load a previously-created segmentation map.
           </p>
           <p>
             <strong>Note:</strong> The PaintWidget (circle on hover) is not
