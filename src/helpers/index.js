@@ -9,7 +9,7 @@ const helpers = {
   formatDA,
   formatTM,
   formatNumberPrecision,
-  isValidNumber
+  isValidNumber,
 };
 
 export { helpers };

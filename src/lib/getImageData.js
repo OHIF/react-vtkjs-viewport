@@ -54,8 +54,6 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
         );
       }
 
-      break;
-
     case 16:
       pixelArray = new Int16Array(xVoxels * yVoxels * zVoxels);
 
@@ -65,7 +63,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const scalarArray = vtkDataArray.newInstance({
     name: 'Pixels',
     numberOfComponents: 1,
-    values: pixelArray
+    values: pixelArray,
   });
 
   const imageData = vtkImageData.newInstance();
@@ -79,7 +77,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     colCosineVec.z,
     crossProduct.x,
     crossProduct.y,
-    crossProduct.z
+    crossProduct.z,
   ];
 
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
@@ -99,7 +97,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     vtkImageData: imageData,
     metaDataMap,
     zAxis,
-    loaded: false
+    loaded: false,
   };
 
   imageDataCache.set(displaySetInstanceUid, imageDataObject);

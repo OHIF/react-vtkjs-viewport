@@ -34,14 +34,14 @@ cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
 cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
 
 var config = {
-    maxWebWorkers: navigator.hardwareConcurrency || 1,
-    startWebWorkersOnDemand : true,
-    taskConfiguration: {
-      decodeTask: {
-        initializeCodecsOnStartup: false,
-        usePDFJS: false,
-        strict: false,
-      },
-    }
+  maxWebWorkers: navigator.hardwareConcurrency || 1,
+  startWebWorkersOnDemand: true,
+  taskConfiguration: {
+    decodeTask: {
+      initializeCodecsOnStartup: false,
+      usePDFJS: false,
+      strict: false,
+    },
+  },
 };
 cornerstoneWADOImageLoader.webWorkerManager.initialize(config);

@@ -26,6 +26,6 @@ export function computeIPP(imageDataObject) {
   return {
     x,
     y,
-    z
+    z,
   };
 }

@@ -27,10 +27,11 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
 
     const width = parseInt(svgContainer.getAttribute('width'), 10);
     const height = parseInt(svgContainer.getAttribute('height'), 10);
-    const widthScale = svgContainer.getBoundingClientRect().width / width;
-    const heightScale = svgContainer.getBoundingClientRect().height / height;
-    const widthClient = svgContainer.getBoundingClientRect().width;
-    const heightClient = svgContainer.getBoundingClientRect().height;
+    // Unused
+    // const widthScale = svgContainer.getBoundingClientRect().width / width;
+    // const heightScale = svgContainer.getBoundingClientRect().height / height;
+    // const widthClient = svgContainer.getBoundingClientRect().width;
+    // const heightClient = svgContainer.getBoundingClientRect().height;
 
     const p = point.slice();
     p[0] = point[0] * scale;

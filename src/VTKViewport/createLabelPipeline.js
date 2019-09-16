@@ -25,7 +25,7 @@ export default function createLabelPipeline(
     const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
     const dataArray = vtkDataArray.newInstance({
       numberOfComponents: 1, // labelmap with single component
-      values
+      values,
     });
     labelMapData.getPointData().setScalars(dataArray);
   }
@@ -46,7 +46,7 @@ export default function createLabelPipeline(
     actor: vtkVolume.newInstance(),
     mapper: vtkVolumeMapper.newInstance(),
     cfun: vtkColorTransferFunction.newInstance(),
-    ofun: vtkPiecewiseFunction.newInstance()
+    ofun: vtkPiecewiseFunction.newInstance(),
   };
 
   // labelmap pipeline
