@@ -17,10 +17,8 @@
     "dev": "webpack-dev-server --config ./.webpack/webpack.dev.js --watch",
     "lint": "eslint src/** --fix",
     "start": "yarn run dev",
-    "predeploy": "cd example && yarn install && yarn run build:release",
-    "prepublishOnly": "yarn run build && yarn run build:release",
-    "deploy": "gh-pages -d example/build",
-    "generateStaticSite": "./generateStaticSite.sh"
+    "predeploy": "yarn install && yarn run build:release",
+    "prepublishOnly": "yarn run build && yarn run build:release"
   },
   "peerDependencies": {
     "react": "^16.8.6",
@@ -63,7 +61,6 @@
     "eslint-plugin-promise": "^4.1.1",
     "eslint-plugin-react": "^7.13.0",
     "eslint-plugin-react-hooks": "1.x",
-    "gh-pages": "^2.0.1",
     "hammerjs": "^2.0.8",
     "html-webpack-plugin": "^3.2.0",
     "husky": "^3.0.0",
