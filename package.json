@@ -5,7 +5,7 @@
   "author": "OHIF Contributors",
   "license": "MIT",
   "repository": "OHIF/react-vtkjs-viewport",
-  "main": "dist/index.js",
+  "main": "dist/index.umd.js",
   "engines": {
     "node": ">=8",
     "npm": ">=5"
