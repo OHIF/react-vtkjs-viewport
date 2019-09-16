@@ -35,7 +35,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/repo
-      - run: npm run build:release
+      - run: npm run build && npm run build:release
       # https://circleci.com/docs/2.0/collect-test-data/#karma
       # - store_test_results:
       #     path: reports/junit
@@ -57,7 +57,7 @@ jobs:
             no\n" > ~/.ssh/config
       - run:
           name: Publish using Semantic Release
-          command: npx semantic-release@15.13.24
+          command: npx semantic-release@15.13.24 --debug
 
 workflows:
   version: 2
