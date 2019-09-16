@@ -13,7 +13,8 @@
   "scripts": {
     "build": "webpack --progress --colors --config ./.webpack/webpack.config.js -d",
     "build:release": "webpack --progress --colors --config ./.webpack/webpack.config.js -p",
-    "dev": "webpack-dev-server --config ./webpack.dev.js --watch",
+    "build:examples": "webpack --progress --colors --config ./.webpack/webpack.dev.js -d",
+    "dev": "webpack-dev-server --config ./.webpack/webpack.dev.js --watch",
     "start": "yarn run dev",
     "predeploy": "cd example && yarn install && yarn run build:release",
     "prepublishOnly": "yarn run build && yarn run build:release",
