@@ -65,6 +65,8 @@ module.exports = {
         amd: 'cornerstone-math',
         root: 'cornerstoneMath',
       },
+      // 
+      react: 'react',
     },
   ],
   plugins: [

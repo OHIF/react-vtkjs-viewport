@@ -45,6 +45,7 @@
     "dicom-parser": "^1.8.3",
     "dicomweb-client": "^0.5.2",
     "eslint": "5.16.0",
+    "eslint-config-react-app": "^4.0.1",
     "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-node": "^9.1.0",
     "eslint-plugin-promise": "^4.1.1",
@@ -52,9 +53,9 @@
     "gh-pages": "^2.0.1",
     "hammerjs": "^2.0.8",
     "html-webpack-plugin": "^3.2.0",
-    "husky": "^2.4.1",
+    "husky": "^3.0.0",
     "kw-web-suite": "^8.0.0",
-    "lint-staged": "^8.2.1",
+    "lint-staged": "^9.2.5",
     "postcss-loader": "^3.0.0",
     "prettier": "^1.18.2",
     "prop-types": "^15.7.2",
@@ -71,6 +72,7 @@
     "webpack": "4.34.0",
     "webpack-cli": "^3.3.4",
     "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.2.2",
     "worker-loader": "^2.0.0"
   },
   "husky": {
@@ -80,7 +82,8 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx,json,css}": [
-      "prettier --single-quote --write",
+      "eslint --fix",
+      "prettier --write",
       "git add"
     ]
   },
