@@ -24,46 +24,32 @@ function setupSyncedBrush(imageDataObject, element) {
 
   // If you want to load a segmentation labelmap, you would want to load
   // it into this array at this point.
-  const threeDimensionalPixelData = new Uint8ClampedArray(numVolumePixels);
+  const threeDimensionalPixelData = new Uint16Array(numVolumePixels);
 
   const buffer = threeDimensionalPixelData.buffer;
-
-  // Slice buffer into 2d-sized pieces, which are added to Cornerstone ToolData
-  const toolType = 'brush';
-  const segmentationIndex = 0;
   const imageIds = imageDataObject.imageIds;
-  if (imageIds.length !== depth) {
+  const numberOfFrames = imageIds.length;
+
+  if (numberOfFrames !== depth) {
     throw new Error('Depth should match the number of imageIds');
   }
 
-  const { globalImageIdSpecificToolStateManager } = cornerstoneTools;
+  const segmentationModule = cornerstoneTools.getModule('segmentation');
 
-  for (let i = 0; i < imageIds.length; i++) {
-    const imageId = imageIds[i];
-    const byteOffset = width * height * i;
-    const length = width * height;
-    const slicePixelData = new Uint8ClampedArray(buffer, byteOffset, length);
+  segmentationModule.setters.labelmap3DByFirstImageId(
+    imageIds[0],
+    buffer,
+    0,
+    [],
+    numberOfFrames,
+    undefined,
+    0
+  );
 
-    const toolData = [];
-    toolData[segmentationIndex] = {
-      pixelData: slicePixelData,
-      invalidated: true,
-    };
-
-    const toolState =
-      globalImageIdSpecificToolStateManager.saveImageIdToolState(imageId) || {};
-
-    toolState[toolType] = {
-      data: toolData,
-    };
-
-    globalImageIdSpecificToolStateManager.restoreImageIdToolState(
-      imageId,
-      toolState
-    );
-  }
+  segmentationModule.setters.colorLUT(0, [[255, 0, 0, 255]]);
 
   // Create VTK Image Data with buffer as input
+
   const labelMap = vtkImageData.newInstance();
 
   // right now only support 256 labels
@@ -100,9 +86,6 @@ const ROOT_URL =
     : window.location.hostname;
 
 const imageIds = [
-  //'dicomweb://s3.amazonaws.com/lury/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032220.10.dcm',
-  //'dicomweb://s3.amazonaws.com/lury/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032220.11.dcm',
-  //'dicomweb://s3.amazonaws.com/lury/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032220.12.dcm',
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.1.dcm`,
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.2.dcm`,
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.3.dcm`,
@@ -119,8 +102,6 @@ const imageIds = [
 const promises = imageIds.map(imageId => {
   return cornerstone.loadAndCacheImage(imageId);
 });
-
-const BaseBrushTool = cornerstoneTools.import('base/BaseBrushTool');
 
 class VTKCornerstonePaintingSyncExample extends Component {
   state = {
@@ -147,10 +128,13 @@ class VTKCornerstonePaintingSyncExample extends Component {
         };
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(imageDataObject);
+        const labelMapInputData = setupSyncedBrush(
+          imageDataObject,
+          this.cornerstoneElements[0]
+        );
 
-        this.onMeasurementModified = event => {
-          if (event.type !== EVENTS.MEASUREMENT_MODIFIED) {
+        this.onMeasurementsChanged = event => {
+          if (event.type !== EVENTS.LABELMAP_MODIFIED) {
             return;
           }
 
@@ -161,6 +145,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
         loadImageData(imageDataObject).then(() => {
           const { actor } = createActorMapper(imageDataObject.vtkImageData);
+
           this.setState({
             vtkImageData: imageDataObject.vtkImageData,
             volumes: [actor],
@@ -175,14 +160,33 @@ class VTKCornerstonePaintingSyncExample extends Component {
     );
   }
 
-  invalidateBrush = () => {
+  onPaintEnd = () => {
     const element = this.cornerstoneElements[0];
     const enabledElement = cornerstone.getEnabledElement(element);
-    const enabledElementUid = enabledElement.uuid;
+    const { getters, setters } = cornerstoneTools.getModule('segmentation');
+    const labelmap3D = getters.labelmap3D(element);
+    const stackState = cornerstoneTools.getToolState(element, 'stack');
+    const { rows, columns } = enabledElement.image;
 
-    // Note: This calls updateImage internally
-    // TODO: Find out why it's not very quick to update...
-    BaseBrushTool.invalidateBrushOnEnabledElement(enabledElementUid);
+    if (!stackState || !labelmap3D) {
+      return;
+    }
+
+    const stackData = stackState.data[0];
+    const numberOfFrames = stackData.imageIds.length;
+
+    // TODO -> Can do more efficiently if we can grab the strokeBuffer from vtk-js.
+    for (let i = 0; i < numberOfFrames; i++) {
+      const labelmap2D = getters.labelmap2DByImageIdIndex(
+        labelmap3D,
+        i,
+        rows,
+        columns
+      );
+      setters.updateSegmentsOnLabelmap2D(labelmap2D);
+    }
+
+    cornerstone.updateImage(element);
   };
 
   rerenderAllVTKViewports = () => {
@@ -233,7 +237,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
           <h1>Syncing VTK Labelmap with Cornerstone Brush Tool Data</h1>
           <p>
             This example demonstrates how to keep painting in VTK, which is
-            performed in 3D, in sync with Cornerstone&apos;s tool data, which is
+            performed in 3D, in sync with Cornerstone's tool data, which is
             accessed in 2D.
           </p>
           <p>
@@ -278,7 +282,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterBackgroundImageData={this.state.vtkImageData}
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
-                onPaint={this.invalidateBrush}
+                onPaintEnd={this.onPaintEnd}
                 onCreated={this.saveComponentReference(0)}
               />
             )}
@@ -287,8 +291,13 @@ class VTKCornerstonePaintingSyncExample extends Component {
             {this.state.cornerstoneViewportData && (
               <CornerstoneViewport
                 activeTool={'Brush'}
+                availableTools={[
+                  { name: 'Brush', mouseButtonMasks: [1] },
+                  { name: 'StackScrollMouseWheel' },
+                  { name: 'StackScrollMultiTouch' },
+                ]}
                 viewportData={this.state.cornerstoneViewportData}
-                onMeasurementModified={this.onMeasurementModified}
+                onMeasurementsChanged={this.onMeasurementsChanged}
                 onElementEnabled={this.saveCornerstoneElements(0)}
               />
             )}
