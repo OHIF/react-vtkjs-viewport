@@ -12,7 +12,7 @@ const math = {
   mean,
   realsApproximatelyEqual,
   compareReals,
-  bsearch
+  bsearch,
 };
 
 export { math };

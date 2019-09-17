@@ -17,7 +17,7 @@ import { createSub } from '../lib/createSub.js';
 function createPipeline() {
   const data = {
     mapper: vtkVolumeMapper.newInstance(),
-    actor: vtkVolume.newInstance()
+    actor: vtkVolume.newInstance(),
   };
 
   data.actor.setMapper(data.mapper);
@@ -30,7 +30,7 @@ function createLabelPipeline() {
     actor: vtkVolume.newInstance(),
     mapper: vtkVolumeMapper.newInstance(),
     cfun: vtkColorTransferFunction.newInstance(),
-    ofun: vtkPiecewiseFunction.newInstance()
+    ofun: vtkPiecewiseFunction.newInstance(),
   };
 
   // labelmap pipeline
@@ -56,12 +56,12 @@ export default class VtkMpr extends Component {
     onPaintStart: PropTypes.func,
     onPaintEnd: PropTypes.func,
     sliceNormal: PropTypes.array.isRequired,
-    dataDetails: PropTypes.object
+    dataDetails: PropTypes.object,
   };
 
   static defaultProps = {
     painting: false,
-    sliceNormal: [0, 0, 1]
+    sliceNormal: [0, 0, 1],
   };
 
   constructor(props) {
@@ -76,7 +76,7 @@ export default class VtkMpr extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub()
+      paintEnd: createSub(),
     };
   }
 
@@ -103,7 +103,7 @@ export default class VtkMpr extends Component {
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0]
+      background: [0, 0, 0],
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -135,7 +135,8 @@ export default class VtkMpr extends Component {
     this.renderer.addVolume(this.labelPipeline.actor);
 
     istyle.setVolumeMapper(this.pipeline.mapper);
-    istyle.setSliceNormal([0, 0, 1]);
+    // istyle.setSliceNormal([0, 0, 1]);
+    istyle.setSliceNormal(0, 0, 1);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
 
@@ -239,7 +240,8 @@ export default class VtkMpr extends Component {
 
     if (prevProps.sliceNormal !== this.props.sliceNormal) {
       const istyle = this.istyle;
-      istyle.setSliceNormal([...this.props.sliceNormal]);
+      // istyle.setSliceNormal([...this.props.sliceNormal]);
+      istyle.setSliceNormal(...this.props.sliceNormal);
 
       const range = istyle.getSliceRange();
       istyle.setSlice((range[0] + range[1]) / 2);
@@ -259,7 +261,7 @@ export default class VtkMpr extends Component {
 
     let voi = {
       windowCenter: 0,
-      windowWidth: 0
+      windowWidth: 0,
     };
     if (this.pipeline) {
       const actor = this.pipeline.actor;
@@ -272,7 +274,7 @@ export default class VtkMpr extends Component {
 
       voi = {
         windowCenter,
-        windowWidth
+        windowWidth,
       };
     }
 

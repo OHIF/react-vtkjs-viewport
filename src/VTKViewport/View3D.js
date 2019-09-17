@@ -23,12 +23,12 @@ export default class View3D extends Component {
     sliceNormal: PropTypes.array.isRequired,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
-    onDestroyed: PropTypes.func
+    onDestroyed: PropTypes.func,
   };
 
   static defaultProps = {
     painting: false,
-    sliceNormal: [0, 0, 1]
+    sliceNormal: [0, 0, 1],
   };
 
   constructor(props) {
@@ -43,13 +43,13 @@ export default class View3D extends Component {
       labelmap: createSub(),
       paint: createSub(),
       paintStart: createSub(),
-      paintEnd: createSub()
+      paintEnd: createSub(),
     };
   }
 
   componentDidMount() {
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
-      background: [0, 0, 0]
+      background: [0, 0, 0],
     });
 
     this.genericRenderWindow.setContainer(this.container.current);
@@ -116,7 +116,7 @@ export default class View3D extends Component {
         filters,
         actors,
         volumes,
-        _component: this
+        _component: this,
       };
 
       this.props.onCreated(api);
@@ -285,7 +285,7 @@ export default class View3D extends Component {
 
     let voi = {
       windowCenter: 0,
-      windowWidth: 0
+      windowWidth: 0,
     };
 
     if (this.pipeline) {
@@ -299,7 +299,7 @@ export default class View3D extends Component {
 
       voi = {
         windowCenter,
-        windowWidth
+        windowWidth,
       };
     }
 

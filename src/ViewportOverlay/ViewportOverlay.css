@@ -4,50 +4,50 @@
 
 .ViewportOverlay {
   color: #9ccef9;
+}
 
-  .overlay-element {
-    position: absolute;
-    font-weight: 400;
-    text-shadow: 1px 1px black;
-    pointer-events: none;
-  }
+.ViewportOverlay .overlay-element {
+  position: absolute;
+  font-weight: 400;
+  text-shadow: 1px 1px black;
+  pointer-events: none;
+}
 
-  .top-left {
-    top: var(--viewport-tag-padding);
-    left: var(--viewport-tag-padding);
-  }
+.ViewportOverlay .top-left {
+  top: var(--viewport-tag-padding);
+  left: var(--viewport-tag-padding);
+}
 
-  .top-center {
-    top: var(--viewport-tag-padding);
-    padding-top: var(--viewport-tag-padding);
-    width: 100%;
-    text-align: center;
-  }
+.ViewportOverlay .top-center {
+  top: var(--viewport-tag-padding);
+  padding-top: var(--viewport-tag-padding);
+  width: 100%;
+  text-align: center;
+}
 
-  .top-right {
-    top: var(--viewport-tag-padding);
-    right: var(--viewport-tag-padding);
-    text-align: right;
-  }
+.ViewportOverlay .top-right {
+  top: var(--viewport-tag-padding);
+  right: var(--viewport-tag-padding);
+  text-align: right;
+}
 
-  .bottom-left {
-    bottom: var(--viewport-tag-padding);
-    left: var(--viewport-tag-padding);
-  }
+.ViewportOverlay .bottom-left {
+  bottom: var(--viewport-tag-padding);
+  left: var(--viewport-tag-padding);
+}
 
-  .bottom-right {
-    bottom: var(--viewport-tag-padding);
-    right: var(--viewport-tag-padding);
-    text-align: right;
-  }
+.ViewportOverlay .bottom-right {
+  bottom: var(--viewport-tag-padding);
+  right: var(--viewport-tag-padding);
+  text-align: right;
+}
 
-  svg {
-    color: #9ccef9;
-    fill: #9ccef9;
-    stroke: #9ccef9;
-    background-color: transparent;
-    margin: 2px;
-    width: 18px;
-    height: 18px;
-  }
+.ViewportOverlay svg {
+  color: #9ccef9;
+  fill: #9ccef9;
+  stroke: #9ccef9;
+  background-color: transparent;
+  margin: 2px;
+  width: 18px;
+  height: 18px;
 }
