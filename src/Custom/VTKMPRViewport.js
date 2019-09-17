@@ -135,8 +135,8 @@ export default class VtkMpr extends Component {
     this.renderer.addVolume(this.labelPipeline.actor);
 
     istyle.setVolumeMapper(this.pipeline.mapper);
-    // istyle.setSliceNormal([0, 0, 1]);
-    istyle.setSliceNormal(0, 0, 1);
+    istyle.setSliceNormal([0, 0, 1]);
+    // istyle.setSliceNormal(0, 0, 1);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
 
@@ -240,8 +240,8 @@ export default class VtkMpr extends Component {
 
     if (prevProps.sliceNormal !== this.props.sliceNormal) {
       const istyle = this.istyle;
-      // istyle.setSliceNormal([...this.props.sliceNormal]);
-      istyle.setSliceNormal(...this.props.sliceNormal);
+      istyle.setSliceNormal([...this.props.sliceNormal]);
+      // istyle.setSliceNormal(...this.props.sliceNormal);
 
       const range = istyle.getSliceRange();
       istyle.setSlice((range[0] + range[1]) / 2);
