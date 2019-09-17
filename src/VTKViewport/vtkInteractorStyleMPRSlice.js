@@ -20,7 +20,7 @@ function boundsToCorners(bounds) {
     [bounds[1], bounds[2], bounds[4]],
     [bounds[1], bounds[2], bounds[5]],
     [bounds[1], bounds[3], bounds[4]],
-    [bounds[1], bounds[3], bounds[5]]
+    [bounds[1], bounds[3], bounds[5]],
   ];
 }
 
@@ -46,27 +46,27 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
   model.trackballManipulator = vtkMouseCameraTrackballRotateManipulator.newInstance(
     {
-      button: 1
+      button: 1,
     }
   );
   model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
     button: 1,
-    shift: true
+    shift: true,
   });
   model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
-    button: 3
+    button: 3,
   });
 
   model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
     scrollEnabled: true,
-    dragEnabled: false
+    dragEnabled: false,
   });
 
   // cache for sliceRange
   const cache = {
     sliceNormal: [0, 0, 0],
     sliceRange: [0, 0],
-    slicePosition: [0, 0, 0]
+    slicePosition: [0, 0, 0],
   };
 
   function updateScrollManipulator() {
@@ -112,7 +112,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
-        updateScrollManipulator();
+        //Zaid: causes the Scroll manipulator to continousley reset
+        // to the slice scrolling overriding other manipulators.
+        //updateScrollManipulator();
         publicAPI.modified();
       });
 
@@ -187,7 +189,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const center = [
         (bounds[0] + bounds[1]) / 2.0,
         (bounds[2] + bounds[3]) / 2.0,
-        (bounds[4] + bounds[5]) / 2.0
+        (bounds[4] + bounds[5]) / 2.0,
       ];
 
       const distance = camera.getDistance();
@@ -198,18 +200,18 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const zeroPoint = [
         center[0] - dop[0] * midPoint,
         center[1] - dop[1] * midPoint,
-        center[2] - dop[2] * midPoint
+        center[2] - dop[2] * midPoint,
       ];
       const slicePoint = [
         zeroPoint[0] + dop[0] * clampedSlice,
         zeroPoint[1] + dop[1] * clampedSlice,
-        zeroPoint[2] + dop[2] * clampedSlice
+        zeroPoint[2] + dop[2] * clampedSlice,
       ];
 
       const cameraPos = [
         slicePoint[0] - dop[0] * distance,
         slicePoint[1] - dop[1] * distance,
-        slicePoint[2] - dop[2] * distance
+        slicePoint[2] - dop[2] * distance,
       ];
 
       camera.setPosition(...cameraPos);
@@ -323,7 +325,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const center = [
         (bounds[0] + bounds[1]) / 2.0,
         (bounds[2] + bounds[3]) / 2.0,
-        (bounds[4] + bounds[5]) / 2.0
+        (bounds[4] + bounds[5]) / 2.0,
       ];
 
       const angle = 90;
@@ -333,7 +335,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const cameraPos = [
         center[0] - _normal[0] * dist,
         center[1] - _normal[1] * dist,
-        center[2] - _normal[2] * dist
+        center[2] - _normal[2] * dist,
       ];
 
       // set viewUp based on DOP rotation
@@ -384,7 +386,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  slabThickness: 0.1
+  slabThickness: 0.1,
 };
 
 // ----------------------------------------------------------------------------

@@ -143,45 +143,20 @@ class VTKMPRRotateExample extends Component {
   async componentDidMount() {
     this.apis = [];
 
-    // const reader = vtkHttpDataSetReader.newInstance({
-    //   fetchGzip: true,
-    // });
-    // const volumeActor = vtkVolume.newInstance();
-    // const volumeMapper = vtkVolumeMapper.newInstance();
+    const reader = vtkHttpDataSetReader.newInstance({
+      fetchGzip: true,
+    });
+    const volumeActor = vtkVolume.newInstance();
+    const volumeMapper = vtkVolumeMapper.newInstance();
 
-    // volumeActor.setMapper(volumeMapper);
+    volumeActor.setMapper(volumeMapper);
 
-    // reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
-    //   const data = reader.getOutputData();
-    //   volumeMapper.setInputData(data);
-
-    //   this.setState({
-    //     volumes: [volumeActor]
-    //   });
-    // });
-
-    const imageIds = await imageIdPromise;
-    let ctImageIds = imageIds.filter(imageId =>
-      imageId.includes(ctSeriesInstanceUID)
-    );
-
-    const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
-    const promises = [ctImageDataPromise];
-
-    Promise.all(promises).then(([ctImageData, petImageData]) => {
-      const ctVol = createCT2dPipeline(ctImageData);
-
-      // const ctVolVR = createCT3dPipeline(
-      //   ctImageData,
-      //   this.state.ctTransferFunctionPresetId
-      // )
-      // const petVolVR = createPET3dPipeline(
-      //   petImageData,
-      //   this.state.petColorMapId
-      // )
+    reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
+      const data = reader.getOutputData();
+      volumeMapper.setInputData(data);
 
       this.setState({
-        volumes: [ctVol],
+        volumes: [volumeActor],
         rotation: [
           {
             x: 0,
@@ -196,10 +171,49 @@ class VTKMPRRotateExample extends Component {
             y: 0,
           },
         ],
-        // volumes: [ctVol, petVol],
-        // volumeRenderingVolumes: [ctVolVR, petVolVR],
       });
     });
+
+    // const imageIds = await imageIdPromise;
+    // let ctImageIds = imageIds.filter(imageId =>
+    //   imageId.includes(ctSeriesInstanceUID)
+    // );
+
+    // const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
+    // const promises = [ctImageDataPromise];
+
+    // Promise.all(promises).then(([ctImageData, petImageData]) => {
+    //   const ctVol = createCT2dPipeline(ctImageData);
+
+    //   // const ctVolVR = createCT3dPipeline(
+    //   //   ctImageData,
+    //   //   this.state.ctTransferFunctionPresetId
+    //   // )
+    //   // const petVolVR = createPET3dPipeline(
+    //   //   petImageData,
+    //   //   this.state.petColorMapId
+    //   // )
+
+    //   this.setState({
+    //     volumes: [ctVol],
+    //     rotation: [
+    //       {
+    //         x: 0,
+    //         y: 0,
+    //       },
+    //       {
+    //         x: 0,
+    //         y: 0,
+    //       },
+    //       {
+    //         x: 0,
+    //         y: 0,
+    //       },
+    //     ],
+    //     // volumes: [ctVol, petVol],
+    //     // volumeRenderingVolumes: [ctVolVR, petVolVR],
+    //   });
+    // });
   }
 
   storeApi = viewportIndex => {
@@ -232,6 +246,17 @@ class VTKMPRRotateExample extends Component {
       });
 
       istyle.setMinMax(min, max);
+
+      istyle.setOnRotateChanged(
+        ({ slicePlaneXRotation, slicePlaneYRotation }) => {
+          const rotation = this.state.rotation;
+
+          rotation[viewportIndex].x = slicePlaneXRotation;
+          rotation[viewportIndex].y = slicePlaneYRotation;
+
+          this.setState({ rotation });
+        }
+      );
       istyle.rotate({ slicePlaneXRotation: 0, slicePlaneYRotation: 0 });
     };
   };
@@ -267,8 +292,8 @@ class VTKMPRRotateExample extends Component {
     const istyle = renderWindow.getInteractor().getInteractorStyle();
 
     istyle.rotate({
-      slicePlaneXRotation: volumeData[index].slicePlaneYRotation,
-      slicePlaneYRotation: volumeData[index].slicePlaneXRotation,
+      slicePlaneXRotation: volumeData[index].slicePlaneXRotation,
+      slicePlaneYRotation: volumeData[index].slicePlaneYRotation,
     });
   };
 
@@ -280,6 +305,49 @@ class VTKMPRRotateExample extends Component {
       return <h4>Loading...</h4>;
     }
 
+    const columns = [];
+
+    for (let index = 0; index < volumeData.length; index++) {
+      columns.push(
+        <div key={index.toString()} className="col-xs-12 col-sm-6">
+          <div>
+            <input
+              className="rotate"
+              type="range"
+              min={min}
+              max={max}
+              step="1"
+              defaultValue={volumeData[index].slicePlaneXRotation}
+              value={this.state.rotation[index].x}
+              onChange={event => {
+                this.handleChangeX(index, event);
+              }}
+            />
+            <span>{this.state.rotation[index].x}</span>
+          </div>
+          <div>
+            <input
+              className="rotate"
+              type="range"
+              min={min}
+              max={max}
+              step="1"
+              defaultValue={volumeData[index].slicePlaneYRotation}
+              value={this.state.rotation[index].y}
+              onChange={event => {
+                this.handleChangeY(index, event);
+              }}
+            />
+            <span>{this.state.rotation[index].y}</span>
+          </div>
+          <View2D
+            volumes={this.state.volumes}
+            onCreated={this.storeApi(index)}
+          />
+        </div>
+      );
+    }
+
     return (
       <>
         <div className="row">
@@ -289,103 +357,7 @@ class VTKMPRRotateExample extends Component {
             </p>
           </div>
         </div>
-        <div className="row">
-          <div className="col-xs-12 col-sm-6">
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[0].slicePlaneXRotation}
-                onChange={event => {
-                  this.handleChangeX(0, event);
-                }}
-              />
-              <span>{this.state.rotation[0].x}</span>
-            </div>
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[0].slicePlaneYRotation}
-                onChange={event => {
-                  this.handleChangeY(0, event);
-                }}
-              />
-              <span>{this.state.rotation[0].y}</span>
-            </div>
-            <View2D volumes={this.state.volumes} onCreated={this.storeApi(0)} />
-          </div>
-          <div className="col-xs-12 col-sm-6">
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[1].slicePlaneXRotation}
-                onChange={event => {
-                  this.handleChangeX(1, event);
-                }}
-              />
-              <span>{this.state.rotation[1].x}</span>
-            </div>
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[1].slicePlaneYRotation}
-                onChange={event => {
-                  this.handleChangeY(1, event);
-                }}
-              />
-              <span>{this.state.rotation[1].y}</span>
-            </div>
-            <View2D volumes={this.state.volumes} onCreated={this.storeApi(1)} />
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-xs-12 col-sm-6">
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[2].slicePlaneXRotation}
-                onChange={event => {
-                  this.handleChangeX(2, event);
-                }}
-              />
-              <span>{this.state.rotation[2].x}</span>
-            </div>
-            <div>
-              <input
-                className="rotate"
-                type="range"
-                min={min}
-                max={max}
-                step="1"
-                defaultValue={volumeData[2].slicePlaneYRotation}
-                onChange={event => {
-                  this.handleChangeY(2, event);
-                }}
-              />
-              <span>{this.state.rotation[2].y}</span>
-            </div>
-            <View2D volumes={this.state.volumes} onCreated={this.storeApi(2)} />
-          </div>
-        </div>
+        <div className="row">{columns}</div>
       </>
     );
   }

@@ -25,32 +25,32 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 
   model.trackballManipulator = vtkMouseCameraTrackballRotateManipulator.newInstance(
     {
-      button: 1
+      button: 1,
     }
   );
   model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
     button: 1,
-    shift: true
+    shift: true,
   });
 
-  // TODO: The inherited zoom manipulator does not appear to be working?
-  model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
-    button: 3
-  });
   model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
     scrollEnabled: true,
-    dragEnabled: false
+    dragEnabled: false,
   });
 
   function updateScrollManipulator() {
-    const range = publicAPI.getSliceRange();
     model.scrollManipulator.removeScrollListener();
     model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
+      model.min,
+      model.max,
       1,
-      publicAPI.getSlice,
-      publicAPI.setSlice
+      () => model.slicePlaneXRotation,
+      slicePlaneXRotation => {
+        publicAPI.rotate({
+          slicePlaneXRotation,
+          slicePlaneYRotation: model.slicePlaneYRotation,
+        });
+      }
     );
   }
 
@@ -67,9 +67,8 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
   publicAPI.handleMouseMove = callData => {
     const pos = [
       Math.round(callData.position.x),
-      Math.round(callData.position.y)
+      Math.round(callData.position.y),
     ];
-    const renderer = callData.pokedRenderer;
 
     if (model.state === States.IS_ROTATE) {
       publicAPI.rotateFromMouse(pos);
@@ -84,15 +83,16 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
   publicAPI.setMinMax = (min, max) => {
     model.min = min;
     model.max = max;
+    updateScrollManipulator();
   };
 
   publicAPI.setRotate = ({
     renderWindow,
     slicePlaneXRotation = 0,
     slicePlaneYRotation = 0,
-    slicePlaneNormal,
+    slicePlaneNormal = [0, 0, 1],
     sliceViewUp = [0, 1, 0],
-    viewRotation = 0
+    viewRotation = 0,
   }) => {
     model.renderWindow = renderWindow;
     model.slicePlaneXRotation = slicePlaneXRotation;
@@ -137,7 +137,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
         dx,
         dy,
         slicePlaneXRotation,
-        slicePlaneYRotation
+        slicePlaneYRotation,
       });
     }
 
@@ -147,7 +147,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     model.rotateStartPos[1] = Math.round(pos[1]);
   };
 
-  publicAPI.rotate = ({ slicePlaneXRotation, slicePlaneYRotation }) => {
+  publicAPI.rotate = ({ slicePlaneXRotation = 0, slicePlaneYRotation = 0 }) => {
     model.slicePlaneXRotation = slicePlaneXRotation;
     model.slicePlaneYRotation = slicePlaneYRotation;
 
@@ -156,7 +156,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       sliceViewUp: model.sliceViewUp,
       sliceXRot: model.slicePlaneXRotation,
       sliceYRot: model.slicePlaneYRotation,
-      viewRotation: model.viewRotation
+      viewRotation: model.viewRotation,
     };
 
     // rotate around the vector of the cross product of the plane and viewup as the X component
@@ -219,7 +219,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     if (onRotateChanged) {
       onRotateChanged({
         slicePlaneXRotation: model.slicePlaneXRotation,
-        slicePlaneYRotation: model.slicePlaneYRotation
+        slicePlaneYRotation: model.slicePlaneYRotation,
       });
     }
   };
@@ -281,7 +281,7 @@ const DEFAULT_VALUES = {
   slicePlaneXRotation: 0,
   slicePlaneYRotation: 0,
   sliceViewUp: [0, 1, 0],
-  viewRotation: 0
+  viewRotation: 0,
 };
 
 // ----------------------------------------------------------------------------
@@ -295,7 +295,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   macro.setGet(publicAPI, model, [
     'volumeMapper',
     'onRotateChanged',
-    'onRotateChanging'
+    'onRotateChanging',
   ]);
 
   // Object specific methods
