@@ -223,6 +223,9 @@ function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
         .reduce((a, b) => a + b, 0)
     );
 
+  const range = imageData.getPointData().getScalars().getRange();
+  actor.getProperty().getRGBTransferFunction(0).setRange(range[0], range[1])
+
   mapper.setSampleDistance(sampleDistance);
 
   const preset = presets.find(
