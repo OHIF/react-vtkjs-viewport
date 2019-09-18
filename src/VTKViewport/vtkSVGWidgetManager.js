@@ -74,17 +74,22 @@ function vtkSVGWidgetManager(publicAPI, model) {
 
   publicAPI.render = () => {
     if (model.svgRootNode) {
-      const { scale } = model;
-      const [width, height] = publicAPI.getSize();
-      model.svgRootNode.setAttribute(
-        'viewBox',
-        `0 0 ${width * scale} ${height * scale}`
-      );
-      model.svgRootNode.setAttribute('width', `${width * scale}`);
-      model.svgRootNode.setAttribute('height', `${height * scale}`);
-      for (let i = 0; i < model.widgets.length; i++) {
-        model.widgets[i].render(model.svgRootNode, model.scale);
-      }
+      // TODO: Not sure this is the best approach but it seems to be
+      // making things smoother. Updating the DOM seemed to be
+      // the performance bottleneck for the crosshairs tool
+      requestAnimationFrame(() => {
+        const { scale } = model;
+        const [width, height] = publicAPI.getSize();
+        model.svgRootNode.setAttribute(
+          'viewBox',
+          `0 0 ${width * scale} ${height * scale}`
+        );
+        model.svgRootNode.setAttribute('width', `${width * scale}`);
+        model.svgRootNode.setAttribute('height', `${height * scale}`);
+        for (let i = 0; i < model.widgets.length; i++) {
+          model.widgets[i].render(model.svgRootNode, model.scale);
+        }
+      });
     }
   };
 }
