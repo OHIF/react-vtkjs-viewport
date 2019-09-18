@@ -21,7 +21,7 @@ module.exports = (env, argv) => {
 
   return {
     entry: {
-      vtkViewport: ENTRY_VTK_EXT,
+      index: ENTRY_VTK_EXT,
     },
     devtool: 'source-map',
     output: {
