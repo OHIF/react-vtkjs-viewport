@@ -7,7 +7,7 @@ const MPR = {
   computeCamera,
   computeSlicingMode,
   changeView,
-  computeIPP
+  computeIPP,
 };
 
 export { MPR };

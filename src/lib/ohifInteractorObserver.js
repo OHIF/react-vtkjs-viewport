@@ -1,5 +1,5 @@
-const { macro } = vtk;
-const { vtkInteractorObserver } = vtk.Rendering.Core;
+import macro from 'vtk.js/Sources/macro';
+import vtkInteractorObserver from 'vtk.js/Sources/Rendering/Core/InteractorObserver';
 
 /**
  * vtkInteractorObserverClass.
@@ -45,7 +45,7 @@ const DEFAULT_VALUES = {
   interactor: null,
   priority: 0.0,
   processEvents: true,
-  subscribedEvents: []
+  subscribedEvents: [],
 };
 
 // ----------------------------------------------------------------------------

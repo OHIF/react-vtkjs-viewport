@@ -1,8 +1,7 @@
-// TODO: imports may be better, not sure
-const { macro } = vtk;
-const { vtkImageMapper } = vtk.Rendering.Core;
-const { States } = vtk.Rendering.Core.vtkInteractorStyle;
-const { vtkInteractorStyleTrackballCamera } = vtk.Interaction.Style;
+import macro from 'vtk.js/Sources/macro';
+import vtkImageMapper from 'vtk.js/Sources/Rendering/Core/ImageMapper';
+import vtkConstants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants.js';
+import vtkInteractorStyleTrackballCamera from 'vtk.js/Sources/Interaction/Style/InteractorStyleTrackballCamera';
 
 /**
  * Class inherits from InteractorStyle.
@@ -11,6 +10,8 @@ const { vtkInteractorStyleTrackballCamera } = vtk.Interaction.Style;
  * @param model - instance data.
  */
 function ohifInteractorStyleSlice(publicAPI, model) {
+  const States = vtkConstants.States;
+
   // Set our className
   model.classHierarchy.push('ohifInteractorStyleSlice');
   macro.setGet(publicAPI, model, ['directionalProperties']);
@@ -264,8 +265,8 @@ function ohifInteractorStyleSlice(publicAPI, model) {
           sliceIndex: idx,
           sliceCount: idxCount,
           window: w,
-          level: l
-        }
+          level: l,
+        },
       });
 
       renderer.getRenderWindow().render();
@@ -339,8 +340,8 @@ function ohifInteractorStyleSlice(publicAPI, model) {
           viewDirection: viewDirection,
           displaySet: displaySet,
           window: newWindow,
-          level: newLevel
-        }
+          level: newLevel,
+        },
       });
     }
   };
@@ -435,7 +436,7 @@ const DEFAULT_VALUES = {
   yViewRightVector: [1, 0, 0],
   yViewUpVector: [0, 0, -1],
   zViewRightVector: [1, 0, 0],
-  zViewUpVector: [0, 1, 0]
+  zViewUpVector: [0, 1, 0],
 };
 
 // ----------------------------------------------------------------------------

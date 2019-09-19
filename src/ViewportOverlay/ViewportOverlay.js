@@ -9,7 +9,7 @@ const {
   formatDA,
   formatNumberPrecision,
   formatTM,
-  isValidNumber
+  isValidNumber,
 } = helpers;
 
 class ViewportOverlay extends PureComponent {
@@ -21,14 +21,14 @@ class ViewportOverlay extends PureComponent {
     patientName: PropTypes.string,
     patientId: PropTypes.string,
     seriesNumber: PropTypes.string,
-    seriesDescription: PropTypes.string
+    seriesDescription: PropTypes.string,
   };
 
   static defaultProps = {
     voi: {
       windowWidth: 0,
-      windowCenter: 0
-    }
+      windowCenter: 0,
+    },
   };
 
   render() {
@@ -40,7 +40,7 @@ class ViewportOverlay extends PureComponent {
       patientId,
       seriesNumber,
       seriesDescription,
-      voi
+      voi,
     } = this.props;
     const { windowWidth, windowCenter } = voi;
     const wwwc = `W: ${windowWidth.toFixed(0)} L: ${windowCenter.toFixed(0)}`;
