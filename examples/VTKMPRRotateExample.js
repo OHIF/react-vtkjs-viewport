@@ -11,7 +11,8 @@ import vtkColorMaps from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/Co
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
-
+import vtkOrientationMarkerWidget from 'vtk.js/Sources/Interaction/Widgets/OrientationMarkerWidget';
+import vtkAnnotatedCubeActor from 'vtk.js/Sources/Rendering/Core/AnnotatedCubeActor';
 import { api } from 'dicomweb-client';
 import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import './initCornerstone.js';
@@ -40,22 +41,22 @@ const volumeData = [
   {
     slicePlaneNormal: [0, 0, 1],
     sliceViewUp: [0, -1, 0],
-    slicePlaneXRotation: 0,
-    slicePlaneYRotation: 0,
+    horizontalRotation: 0,
+    verticalRotation: 0,
     viewRotation: 0,
   },
   {
     slicePlaneNormal: [1, 0, 0],
     sliceViewUp: [0, 0, 1],
-    slicePlaneXRotation: 0,
-    slicePlaneYRotation: 0,
+    horizontalRotation: 0,
+    verticalRotation: 0,
     viewRotation: 0,
   },
   {
     slicePlaneNormal: [0, 1, 0],
     sliceViewUp: [0, 0, 1],
-    slicePlaneXRotation: 0,
-    slicePlaneYRotation: 0,
+    horizontalRotation: 0,
+    verticalRotation: 0,
     viewRotation: 0,
   },
 ];
@@ -143,6 +144,66 @@ class VTKMPRRotateExample extends Component {
   async componentDidMount() {
     this.apis = [];
 
+    this.loadFromVti();
+  }
+
+  /**
+   * This is not working. The volume is not being updated/rendered.
+   */
+  loadSelectedVolume() {
+    const selected = document.getElementById('select_volume').value;
+
+    if (selected === '0') {
+      this.loadFromVti();
+    } else {
+      this.loadFromWadors().then(() => {
+        for (var index = 0; index < this.apis.length; index++) {
+          const api = this.apis[index];
+          const renderWindow = api.genericRenderWindow.getRenderWindow();
+
+          renderWindow.render();
+        }
+      });
+    }
+  }
+
+  async loadFromWadors() {
+    const imageIds = await imageIdPromise;
+    let ctImageIds = imageIds.filter(imageId =>
+      imageId.includes(ctSeriesInstanceUID)
+    );
+
+    const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
+    const promises = [ctImageDataPromise];
+
+    return new Promise((resolve, reject) => {
+      Promise.all(promises).then(([ctImageData, petImageData]) => {
+        const ctVol = createCT2dPipeline(ctImageData);
+
+        this.setState({
+          volumes: [ctVol],
+          rotation: [
+            {
+              x: 0,
+              y: 0,
+            },
+            {
+              x: 0,
+              y: 0,
+            },
+            {
+              x: 0,
+              y: 0,
+            },
+          ],
+        });
+
+        resolve();
+      });
+    });
+  }
+
+  loadFromVti() {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
     });
@@ -173,47 +234,84 @@ class VTKMPRRotateExample extends Component {
         ],
       });
     });
+  }
 
-    // const imageIds = await imageIdPromise;
-    // let ctImageIds = imageIds.filter(imageId =>
-    //   imageId.includes(ctSeriesInstanceUID)
-    // );
+  addWidget(index) {
+    this.apis.orientations = this.apis.orientations || [];
+    // ----------------------------------------------------------------------------
+    // Standard rendering code setup
+    // ----------------------------------------------------------------------------
 
-    // const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
-    // const promises = [ctImageDataPromise];
+    const api = this.apis[index];
+    const renderer = api.genericRenderWindow.getRenderer();
+    const renderWindow = api.genericRenderWindow.getRenderWindow();
 
-    // Promise.all(promises).then(([ctImageData, petImageData]) => {
-    //   const ctVol = createCT2dPipeline(ctImageData);
+    // ----------------------------------------------------------------------------
+    // Example code
+    // ----------------------------------------------------------------------------
 
-    //   // const ctVolVR = createCT3dPipeline(
-    //   //   ctImageData,
-    //   //   this.state.ctTransferFunctionPresetId
-    //   // )
-    //   // const petVolVR = createPET3dPipeline(
-    //   //   petImageData,
-    //   //   this.state.petColorMapId
-    //   // )
+    // TODO: reaplce +X, -X, +Y, -Y, +Z, -Z with  A, P, L, R, S, I
 
-    //   this.setState({
-    //     volumes: [ctVol],
-    //     rotation: [
-    //       {
-    //         x: 0,
-    //         y: 0,
-    //       },
-    //       {
-    //         x: 0,
-    //         y: 0,
-    //       },
-    //       {
-    //         x: 0,
-    //         y: 0,
-    //       },
-    //     ],
-    //     // volumes: [ctVol, petVol],
-    //     // volumeRenderingVolumes: [ctVolVR, petVolVR],
-    //   });
-    // });
+    // create axes
+    const axes = vtkAnnotatedCubeActor.newInstance();
+    axes.setDefaultStyle({
+      text: '+X',
+      fontStyle: 'bold',
+      fontFamily: 'Arial',
+      fontColor: 'black',
+      fontSizeScale: res => res / 2,
+      faceColor: '#0000ff',
+      faceRotation: 0,
+      edgeThickness: 0.1,
+      edgeColor: 'black',
+      resolution: 400,
+    });
+    // axes.setXPlusFaceProperty({ text: '+X' });
+    axes.setXMinusFaceProperty({
+      text: '-X',
+      faceColor: '#ffff00',
+      faceRotation: 90,
+      fontStyle: 'italic',
+    });
+    axes.setYPlusFaceProperty({
+      text: '+Y',
+      faceColor: '#00ff00',
+      fontSizeScale: res => res / 4,
+    });
+    axes.setYMinusFaceProperty({
+      text: '-Y',
+      faceColor: '#00ffff',
+      fontColor: 'white',
+    });
+    axes.setZPlusFaceProperty({
+      text: '+Z',
+      edgeColor: 'yellow',
+    });
+    axes.setZMinusFaceProperty({
+      text: '-Z',
+      faceRotation: 45,
+      edgeThickness: 0,
+    });
+
+    // create orientation widget
+    const orientationWidget = vtkOrientationMarkerWidget.newInstance({
+      actor: axes,
+      interactor: renderWindow.getInteractor(),
+    });
+    orientationWidget.setEnabled(true);
+    orientationWidget.setViewportCorner(
+      vtkOrientationMarkerWidget.Corners.BOTTOM_RIGHT
+    );
+    orientationWidget.setViewportSize(0.15);
+    orientationWidget.setMinPixelSize(100);
+    orientationWidget.setMaxPixelSize(300);
+
+    orientationWidget.updateMarkerOrientation();
+
+    renderer.resetCamera();
+    renderWindow.render();
+
+    this.apis.orientations[index] = orientationWidget;
   }
 
   storeApi = viewportIndex => {
@@ -235,11 +333,13 @@ class VTKMPRRotateExample extends Component {
       renderWindow.getInteractor().setInteractorStyle(istyle);
       istyle.setVolumeMapper(api.volumes[0]);
 
-      // renderWindow.render();
+      // api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
+      // istyle.setSlabThickness(30);
+
       istyle.setRotate({
         renderWindow,
-        slicePlaneXRotation: volumeData[viewportIndex].slicePlaneXRotation,
-        slicePlaneYRotation: volumeData[viewportIndex].slicePlaneYRotation,
+        horizontalRotation: volumeData[viewportIndex].horizontalRotation,
+        verticalRotation: volumeData[viewportIndex].verticalRotation,
         slicePlaneNormal: volumeData[viewportIndex].slicePlaneNormal,
         sliceViewUp: volumeData[viewportIndex].sliceViewUp,
         viewRotation: volumeData[viewportIndex].viewRotation,
@@ -247,22 +347,27 @@ class VTKMPRRotateExample extends Component {
 
       istyle.setMinMax(min, max);
 
-      istyle.setOnRotateChanged(
-        ({ slicePlaneXRotation, slicePlaneYRotation }) => {
+      istyle.setOnInteractiveRotateChanged(
+        ({ horizontalRotation, verticalRotation }) => {
           const rotation = this.state.rotation;
 
-          rotation[viewportIndex].x = slicePlaneXRotation;
-          rotation[viewportIndex].y = slicePlaneYRotation;
+          rotation[viewportIndex].x = horizontalRotation;
+          rotation[viewportIndex].y = verticalRotation;
 
           this.setState({ rotation });
         }
       );
-      istyle.rotate({ slicePlaneXRotation: 0, slicePlaneYRotation: 0 });
+
+      this.addWidget(viewportIndex);
+
+      istyle.setRotation({ horizontalRotation: 0, verticalRotation: 0 });
+
+      this.apis.orientations[viewportIndex].updateMarkerOrientation();
     };
   };
 
   handleChangeX = (index, event) => {
-    volumeData[index].slicePlaneXRotation = event.target.value;
+    volumeData[index].horizontalRotation = event.target.value;
 
     const rotation = this.state.rotation;
 
@@ -274,7 +379,7 @@ class VTKMPRRotateExample extends Component {
   };
 
   handleChangeY = (index, event) => {
-    volumeData[index].slicePlaneYRotation = event.target.value;
+    volumeData[index].verticalRotation = event.target.value;
 
     const rotation = this.state.rotation;
 
@@ -291,14 +396,16 @@ class VTKMPRRotateExample extends Component {
 
     const istyle = renderWindow.getInteractor().getInteractorStyle();
 
-    istyle.rotate({
-      slicePlaneXRotation: volumeData[index].slicePlaneXRotation,
-      slicePlaneYRotation: volumeData[index].slicePlaneYRotation,
+    istyle.setRotation({
+      horizontalRotation: volumeData[index].horizontalRotation,
+      verticalRotation: volumeData[index].verticalRotation,
     });
+
+    this.apis.orientations[index].updateMarkerOrientation();
   };
 
   getSliceXRotation = index => {
-    return volumeData[index].slicePlaneXRotation;
+    return volumeData[index].horizontalRotation;
   };
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
@@ -317,7 +424,6 @@ class VTKMPRRotateExample extends Component {
               min={min}
               max={max}
               step="1"
-              defaultValue={volumeData[index].slicePlaneXRotation}
               value={this.state.rotation[index].x}
               onChange={event => {
                 this.handleChangeX(index, event);
@@ -332,7 +438,6 @@ class VTKMPRRotateExample extends Component {
               min={min}
               max={max}
               step="1"
-              defaultValue={volumeData[index].slicePlaneYRotation}
               value={this.state.rotation[index].y}
               onChange={event => {
                 this.handleChangeY(index, event);
@@ -355,6 +460,16 @@ class VTKMPRRotateExample extends Component {
             <p>
               This example demonstrates how to use the MPR Rotate manipulator.
             </p>
+            {/* <div>
+              <label htmlFor="select_volume">Select Volume: </label>
+              <select
+                id="select_volume"
+                onChange={() => this.loadSelectedVolume()}
+              >
+                <option value="0">headsq.vti (small)</option>
+                <option value="1">Full Body (large)</option>
+              </select>
+            </div> */}
           </div>
         </div>
         <div className="row">{columns}</div>

@@ -44,11 +44,11 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       model.min,
       model.max,
       1,
-      () => model.slicePlaneXRotation,
-      slicePlaneXRotation => {
+      () => model.horizontalRotation,
+      horizontalRotation => {
         publicAPI.rotate({
-          slicePlaneXRotation,
-          slicePlaneYRotation: model.slicePlaneYRotation,
+          horizontalRotation,
+          verticalRotation: model.verticalRotation,
         });
       }
     );
@@ -88,15 +88,15 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 
   publicAPI.setRotate = ({
     renderWindow,
-    slicePlaneXRotation = 0,
-    slicePlaneYRotation = 0,
+    horizontalRotation = 0,
+    verticalRotation = 0,
     slicePlaneNormal = [0, 0, 1],
     sliceViewUp = [0, 1, 0],
     viewRotation = 0,
   }) => {
     model.renderWindow = renderWindow;
-    model.slicePlaneXRotation = slicePlaneXRotation;
-    model.slicePlaneYRotation = slicePlaneYRotation;
+    model.horizontalRotation = horizontalRotation;
+    model.verticalRotation = verticalRotation;
     model.slicePlaneNormal = slicePlaneNormal;
     model.sliceViewUp = sliceViewUp;
     model.viewRotation = viewRotation;
@@ -108,101 +108,92 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
   publicAPI.rotateFromMouse = pos => {
     const dx = Math.floor(pos[0] - model.rotateStartPos[0]);
     const dy = Math.floor(pos[1] - model.rotateStartPos[1]);
-    let slicePlaneXRotation = model.slicePlaneXRotation + dx;
-    let slicePlaneYRotation = model.slicePlaneYRotation + dy;
+    let horizontalRotation = model.horizontalRotation + dx;
+    let verticalRotation = model.verticalRotation + dy;
 
-    slicePlaneXRotation = Math.max(
-      model.min,
-      Math.min(model.max, slicePlaneXRotation)
-    );
-    slicePlaneYRotation = Math.max(
-      model.min,
-      Math.min(model.max, slicePlaneYRotation)
-    );
+    horizontalRotation %= 360;
+    verticalRotation %= 360;
 
     if (
-      model.slicePlaneXRotation === slicePlaneXRotation &&
-      model.slicePlaneYRotation === slicePlaneYRotation
+      model.horizontalRotation === horizontalRotation &&
+      model.verticalRotation === verticalRotation
     ) {
       return;
     }
 
-    const onRotateChanging = publicAPI.getOnRotateChanging();
-    if (onRotateChanging) {
-      onRotateChanging({
-        xPos: pos[0],
-        yPos: pos[1],
-        rotateXStartPos: model.rotateStartPos[0],
-        rotateYStartPos: model.rotateStartPos[1],
-        dx,
-        dy,
-        slicePlaneXRotation,
-        slicePlaneYRotation,
-      });
-    }
-
-    publicAPI.rotate({ slicePlaneXRotation, slicePlaneYRotation });
+    publicAPI.setRotation({ horizontalRotation, verticalRotation });
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);
+
+    const onRotateChanged = publicAPI.getOnInteractiveRotateChanged();
+    if (onRotateChanged) {
+      onRotateChanged({
+        horizontalRotation: model.horizontalRotation,
+        verticalRotation: model.verticalRotation,
+      });
+    }
   };
 
-  publicAPI.rotate = ({ slicePlaneXRotation = 0, slicePlaneYRotation = 0 }) => {
-    model.slicePlaneXRotation = slicePlaneXRotation;
-    model.slicePlaneYRotation = slicePlaneYRotation;
-
-    const input = {
-      slicePlaneNormal: model.slicePlaneNormal,
-      sliceViewUp: model.sliceViewUp,
-      sliceXRot: model.slicePlaneXRotation,
-      sliceYRot: model.slicePlaneYRotation,
-      viewRotation: model.viewRotation,
+  publicAPI.getRotation = () => {
+    return {
+      horizontalRotation: model.horizontalRotation,
+      verticalRotation: model.verticalRotation,
     };
+  };
+
+  publicAPI.setRotation = ({
+    horizontalRotation = 0,
+    verticalRotation = 0,
+  }) => {
+    model.horizontalRotation = horizontalRotation;
+    model.verticalRotation = verticalRotation;
+
+    const { slicePlaneNormal, sliceViewUp } = model;
 
     // rotate around the vector of the cross product of the plane and viewup as the X component
     let sliceXRot = [];
-    vec3.cross(sliceXRot, input.sliceViewUp, input.slicePlaneNormal);
+    vec3.cross(sliceXRot, sliceViewUp, slicePlaneNormal);
     vec3.normalize(sliceXRot, sliceXRot);
 
-    // rotate the viewUp vector as the Y component
-    let sliceYRot = model.sliceViewUp;
     const planeMat = mat4.create();
 
+    // Rotate around the vertical (slice-up) vector
     mat4.rotate(
       planeMat,
       planeMat,
-      degrees2radians(input.sliceYRot),
-      sliceYRot
+      degrees2radians(horizontalRotation),
+      sliceViewUp
     );
+
+    // Rotate around the horizontal (screen-x) vector
     mat4.rotate(
       planeMat,
       planeMat,
-      degrees2radians(input.sliceXRot),
+      degrees2radians(verticalRotation),
       sliceXRot
     );
-    vec3.transformMat4(
-      model.cachedSlicePlane,
-      model.slicePlaneNormal,
-      planeMat
-    );
 
-    // Rotate the viewUp in 90 degree increments
-    const viewRotQuat = quat.create();
-    // Use - degrees since the axis of rotation should really be the direction of projection, which is the negative of the plane normal
-    quat.setAxisAngle(
-      viewRotQuat,
-      model.cachedSlicePlane,
-      degrees2radians(-input.viewRotation)
-    );
-    quat.normalize(viewRotQuat, viewRotQuat);
+    vec3.transformMat4(model.cachedSlicePlane, slicePlaneNormal, planeMat);
+    vec3.transformMat4(model.cachedSliceViewUp, sliceViewUp, planeMat);
 
-    // rotate the ViewUp with the x and z rotations
-    const xQuat = quat.create();
-    quat.setAxisAngle(xQuat, sliceXRot, degrees2radians(input.sliceXRot));
-    quat.normalize(xQuat, xQuat);
-    const viewUpQuat = quat.create();
-    quat.add(viewUpQuat, xQuat, viewRotQuat);
-    vec3.transformQuat(model.cachedSliceViewUp, model.sliceViewUp, viewRotQuat);
+    // // Rotate the viewUp in 90 degree increments
+    // const viewRotQuat = quat.create();
+    // // Use - degrees since the axis of rotation should really be the direction of projection, which is the negative of the plane normal
+    // quat.setAxisAngle(
+    //   viewRotQuat,
+    //   model.cachedSlicePlane,
+    //   degrees2radians(-input.viewRotation)
+    // );
+    // quat.normalize(viewRotQuat, viewRotQuat);
+
+    // // rotate the ViewUp with the x and z rotations
+    // const xQuat = quat.create();
+    // quat.setAxisAngle(xQuat, sliceXRot, degrees2radians(input.sliceXRot));
+    // quat.normalize(xQuat, xQuat);
+    // const viewUpQuat = quat.create();
+    // quat.add(viewUpQuat, xQuat, viewRotQuat);
+    // vec3.transformQuat(model.cachedSliceViewUp, model.sliceViewUp, viewRotQuat);
 
     // update the view's slice
     // FIXME: Store/remember the slice currently looked at, so you rotate around that location instead of the volume center
@@ -214,14 +205,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       .setSliceNormal(model.cachedSlicePlane, model.cachedSliceViewUp);
 
     renderWindow.render();
-
-    const onRotateChanged = publicAPI.getOnRotateChanged();
-    if (onRotateChanged) {
-      onRotateChanged({
-        slicePlaneXRotation: model.slicePlaneXRotation,
-        slicePlaneYRotation: model.slicePlaneYRotation,
-      });
-    }
   };
 
   const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;
@@ -278,8 +261,8 @@ const DEFAULT_VALUES = {
   rotateStartPos: [],
   min: -89,
   max: 89,
-  slicePlaneXRotation: 0,
-  slicePlaneYRotation: 0,
+  horizontalRotation: 0,
+  verticalRotation: 0,
   sliceViewUp: [0, 1, 0],
   viewRotation: 0,
 };
@@ -294,8 +277,7 @@ export function extend(publicAPI, model, initialValues = {}) {
 
   macro.setGet(publicAPI, model, [
     'volumeMapper',
-    'onRotateChanged',
-    'onRotateChanging',
+    'onInteractiveRotateChanged',
   ]);
 
   // Object specific methods
