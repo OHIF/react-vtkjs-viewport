@@ -336,14 +336,11 @@ class VTKMPRRotateExample extends Component {
       // api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
       // istyle.setSlabThickness(30);
 
-      istyle.setRotate({
+      istyle.setPlaneView(
         renderWindow,
-        horizontalRotation: volumeData[viewportIndex].horizontalRotation,
-        verticalRotation: volumeData[viewportIndex].verticalRotation,
-        slicePlaneNormal: volumeData[viewportIndex].slicePlaneNormal,
-        sliceViewUp: volumeData[viewportIndex].sliceViewUp,
-        viewRotation: volumeData[viewportIndex].viewRotation,
-      });
+        volumeData[viewportIndex].slicePlaneNormal,
+        volumeData[viewportIndex].sliceViewUp
+      );
 
       istyle.setOnInteractiveRotateChanged(
         ({ horizontalRotation, verticalRotation }) => {

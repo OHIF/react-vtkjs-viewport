@@ -280,9 +280,11 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   // publicAPI.getSliceNormal = () => cache.sliceNormal;
 
   /**
-   * Move the camera to the given slice normal and viewup direction. Viewup can be used to rotate the display of the image around the direction of view.
+   * Move the camera to the given slice normal and viewup direction.
+   * Viewup can be used to rotate the display of the image around the direction of view.
    *
-   * TODO: setting the slice ALWAYS resets to the volume center, but we need to be able to rotate from an arbitrary position, AKA the intersection of all 3 slice planes.
+   * TODO: setting the slice ALWAYS resets to the volume center,
+   * but we need to be able to rotate from an arbitrary position, AKA the intersection of all 3 slice planes.
    */
   // in world space
   publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {

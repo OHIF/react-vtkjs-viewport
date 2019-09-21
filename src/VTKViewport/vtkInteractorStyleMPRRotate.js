@@ -1,14 +1,11 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
-import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
-import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
-import { quat, vec3, mat4 } from 'gl-matrix';
+import { vec3, mat4 } from 'gl-matrix';
 import { degrees2radians } from '../lib/math/angles.js';
 
 const { States } = Constants;
+const MAX_SAFE_INTEGER = 2147483647;
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -23,21 +20,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
   model.classHierarchy.push('vtkInteractorStyleMPRRotate');
   model.wlStartPos = [0, 0];
 
-  model.trackballManipulator = vtkMouseCameraTrackballRotateManipulator.newInstance(
-    {
-      button: 1,
-    }
-  );
-  model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
-    button: 1,
-    shift: true,
-  });
-
-  model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
-    scrollEnabled: true,
-    dragEnabled: false,
-  });
-
   function onInteractiveRotationChanged() {
     const onChanged = publicAPI.getOnInteractiveRotateChanged();
     if (onChanged) {
@@ -47,7 +29,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       });
     }
   }
-  const MAX_SAFE_INTEGER = 2147483647;
 
   function updateScrollManipulator() {
     model.scrollManipulator.removeScrollListener();
@@ -71,8 +52,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 
   function setManipulators() {
     publicAPI.removeAllMouseManipulators();
-    publicAPI.addMouseManipulator(model.trackballManipulator);
-    publicAPI.addMouseManipulator(model.panManipulator);
     publicAPI.addMouseManipulator(model.zoomManipulator);
     publicAPI.addMouseManipulator(model.scrollManipulator);
     updateScrollManipulator();
@@ -95,23 +74,12 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     }
   };
 
-  publicAPI.setRotate = ({
-    renderWindow,
-    horizontalRotation = 0,
-    verticalRotation = 0,
-    slicePlaneNormal = [0, 0, 1],
-    sliceViewUp = [0, 1, 0],
-    viewRotation = 0,
-  }) => {
+  publicAPI.setPlaneView = (renderWindow, initialNormal, initialViewUp) => {
     model.renderWindow = renderWindow;
-    model.horizontalRotation = horizontalRotation;
-    model.verticalRotation = verticalRotation;
-    model.slicePlaneNormal = slicePlaneNormal;
-    model.sliceViewUp = sliceViewUp;
-    model.viewRotation = viewRotation;
+    model.initialViewUp = initialViewUp;
+    model.initialNormal = initialNormal;
 
-    model.cachedSlicePlane = [...slicePlaneNormal];
-    model.cachedSliceViewUp = [...sliceViewUp];
+    publicAPI.setSliceNormal(initialNormal, initialViewUp);
   };
 
   publicAPI.rotateFromMouse = pos => {
@@ -152,11 +120,11 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     model.horizontalRotation = horizontalRotation;
     model.verticalRotation = verticalRotation;
 
-    const { slicePlaneNormal, sliceViewUp } = model;
+    const { initialNormal, initialViewUp } = model;
 
     // rotate around the vector of the cross product of the plane and viewup as the X component
     let sliceXRot = [];
-    vec3.cross(sliceXRot, sliceViewUp, slicePlaneNormal);
+    vec3.cross(sliceXRot, initialViewUp, initialNormal);
     vec3.normalize(sliceXRot, sliceXRot);
 
     const planeMat = mat4.create();
@@ -166,40 +134,19 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       planeMat,
       planeMat,
       degrees2radians(-horizontalRotation),
-      sliceViewUp
+      initialViewUp
     );
 
     // Rotate around the horizontal (screen-x) vector
     mat4.rotate(
       planeMat,
       planeMat,
-      degrsssssssees2radians(-verticalRotation),
+      degrees2radians(-verticalRotation),
       sliceXRot
     );
 
-    vec3.transformMat4(model.cachedSlicePlane, slicePlaneNormal, planeMat);
-    vec3.transformMat4(model.cachedSliceViewUp, sliceViewUp, planeMat);
-
-    // // Rotate the viewUp in 90 degree increments
-    // const viewRotQuat = quat.create();
-    // // Use - degrees since the axis of rotation should really be the direction of projection, which is the negative of the plane normal
-    // quat.setAxisAngle(
-    //   viewRotQuat,
-    //   model.cachedSlicePlane,
-    //   degrees2radians(-input.viewRotation)
-    // );
-    // quat.normalize(viewRotQuat, viewRotQuat);
-
-    // // rotate the ViewUp with the x and z rotations
-    // const xQuat = quat.create();
-    // quat.setAxisAngle(xQuat, sliceXRot, degrees2radians(input.sliceXRot));
-    // quat.normalize(xQuat, xQuat);
-    // const viewUpQuat = quat.create();
-    // quat.add(viewUpQuat, xQuat, viewRotQuat);
-    // vec3.transformQuat(model.cachedSliceViewUp, model.sliceViewUp, viewRotQuat);
-
-    // update the view's slice
-    // FIXME: Store/remember the slice currently looked at, so you rotate around that location instead of the volume center
+    vec3.transformMat4(model.cachedSlicePlane, initialNormal, planeMat);
+    vec3.transformMat4(model.cachedSliceViewUp, initialViewUp, planeMat);
 
     const renderWindow = model.renderWindow;
     renderWindow
@@ -264,8 +211,6 @@ const DEFAULT_VALUES = {
   rotateStartPos: [0, 0],
   horizontalRotation: 0,
   verticalRotation: 0,
-  sliceViewUp: [0, 1, 0],
-  viewRotation: 0,
 };
 
 // ----------------------------------------------------------------------------
