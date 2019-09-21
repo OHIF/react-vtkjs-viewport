@@ -38,18 +38,33 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     dragEnabled: false,
   });
 
+  function onInteractiveRotationChanged() {
+    const onChanged = publicAPI.getOnInteractiveRotateChanged();
+    if (onChanged) {
+      onChanged({
+        horizontalRotation: model.horizontalRotation,
+        verticalRotation: model.verticalRotation,
+      });
+    }
+  }
+  const MAX_SAFE_INTEGER = 2147483647;
+
   function updateScrollManipulator() {
     model.scrollManipulator.removeScrollListener();
     model.scrollManipulator.setScrollListener(
-      model.min,
-      model.max,
+      -MAX_SAFE_INTEGER,
+      MAX_SAFE_INTEGER,
       1,
       () => model.horizontalRotation,
       horizontalRotation => {
-        publicAPI.rotate({
+        horizontalRotation %= 360;
+
+        publicAPI.setRotation({
           horizontalRotation,
           verticalRotation: model.verticalRotation,
         });
+
+        onInteractiveRotationChanged();
       }
     );
   }
@@ -78,12 +93,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     if (superHandleMouseMove) {
       superHandleMouseMove(callData);
     }
-  };
-
-  publicAPI.setMinMax = (min, max) => {
-    model.min = min;
-    model.max = max;
-    updateScrollManipulator();
   };
 
   publicAPI.setRotate = ({
@@ -126,13 +135,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);
 
-    const onRotateChanged = publicAPI.getOnInteractiveRotateChanged();
-    if (onRotateChanged) {
-      onRotateChanged({
-        horizontalRotation: model.horizontalRotation,
-        verticalRotation: model.verticalRotation,
-      });
-    }
+    onInteractiveRotationChanged();
   };
 
   publicAPI.getRotation = () => {
@@ -162,7 +165,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     mat4.rotate(
       planeMat,
       planeMat,
-      degrees2radians(horizontalRotation),
+      degrees2radians(-horizontalRotation),
       sliceViewUp
     );
 
@@ -170,7 +173,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     mat4.rotate(
       planeMat,
       planeMat,
-      degrees2radians(verticalRotation),
+      degrsssssssees2radians(-verticalRotation),
       sliceXRot
     );
 
@@ -258,9 +261,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 const DEFAULT_VALUES = {
   cachedSlicePlane: [],
   cachedSliceViewUp: [],
-  rotateStartPos: [],
-  min: -89,
-  max: 89,
+  rotateStartPos: [0, 0],
   horizontalRotation: 0,
   verticalRotation: 0,
   sliceViewUp: [0, 1, 0],

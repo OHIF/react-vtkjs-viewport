@@ -35,7 +35,7 @@ const searchInstanceOptions = {
   studyInstanceUID,
 };
 
-const min = 0;
+const min = -360;
 const max = 360;
 const volumeData = [
   {
@@ -344,8 +344,6 @@ class VTKMPRRotateExample extends Component {
         sliceViewUp: volumeData[viewportIndex].sliceViewUp,
         viewRotation: volumeData[viewportIndex].viewRotation,
       });
-
-      istyle.setMinMax(min, max);
 
       istyle.setOnInteractiveRotateChanged(
         ({ horizontalRotation, verticalRotation }) => {
