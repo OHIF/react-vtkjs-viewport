@@ -57,6 +57,17 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     updateScrollManipulator();
   }
 
+  function validateNumber(numberValue) {
+    if (
+      typeof numberValue === 'number' &&
+      numberValue === Number(numberValue) &&
+      Number.isFinite(numberValue)
+    ) {
+      return;
+    }
+
+    throw `Invalid number ${numberValue}`;
+  }
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [
@@ -74,8 +85,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     }
   };
 
-  publicAPI.setPlaneView = (renderWindow, initialNormal, initialViewUp) => {
-    model.renderWindow = renderWindow;
+  publicAPI.setPlaneView = (initialNormal, initialViewUp) => {
     model.initialViewUp = initialViewUp;
     model.initialNormal = initialNormal;
 
@@ -117,6 +127,9 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     horizontalRotation = 0,
     verticalRotation = 0,
   }) => {
+    validateNumber(horizontalRotation);
+    validateNumber(verticalRotation);
+
     model.horizontalRotation = horizontalRotation;
     model.verticalRotation = verticalRotation;
 
@@ -148,13 +161,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     vec3.transformMat4(model.cachedSlicePlane, initialNormal, planeMat);
     vec3.transformMat4(model.cachedSliceViewUp, initialViewUp, planeMat);
 
-    const renderWindow = model.renderWindow;
-    renderWindow
-      .getInteractor()
-      .getInteractorStyle()
-      .setSliceNormal(model.cachedSlicePlane, model.cachedSliceViewUp);
-
-    renderWindow.render();
+    publicAPI.setSliceNormal(model.cachedSlicePlane, model.cachedSliceViewUp);
   };
 
   const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;

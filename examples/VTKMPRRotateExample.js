@@ -16,6 +16,9 @@ import vtkAnnotatedCubeActor from 'vtk.js/Sources/Rendering/Core/AnnotatedCubeAc
 import { api } from 'dicomweb-client';
 import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import './initCornerstone.js';
+import Constants from 'vtk.js/Sources/Rendering/Core/VolumeMapper/Constants.js';
+
+const { BlendMode } = Constants;
 
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
@@ -118,7 +121,7 @@ function createActorMapper(imageData) {
 }
 
 function createCT2dPipeline(imageData) {
-  const { actor } = createActorMapper(imageData);
+  const { actor, mapper } = createActorMapper(imageData);
   const cfun = vtkColorTransferFunction.newInstance();
   /*
     0: { description: 'Soft tissue', window: 400, level: 40 },
@@ -132,6 +135,16 @@ function createCT2dPipeline(imageData) {
 
   actor.getProperty().setRGBTransferFunction(0, cfun);
 
+  const sampleDistance =
+    0.7 *
+    Math.sqrt(
+      imageData
+        .getSpacing()
+        .map(v => v * v)
+        .reduce((a, b) => a + b, 0)
+    );
+
+  mapper.setSampleDistance(sampleDistance);
   return actor;
 }
 
@@ -144,7 +157,7 @@ class VTKMPRRotateExample extends Component {
   async componentDidMount() {
     this.apis = [];
 
-    this.loadFromVti();
+    this.loadFromWadors();
   }
 
   /**
@@ -333,11 +346,13 @@ class VTKMPRRotateExample extends Component {
       renderWindow.getInteractor().setInteractorStyle(istyle);
       istyle.setVolumeMapper(api.volumes[0]);
 
-      // api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
-      // istyle.setSlabThickness(30);
+      // api.volumes[0]
+      //   .getMapper()
+      //   .setBlendMode(BlendMode.MAXIMUM_INTENSITY_BLEND);
+      //api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
+      //istyle.setSlabThickness(3);
 
       istyle.setPlaneView(
-        renderWindow,
         volumeData[viewportIndex].slicePlaneNormal,
         volumeData[viewportIndex].sliceViewUp
       );
@@ -358,15 +373,17 @@ class VTKMPRRotateExample extends Component {
       istyle.setRotation({ horizontalRotation: 0, verticalRotation: 0 });
 
       this.apis.orientations[viewportIndex].updateMarkerOrientation();
+
+      renderWindow.render();
     };
   };
 
   handleChangeX = (index, event) => {
-    volumeData[index].horizontalRotation = event.target.value;
+    volumeData[index].horizontalRotation = +event.target.value;
 
     const rotation = this.state.rotation;
 
-    rotation[index].x = event.target.value;
+    rotation[index].x = +event.target.value;
 
     this.setState({ rotation });
 
@@ -374,11 +391,11 @@ class VTKMPRRotateExample extends Component {
   };
 
   handleChangeY = (index, event) => {
-    volumeData[index].verticalRotation = event.target.value;
+    volumeData[index].verticalRotation = +event.target.value;
 
     const rotation = this.state.rotation;
 
-    rotation[index].y = event.target.value;
+    rotation[index].y = +event.target.value;
 
     this.setState({ rotation });
 
@@ -397,6 +414,8 @@ class VTKMPRRotateExample extends Component {
     });
 
     this.apis.orientations[index].updateMarkerOrientation();
+
+    renderWindow.render();
   };
 
   getSliceXRotation = index => {

@@ -66,14 +66,11 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   const cache = {
     sliceNormal: [0, 0, 0],
     sliceRange: [0, 0],
-    slicePosition: [0, 0, 0],
   };
 
   function updateScrollManipulator() {
     const range = publicAPI.getSliceRange();
     model.scrollManipulator.removeScrollListener();
-    // The Scroll listener has min, max, step, and getValue setValue as params.
-    // Internally, it checks that the result of the GET has changed, and only calls SET if it is new.
     model.scrollManipulator.setScrollListener(
       range[0],
       range[1],
@@ -97,6 +94,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   const superSetInteractor = publicAPI.setInteractor;
   publicAPI.setInteractor = interactor => {
     superSetInteractor(interactor);
+
     if (cameraSub) {
       cameraSub.unsubscribe();
       cameraSub = null;
@@ -112,9 +110,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
-        //Zaid: causes the Scroll manipulator to continousley reset
-        // to the slice scrolling overriding other manipulators.
-        //updateScrollManipulator();
+        updateScrollManipulator();
         publicAPI.modified();
       });
 
@@ -148,7 +144,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
       if (mapper) {
         // prevent zoom manipulator from messing with our focal point
-        // TODO: remove the zoom maninipulator instead?
         camera.setFreezeFocalPoint(true);
 
         // NOTE: Disabling this because it makes it more difficult to switch
@@ -218,7 +213,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       camera.setFocalPoint(...slicePoint);
 
       // run Callback
-      const onScroll = publicAPI.getOnScroll();
+      const onScroll = publicAPI.getOnScroll;
       if (onScroll) onScroll(slicePoint);
     }
   };
@@ -276,16 +271,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     return [0, 0, 0];
   };
 
-  // Thought this was a good idea, but no.
-  // publicAPI.getSliceNormal = () => cache.sliceNormal;
-
-  /**
-   * Move the camera to the given slice normal and viewup direction.
-   * Viewup can be used to rotate the display of the image around the direction of view.
-   *
-   * TODO: setting the slice ALWAYS resets to the volume center,
-   * but we need to be able to rotate from an arbitrary position, AKA the intersection of all 3 slice planes.
-   */
   // in world space
   publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {
     const renderer = model.interactor.getCurrentRenderer();
@@ -345,9 +330,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       // const transform = vtkMatrixBuilder
       //   .buildFromDegree()
       //   .identity()
-      //   .rotateFromDirections(oldDop, normal);
-      // const viewUp = [0, 1, 0];
-      // transform.apply(viewUp);
+      //   .rotateFromDirections(oldDop, _normal);
+
+      // transform.apply(_viewUp);
 
       vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _viewUp, _viewUp);
 
@@ -376,8 +361,10 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
     const dist = camera.getDistance();
+    const near = dist - slabThickness / 2;
+    const far = dist + slabThickness / 2;
 
-    camera.setClippingRange(dist - slabThickness / 2, dist + slabThickness / 2);
+    camera.setClippingRange(near, far);
   };
 
   setManipulators();
@@ -399,8 +386,8 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['volumeMapper', 'onScroll']);
-  macro.get(publicAPI, model, ['slabThickness', 'viewUp']);
+  macro.setGet(publicAPI, model, ['volumeMapper']);
+  macro.get(publicAPI, model, ['slabThickness']);
 
   // Object specific methods
   vtkInteractorStyleMPRSlice(publicAPI, model);
