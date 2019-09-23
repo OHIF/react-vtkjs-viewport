@@ -271,6 +271,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     return [0, 0, 0];
   };
 
+  function isCameraViewInitialized(camera) {
+    return camera.getDistance() !== undefined;
+  }
   // in world space
   publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {
     const renderer = model.interactor.getCurrentRenderer();
@@ -298,26 +301,32 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
       // Convert the provided normal into the volume's space
       vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _normal, _normal);
+      let center = camera.getFocalPoint();
+      let dist = camera.getDistance();
+      let angle = camera.getViewAngle();
 
-      const bounds = model.volumeMapper.getBounds();
-      // diagonal will be used as "width" of camera scene
-      const diagonal = Math.sqrt(
-        vtkMath.distance2BetweenPoints(
-          [bounds[0], bounds[2], bounds[4]],
-          [bounds[1], bounds[3], bounds[5]]
-        )
-      );
+      if (!isCameraViewInitialized(camera)) {
+        const bounds = model.volumeMapper.getBounds();
+        // diagonal will be used as "width" of camera scene
+        const diagonal = Math.sqrt(
+          vtkMath.distance2BetweenPoints(
+            [bounds[0], bounds[2], bounds[4]],
+            [bounds[1], bounds[3], bounds[5]]
+          )
+        );
 
-      // center will be used as initial focal point
-      const center = [
-        (bounds[0] + bounds[1]) / 2.0,
-        (bounds[2] + bounds[3]) / 2.0,
-        (bounds[4] + bounds[5]) / 2.0,
-      ];
+        // center will be used as initial focal point
+        center = [
+          (bounds[0] + bounds[1]) / 2.0,
+          (bounds[2] + bounds[3]) / 2.0,
+          (bounds[4] + bounds[5]) / 2.0,
+        ];
 
-      const angle = 90;
-      // distance from camera to focal point
-      const dist = diagonal / (2 * Math.tan((angle / 360) * Math.PI));
+        angle = 90;
+
+        // distance from camera to focal point
+        dist = diagonal / (2 * Math.tan((angle / 360) * Math.PI));
+      }
 
       const cameraPos = [
         center[0] - _normal[0] * dist,
