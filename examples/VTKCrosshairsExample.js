@@ -71,8 +71,14 @@ class VTKCrosshairsExample extends Component {
 
     volumeActor.setMapper(volumeMapper);
 
-    reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
+    reader.setUrl('/vmhead2-large.vti', { loadData: true }).then(() => {
       const data = reader.getOutputData();
+      const range = data.getPointData().getScalars().getRange();
+
+      const rgbTransferFunction = volumeActor.getProperty().getRGBTransferFunction(0);
+
+      rgbTransferFunction.setRange(range[0], range[1])
+
       volumeMapper.setInputData(data);
 
       this.setState({

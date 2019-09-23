@@ -1,6 +1,10 @@
 import React from 'react';
 import { Component } from 'react';
-import { View2D, vtkInteractorStyleMPRWindowLevel } from '@vtk-viewport';
+import {
+  View2D,
+  vtkInteractorStyleMPRWindowLevel,
+  invertVolume,
+} from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
@@ -56,6 +60,12 @@ class VTKBasicExample extends Component {
       levels: { windowWidth: voi.windowWidth, windowCenter: voi.windowCenter },
     });
     this.updateAllViewports();
+  };
+
+  invert = () => {
+    const volume = this.state.volumes[0];
+
+    invertVolume(volume, this.updateAllViewports);
   };
 
   updateAllViewports = () => {
@@ -160,8 +170,8 @@ class VTKBasicExample extends Component {
             to obtain access to the VTK render window for one or more component.
             It also shows how to provide an array of vtkVolumes to the component
             for rendering. When we change the RGB Transfer Function for the
-            volume using the Window/Level buttons, we can see that this is
-            applied inside both components.
+            volume using the Window/Level and Invert buttons, we can see that
+            this is applied inside both components.
           </p>
         </div>
         <div className="col-xs-12">
@@ -178,6 +188,9 @@ class VTKBasicExample extends Component {
               onClick={() => this.setWLPreset('HEAD')}
             >
               Head
+            </button>
+            <button className="btn btn-primary" onClick={() => this.invert()}>
+              Invert
             </button>
           </div>
           <span>WW: {this.state.levels.windowWidth}</span>
