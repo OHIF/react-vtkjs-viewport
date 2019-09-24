@@ -22,6 +22,7 @@ const PRESETS = {
 class VTKBasicExample extends Component {
   state = {
     volumes: [],
+    levels: {},
   };
 
   componentDidMount() {
@@ -55,6 +56,9 @@ class VTKBasicExample extends Component {
 
     rgbTransferFunction.setMappingRange(low, high);
 
+    this.setState({
+      levels: { windowWidth: voi.windowWidth, windowCenter: voi.windowCenter },
+    });
     this.updateAllViewports();
   };
 
@@ -132,6 +136,8 @@ class VTKBasicExample extends Component {
         renderWindow.getInteractor().setInteractorStyle(istyle);
         istyle.setVolumeMapper(component.volumes[0]);
 
+        istyle.setOnLevelsChanged(levels => this.handleLevelsChanged(levels));
+
         const renderWindows = Object.values(this.components).map(a =>
           a.genericRenderWindow.getRenderWindow()
         );
@@ -139,6 +145,17 @@ class VTKBasicExample extends Component {
       }
     };
   };
+
+  handleLevelsChanged({ windowCenter, windowWidth }) {
+    const levels = this.state.levels || {};
+
+    levels.windowCenter = windowCenter;
+    levels.windowWidth = windowWidth;
+
+    this.setState({
+      levels,
+    });
+  }
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
@@ -176,6 +193,8 @@ class VTKBasicExample extends Component {
               Invert
             </button>
           </div>
+          <span>WW: {this.state.levels.windowWidth}</span>
+          <span>WC: {this.state.levels.windowCenter}</span>
         </div>
         <div className="col-xs-12 col-sm-6">
           <View2D

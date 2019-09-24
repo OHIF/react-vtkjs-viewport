@@ -1,13 +1,14 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMath from 'vtk.js/Sources/Common/Core/Math';
-import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
-import vtkInteractorStyleManipulator from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator';
 import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
+import {
+  toWindowLevel,
+  toLowHighRange,
+} from '../lib/windowLevelRangeConverter';
 
 const { States } = Constants;
 
@@ -67,10 +68,9 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [callData.position.x, callData.position.y];
-    const renderer = callData.pokedRenderer;
 
     if (model.state === States.IS_WINDOW_LEVEL) {
-      publicAPI.windowLevel(renderer, pos);
+      publicAPI.windowLevelFromMouse(pos);
       publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
     }
 
@@ -97,39 +97,61 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     }
   };
 
-  publicAPI.windowLevel = (renderer, pos) => {
-    const rwi = model.interactor;
-    if (model.volumeMapper) {
-      const size = rwi.getView().getViewportSize(renderer);
-      const win = model.initialMRange[1] - model.initialMRange[0];
-      const level = (model.initialMRange[0] + model.initialMRange[1]) / 2.0;
-      let dx = ((pos[0] - model.wlStartPos[0]) * 4.0) / size[0];
-      let dy = ((pos[1] - model.wlStartPos[1]) * 4.0) / size[1];
-      if (Math.abs(win) > 0.01) {
-        dx *= win;
-      } else {
-        dx *= win < 0 ? -0.01 : 0.01;
-      }
-      if (Math.abs(level) > 0.01) {
-        dy *= level;
-      } else {
-        dy *= level < 0 ? -0.01 : 0.01;
-      }
-      if (win < 0.0) {
-        dx *= -1;
-      }
-      if (level < 0.0) {
-        dy *= -1;
-      }
-      const newWin = Math.max(0.01, dx + win);
-      const newLevel = level - dy;
-      const lower = newLevel - newWin / 2.0;
-      const upper = newLevel + newWin / 2.0;
-      model.volumeMapper
-        .getProperty()
-        .getRGBTransferFunction(0)
-        .setMappingRange(lower, upper);
+  publicAPI.windowLevelFromMouse = pos => {
+    const range = model.volumeMapper
+      .getMapper()
+      .getInputData()
+      .getPointData()
+      .getScalars()
+      .getRange();
+    const imageDynamicRange = range[1] - range[0];
+    const multiplier =
+      Math.round(imageDynamicRange / 1024) * publicAPI.getLevelScale();
+    const dx = Math.floor((pos[0] - model.wlStartPos[0]) * multiplier);
+    const dy = Math.floor((pos[1] - model.wlStartPos[1]) * multiplier);
+
+    let windowWidth = model.levels.windowWidth + dx;
+    let windowCenter = model.levels.windowCenter - dy;
+
+    windowWidth = Math.max(0.01, windowWidth);
+
+    if (
+      model.windowWidth === windowWidth &&
+      model.windowCenter === windowCenter
+    ) {
+      return;
     }
+
+    publicAPI.setWindowLevel(windowWidth, windowCenter);
+
+    model.wlStartPos[0] = Math.round(pos[0]);
+    model.wlStartPos[1] = Math.round(pos[1]);
+
+    const onLevelsChanged = publicAPI.getOnLevelsChanged();
+    if (onLevelsChanged) {
+      onLevelsChanged({ windowCenter, windowWidth });
+    }
+  };
+
+  publicAPI.getWindowLevel = () => {
+    const range = model.volumeMapper
+      .getProperty()
+      .getRGBTransferFunction(0)
+      .getMappingRange()
+      .slice();
+    return toWindowLevel(...range);
+  };
+
+  publicAPI.setWindowLevel = (windowWidth, windowCenter) => {
+    const lowHigh = toLowHighRange(windowWidth, windowCenter);
+
+    model.levels.windowWidth = windowWidth;
+    model.levels.windowCenter = windowCenter;
+
+    model.volumeMapper
+      .getProperty()
+      .getRGBTransferFunction(0)
+      .setMappingRange(lowHigh.lower, lowHigh.upper);
   };
 
   const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;
@@ -143,6 +165,12 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
           .getRGBTransferFunction(0)
           .getMappingRange()
           .slice();
+
+        model.levels = toWindowLevel(
+          model.initialMRange[0],
+          model.initialMRange[1]
+        );
+
         publicAPI.startWindowLevel();
       }
     } else if (superHandleLeftButtonPress) {
@@ -170,7 +198,10 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = {};
+const DEFAULT_VALUES = {
+  wlStartPos: [],
+  levelScale: 1,
+};
 
 // ----------------------------------------------------------------------------
 
@@ -180,7 +211,11 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['volumeMapper']);
+  macro.setGet(publicAPI, model, [
+    'volumeMapper',
+    'onLevelsChanged',
+    'levelScale',
+  ]);
 
   // Object specific methods
   vtkInteractorStyleMPRWindowLevel(publicAPI, model);
