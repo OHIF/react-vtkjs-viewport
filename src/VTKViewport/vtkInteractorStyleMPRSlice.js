@@ -110,7 +110,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
-        updateScrollManipulator();
+        // TODO: check why this is here?
+        // It overwrites inhirited functions
+        //updateScrollManipulator();
         publicAPI.modified();
       });
 

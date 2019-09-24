@@ -74,9 +74,10 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
       Math.round(callData.position.x),
       Math.round(callData.position.y),
     ];
+    const renderer = callData.pokedRenderer;
 
     if (model.state === States.IS_ROTATE) {
-      publicAPI.rotateFromMouse(pos);
+      publicAPI.rotateFromMouse(pos, renderer);
       publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
     }
 
@@ -92,9 +93,13 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     publicAPI.setSliceNormal(initialNormal, initialViewUp);
   };
 
-  publicAPI.rotateFromMouse = pos => {
-    const dx = Math.floor(pos[0] - model.rotateStartPos[0]);
-    const dy = Math.floor(pos[1] - model.rotateStartPos[1]);
+  publicAPI.rotateFromMouse = (pos, renderer) => {
+    const rwi = model.interactor;
+    const size = rwi.getView().getViewportSize(renderer);
+    const xSensitivity = 100.0 / size[0];
+    const ySensitivity = 100.0 / size[1];
+    const dx = Math.round((pos[0] - model.rotateStartPos[0]) * xSensitivity);
+    const dy = Math.round((pos[1] - model.rotateStartPos[1]) * ySensitivity);
     let horizontalRotation = model.horizontalRotation + dx;
     let verticalRotation = model.verticalRotation + dy;
 
