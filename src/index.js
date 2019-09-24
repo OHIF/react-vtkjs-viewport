@@ -9,6 +9,7 @@ import vtkSVGCrosshairsWidget from './VTKViewport/vtkSVGCrosshairsWidget.js';
 import ViewportOverlay from './ViewportOverlay/ViewportOverlay.js';
 import getImageData from './lib/getImageData.js';
 import loadImageData from './lib/loadImageData.js';
+import invertVolume from './lib/invertVolume.js';
 
 export {
   View2D,
@@ -21,7 +22,8 @@ export {
   vtkInteractorStyleMPRRotate,
   vtkInteractorStyleMPRSlice,
   vtkSVGWidgetManager,
-  vtkSVGCrosshairsWidget
+  vtkSVGCrosshairsWidget,
+  invertVolume,
 };
 
 export default View2D;

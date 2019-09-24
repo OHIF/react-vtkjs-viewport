@@ -1,6 +1,10 @@
 import React from 'react';
 import { Component } from 'react';
-import { View2D, vtkInteractorStyleMPRWindowLevel } from '@vtk-viewport';
+import {
+  View2D,
+  vtkInteractorStyleMPRWindowLevel,
+  invertVolume,
+} from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
@@ -18,6 +22,7 @@ const PRESETS = {
 class VTKBasicExample extends Component {
   state = {
     volumes: [],
+    levels: {},
   };
 
   componentDidMount() {
@@ -51,7 +56,16 @@ class VTKBasicExample extends Component {
 
     rgbTransferFunction.setMappingRange(low, high);
 
+    this.setState({
+      levels: { windowWidth: voi.windowWidth, windowCenter: voi.windowCenter },
+    });
     this.updateAllViewports();
+  };
+
+  invert = () => {
+    const volume = this.state.volumes[0];
+
+    invertVolume(volume, this.updateAllViewports);
   };
 
   updateAllViewports = () => {
@@ -122,6 +136,8 @@ class VTKBasicExample extends Component {
         renderWindow.getInteractor().setInteractorStyle(istyle);
         istyle.setVolumeMapper(component.volumes[0]);
 
+        istyle.setOnLevelsChanged(levels => this.handleLevelsChanged(levels));
+
         const renderWindows = Object.values(this.components).map(a =>
           a.genericRenderWindow.getRenderWindow()
         );
@@ -129,6 +145,17 @@ class VTKBasicExample extends Component {
       }
     };
   };
+
+  handleLevelsChanged({ windowCenter, windowWidth }) {
+    const levels = this.state.levels || {};
+
+    levels.windowCenter = windowCenter;
+    levels.windowWidth = windowWidth;
+
+    this.setState({
+      levels,
+    });
+  }
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
@@ -143,8 +170,8 @@ class VTKBasicExample extends Component {
             to obtain access to the VTK render window for one or more component.
             It also shows how to provide an array of vtkVolumes to the component
             for rendering. When we change the RGB Transfer Function for the
-            volume using the Window/Level buttons, we can see that this is
-            applied inside both components.
+            volume using the Window/Level and Invert buttons, we can see that
+            this is applied inside both components.
           </p>
         </div>
         <div className="col-xs-12">
@@ -162,7 +189,12 @@ class VTKBasicExample extends Component {
             >
               Head
             </button>
+            <button className="btn btn-primary" onClick={() => this.invert()}>
+              Invert
+            </button>
           </div>
+          <span>WW: {this.state.levels.windowWidth}</span>
+          <span>WC: {this.state.levels.windowCenter}</span>
         </div>
         <div className="col-xs-12 col-sm-6">
           <View2D
