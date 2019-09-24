@@ -73,7 +73,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     rowCosineVec.y,
     rowCosineVec.z,
     colCosineVec.x,
-    colCosineVec.x,
+    colCosineVec.y,
     colCosineVec.z,
     crossProduct.x,
     crossProduct.y,
