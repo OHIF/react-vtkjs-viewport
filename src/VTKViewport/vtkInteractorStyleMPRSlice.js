@@ -188,6 +188,15 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         // prevent zoom manipulator from messing with our focal point
         camera.setFreezeFocalPoint(true);
 
+        const viewportData = publicAPI.getViewport();
+
+        if (viewportData) {
+          publicAPI.setSliceNormal(
+            viewportData.getInitialSliceNormal(),
+            viewportData.getInitialViewUp()
+          );
+        }
+
         // NOTE: Disabling this because it makes it more difficult to switch
         // interactor styles. Need to find a better way to do this!
         //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());

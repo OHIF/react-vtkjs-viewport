@@ -73,11 +73,16 @@ class VTKCrosshairsExample extends Component {
 
     reader.setUrl('/vmhead2-large.vti', { loadData: true }).then(() => {
       const data = reader.getOutputData();
-      const range = data.getPointData().getScalars().getRange();
+      const range = data
+        .getPointData()
+        .getScalars()
+        .getRange();
 
-      const rgbTransferFunction = volumeActor.getProperty().getRGBTransferFunction(0);
+      const rgbTransferFunction = volumeActor
+        .getProperty()
+        .getRGBTransferFunction(0);
 
-      rgbTransferFunction.setRange(range[0], range[1])
+      rgbTransferFunction.setRange(range[0], range[1]);
 
       volumeMapper.setInputData(data);
 
@@ -124,27 +129,25 @@ class VTKCrosshairsExample extends Component {
       api.svgWidgets = {
         crosshairsWidget,
       };
+      const viewport = istyle.getViewport();
 
       switch (viewportIndex) {
         default:
         case 0:
           //Axial
-          istyle.setSliceNormal([0, 0, 1]);
-          camera.setViewUp(0, -1, 0);
+          viewport.setInitialOrientation([0, 0, 1], [0, -1, 0]);
 
           break;
         case 1:
           // sagittal
-          istyle.setSliceNormal([1, 0, 0]);
-          camera.setViewUp(0, 0, 1);
+          viewport.setInitialOrientation([1, 0, 0], [0, 0, 1]);
           break;
         case 2:
           // Coronal
-          istyle.setSliceNormal([0, 1, 0]);
-          camera.setViewUp(0, 0, 1);
+          viewport.setInitialOrientation([0, 1, 0], [0, 0, 1]);
           break;
       }
-
+      istyle.setViewport(viewport);
       renderWindow.render();
     };
   };

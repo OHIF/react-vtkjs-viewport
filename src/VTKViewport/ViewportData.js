@@ -127,7 +127,7 @@ export default class {
     return this._state.initialSliceNormal;
   };
 
-  setInitialOrientation = (initialSliceNormal, initialViewUp = [0, 0, 1]) => {
+  setInitialOrientation = (initialSliceNormal, initialViewUp = [0, 1, 0]) => {
     this._state.initialSliceNormal = initialSliceNormal;
     this._state.initialViewUp = initialViewUp;
   };
