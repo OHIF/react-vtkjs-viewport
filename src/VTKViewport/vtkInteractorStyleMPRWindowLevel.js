@@ -65,6 +65,16 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     updateScrollManipulator();
   }
 
+  publicAPI.setVolumeMapper = mapper => {
+    model.volumeMapper = mapper;
+
+    updateScrollManipulator();
+  };
+
+  publicAPI.getVolumeMapper = () => {
+    return model.volumeMapper;
+  };
+
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [callData.position.x, callData.position.y];
@@ -211,11 +221,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, [
-    'volumeMapper',
-    'onLevelsChanged',
-    'levelScale',
-  ]);
+  macro.setGet(publicAPI, model, ['onLevelsChanged', 'levelScale']);
 
   // Object specific methods
   vtkInteractorStyleMPRWindowLevel(publicAPI, model);

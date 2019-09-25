@@ -6,6 +6,9 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
+import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
+import ViewportData from './ViewportData';
+import EVENTS from '../events';
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -57,7 +60,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     button: 3,
   });
 
-  model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
+  model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
     scrollEnabled: true,
     dragEnabled: false,
   });
@@ -68,26 +71,57 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     sliceRange: [0, 0],
   };
 
-  function updateScrollManipulator() {
-    const range = publicAPI.getSliceRange();
-    model.scrollManipulator.removeScrollListener();
-    model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
-      1,
-      publicAPI.getSlice,
-      publicAPI.setSlice
-    );
-  }
+  // function updateScrollManipulator() {
+  //   const range = publicAPI.getSliceRange();
+  //   model.scrollManipulator.removeScrollListener();
+  //   model.scrollManipulator.setScrollListener(
+  //     range[0],
+  //     range[1],
+  //     1,
+  //     publicAPI.getSlice,
+  //     publicAPI.setSlice
+  //   );
+  // }
 
   function setManipulators() {
     publicAPI.removeAllMouseManipulators();
     publicAPI.addMouseManipulator(model.trackballManipulator);
     publicAPI.addMouseManipulator(model.panManipulator);
     publicAPI.addMouseManipulator(model.zoomManipulator);
+    //publicAPI.addMouseManipulator(model.scrollRotateManipulator);
     publicAPI.addMouseManipulator(model.scrollManipulator);
-    updateScrollManipulator();
+    // updateScrollManipulator();
   }
+
+  publicAPI.setViewport = viewportData => {
+    if (model.viewportData) {
+      const oldWindow = model.viewportData.getEventWindow();
+
+      oldWindow.removeEventListener(EVENTS.VIEWPORT_ROTATED, onRotateChanged);
+    }
+
+    model.viewportData = viewportData;
+
+    if (model.scrollManipulator.setViewportData) {
+      model.scrollManipulator.setViewportData(viewportData);
+    }
+
+    if (viewportData) {
+      publicAPI.setSliceNormal(
+        viewportData.getInitialSliceNormal(),
+        viewportData.getInitialViewUp()
+      );
+      viewportData
+        .getEventWindow()
+        .addEventListener(EVENTS.VIEWPORT_ROTATED, onRotateChanged);
+    }
+  };
+
+  function onRotateChanged(args) {
+    publicAPI.setSliceNormal(args.detail.sliceNormal, args.detail.sliceViewUp);
+  }
+
+  publicAPI.getViewport = () => model.viewportData;
 
   let cameraSub = null;
   let interactorSub = null;
@@ -125,6 +159,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
         camera.setClippingRange(near, far);
       });
+
+      const eventWindow = model.interactor.getContainer();
+
+      publicAPI.setViewport(new ViewportData(eventWindow));
+    } else {
+      publicAPI.setViewport(null);
     }
   };
 
@@ -274,7 +314,11 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   };
 
   function isCameraViewInitialized(camera) {
-    return camera.getDistance() !== undefined;
+    const dist = camera.getDistance();
+
+    return (
+      typeof dist === 'number' && dist === Number(dist) && Number.isFinite(dist)
+    );
   }
   // in world space
   publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {

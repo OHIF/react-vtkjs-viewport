@@ -20,54 +20,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
   model.classHierarchy.push('vtkInteractorStyleMPRRotate');
   model.wlStartPos = [0, 0];
 
-  function onInteractiveRotationChanged() {
-    const onChanged = publicAPI.getOnInteractiveRotateChanged();
-    if (onChanged) {
-      onChanged({
-        horizontalRotation: model.horizontalRotation,
-        verticalRotation: model.verticalRotation,
-      });
-    }
-  }
-
-  function updateScrollManipulator() {
-    model.scrollManipulator.removeScrollListener();
-    model.scrollManipulator.setScrollListener(
-      -MAX_SAFE_INTEGER,
-      MAX_SAFE_INTEGER,
-      1,
-      () => model.horizontalRotation,
-      horizontalRotation => {
-        horizontalRotation %= 360;
-
-        publicAPI.setRotation({
-          horizontalRotation,
-          verticalRotation: model.verticalRotation,
-        });
-
-        onInteractiveRotationChanged();
-      }
-    );
-  }
-
-  function setManipulators() {
-    publicAPI.removeAllMouseManipulators();
-    publicAPI.addMouseManipulator(model.zoomManipulator);
-    publicAPI.addMouseManipulator(model.scrollManipulator);
-    updateScrollManipulator();
-  }
-
-  function validateNumber(numberValue) {
-    if (
-      typeof numberValue === 'number' &&
-      numberValue === Number(numberValue) &&
-      Number.isFinite(numberValue)
-    ) {
-      return;
-    }
-
-    throw `Invalid number ${numberValue}`;
-  }
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [
@@ -86,13 +38,6 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     }
   };
 
-  publicAPI.setPlaneView = (initialNormal, initialViewUp) => {
-    model.initialViewUp = initialViewUp;
-    model.initialNormal = initialNormal;
-
-    publicAPI.setSliceNormal(initialNormal, initialViewUp);
-  };
-
   publicAPI.rotateFromMouse = (pos, renderer) => {
     const rwi = model.interactor;
     const size = rwi.getView().getViewportSize(renderer);
@@ -100,73 +45,17 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     const ySensitivity = 100.0 / size[1];
     const dx = Math.round((pos[0] - model.rotateStartPos[0]) * xSensitivity);
     const dy = Math.round((pos[1] - model.rotateStartPos[1]) * ySensitivity);
-    let horizontalRotation = model.horizontalRotation + dx;
-    let verticalRotation = model.verticalRotation + dy;
+    const viewport = publicAPI.getViewport();
+    let horizontalRotation = viewport.getHRotation() + dx;
+    let verticalRotation = viewport.getVRotation() + dy;
 
     horizontalRotation %= 360;
     verticalRotation %= 360;
 
-    if (
-      model.horizontalRotation === horizontalRotation &&
-      model.verticalRotation === verticalRotation
-    ) {
-      return;
-    }
-
-    publicAPI.setRotation({ horizontalRotation, verticalRotation });
+    viewport.rotate(horizontalRotation, verticalRotation);
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);
-
-    onInteractiveRotationChanged();
-  };
-
-  publicAPI.getRotation = () => {
-    return {
-      horizontalRotation: model.horizontalRotation,
-      verticalRotation: model.verticalRotation,
-    };
-  };
-
-  publicAPI.setRotation = ({
-    horizontalRotation = 0,
-    verticalRotation = 0,
-  }) => {
-    validateNumber(horizontalRotation);
-    validateNumber(verticalRotation);
-
-    model.horizontalRotation = horizontalRotation;
-    model.verticalRotation = verticalRotation;
-
-    const { initialNormal, initialViewUp } = model;
-
-    // rotate around the vector of the cross product of the plane and viewup as the X component
-    let sliceXRot = [];
-    vec3.cross(sliceXRot, initialViewUp, initialNormal);
-    vec3.normalize(sliceXRot, sliceXRot);
-
-    const planeMat = mat4.create();
-
-    // Rotate around the vertical (slice-up) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-horizontalRotation),
-      initialViewUp
-    );
-
-    // Rotate around the horizontal (screen-x) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-verticalRotation),
-      sliceXRot
-    );
-
-    vec3.transformMat4(model.cachedSlicePlane, initialNormal, planeMat);
-    vec3.transformMat4(model.cachedSliceViewUp, initialViewUp, planeMat);
-
-    publicAPI.setSliceNormal(model.cachedSlicePlane, model.cachedSliceViewUp);
   };
 
   const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;
@@ -210,7 +99,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     }
   };
 
-  setManipulators();
+  // setManipulators();
 }
 
 // ----------------------------------------------------------------------------
@@ -218,11 +107,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  cachedSlicePlane: [],
-  cachedSliceViewUp: [],
   rotateStartPos: [0, 0],
-  horizontalRotation: 0,
-  verticalRotation: 0,
 };
 
 // ----------------------------------------------------------------------------

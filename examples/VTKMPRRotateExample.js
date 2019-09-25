@@ -5,6 +5,7 @@ import {
   getImageData,
   loadImageData,
   vtkInteractorStyleMPRRotate,
+  EVENTS,
 } from '@vtk-viewport';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkColorMaps from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/ColorMaps';
@@ -157,7 +158,7 @@ class VTKMPRRotateExample extends Component {
   async componentDidMount() {
     this.apis = [];
 
-    this.loadFromWadors();
+    this.loadFromVti();
   }
 
   /**
@@ -352,29 +353,36 @@ class VTKMPRRotateExample extends Component {
       //api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
       //istyle.setSlabThickness(3);
 
-      istyle.setPlaneView(
+      const viewport = istyle.getViewport();
+
+      viewport.setInitialOrientation(
         volumeData[viewportIndex].slicePlaneNormal,
         volumeData[viewportIndex].sliceViewUp
       );
 
-      istyle.setOnInteractiveRotateChanged(
-        ({ horizontalRotation, verticalRotation }) => {
+      istyle.setViewport(viewport);
+
+      viewport
+        .getEventWindow()
+        .addEventListener(EVENTS.VIEWPORT_ROTATED, args => {
           const rotation = this.state.rotation;
 
-          rotation[viewportIndex].x = horizontalRotation;
-          rotation[viewportIndex].y = verticalRotation;
+          if (
+            rotation[viewportIndex].x === args.detail.horizontalRotation &&
+            rotation[viewportIndex].y === args.detail.verticalRotation
+          ) {
+            return;
+          }
+
+          rotation[viewportIndex].x = args.detail.horizontalRotation;
+          rotation[viewportIndex].y = args.detail.verticalRotation;
 
           this.setState({ rotation });
-        }
-      );
+        });
 
       this.addWidget(viewportIndex);
 
-      istyle.setRotation({ horizontalRotation: 0, verticalRotation: 0 });
-
-      this.apis.orientations[viewportIndex].updateMarkerOrientation();
-
-      renderWindow.render();
+      this.updateRotate(viewportIndex);
     };
   };
 
@@ -408,10 +416,12 @@ class VTKMPRRotateExample extends Component {
 
     const istyle = renderWindow.getInteractor().getInteractorStyle();
 
-    istyle.setRotation({
-      horizontalRotation: volumeData[index].horizontalRotation,
-      verticalRotation: volumeData[index].verticalRotation,
-    });
+    istyle
+      .getViewport()
+      .rotate(
+        volumeData[index].horizontalRotation,
+        volumeData[index].verticalRotation
+      );
 
     this.apis.orientations[index].updateMarkerOrientation();
 
