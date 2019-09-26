@@ -129,25 +129,24 @@ class VTKCrosshairsExample extends Component {
       api.svgWidgets = {
         crosshairsWidget,
       };
-      const viewport = istyle.getViewport();
 
       switch (viewportIndex) {
         default:
         case 0:
           //Axial
-          viewport.setInitialOrientation([0, 0, 1], [0, -1, 0]);
+          istyle.setSliceNormal([0, 0, 1], [0, -1, 0]);
 
           break;
         case 1:
           // sagittal
-          viewport.setInitialOrientation([1, 0, 0], [0, 0, 1]);
+          istyle.setSliceNormal([1, 0, 0], [0, 0, 1]);
           break;
         case 2:
           // Coronal
-          viewport.setInitialOrientation([0, 1, 0], [0, 0, 1]);
+          istyle.setSliceNormal([0, 1, 0], [0, 0, 1]);
           break;
       }
-      istyle.setViewport(viewport);
+
       renderWindow.render();
     };
   };

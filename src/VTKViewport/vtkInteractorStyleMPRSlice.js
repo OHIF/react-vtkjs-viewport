@@ -60,10 +60,15 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     button: 3,
   });
 
-  model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
+  model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
     scrollEnabled: true,
     dragEnabled: false,
   });
+
+  // model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
+  //   scrollEnabled: true,
+  //   dragEnabled: false,
+  // });
 
   // cache for sliceRange
   const cache = {
@@ -71,26 +76,25 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     sliceRange: [0, 0],
   };
 
-  // function updateScrollManipulator() {
-  //   const range = publicAPI.getSliceRange();
-  //   model.scrollManipulator.removeScrollListener();
-  //   model.scrollManipulator.setScrollListener(
-  //     range[0],
-  //     range[1],
-  //     1,
-  //     publicAPI.getSlice,
-  //     publicAPI.setSlice
-  //   );
-  // }
+  function updateScrollManipulator() {
+    const range = publicAPI.getSliceRange();
+    model.scrollManipulator.removeScrollListener();
+    model.scrollManipulator.setScrollListener(
+      range[0],
+      range[1],
+      1,
+      publicAPI.getSlice,
+      publicAPI.setSlice
+    );
+  }
 
   function setManipulators() {
     publicAPI.removeAllMouseManipulators();
     publicAPI.addMouseManipulator(model.trackballManipulator);
     publicAPI.addMouseManipulator(model.panManipulator);
     publicAPI.addMouseManipulator(model.zoomManipulator);
-    //publicAPI.addMouseManipulator(model.scrollRotateManipulator);
     publicAPI.addMouseManipulator(model.scrollManipulator);
-    // updateScrollManipulator();
+    updateScrollManipulator();
   }
 
   publicAPI.setViewport = viewportData => {
@@ -107,7 +111,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
 
     if (viewportData) {
-      publicAPI.setSliceNormal(
+      setSliceNormalInternal(
         viewportData.getInitialSliceNormal(),
         viewportData.getInitialViewUp()
       );
@@ -118,7 +122,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   };
 
   function onRotateChanged(args) {
-    publicAPI.setSliceNormal(args.detail.sliceNormal, args.detail.sliceViewUp);
+    setSliceNormalInternal(args.detail.sliceNormal, args.detail.sliceViewUp);
   }
 
   publicAPI.getViewport = () => model.viewportData;
@@ -146,7 +150,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       cameraSub = camera.onModified(() => {
         // TODO: check why this is here?
         // It overwrites inhirited functions
-        //updateScrollManipulator();
+        updateScrollManipulator();
         publicAPI.modified();
       });
 
@@ -191,12 +195,13 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         const viewportData = publicAPI.getViewport();
 
         if (viewportData) {
-          publicAPI.setSliceNormal(
+          setSliceNormalInternal(
             viewportData.getInitialSliceNormal(),
             viewportData.getInitialViewUp()
           );
         }
 
+        updateScrollManipulator();
         // NOTE: Disabling this because it makes it more difficult to switch
         // interactor styles. Need to find a better way to do this!
         //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
@@ -329,8 +334,19 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       typeof dist === 'number' && dist === Number(dist) && Number.isFinite(dist)
     );
   }
-  // in world space
+
   publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {
+    const viewportData = publicAPI.getViewport();
+
+    if (viewportData) {
+      viewportData.setInitialOrientation(normal, viewUp);
+    }
+
+    setSliceNormalInternal(normal, viewUp);
+  };
+
+  // in world space
+  function setSliceNormalInternal(normal, viewUp = [0, 1, 0]) {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
 
@@ -415,7 +431,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       publicAPI.setCenterOfRotation(center);
     }
-  };
+  }
 
   publicAPI.setSlabThickness = slabThickness => {
     model.slabThickness = slabThickness;
