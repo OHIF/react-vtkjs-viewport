@@ -1,11 +1,14 @@
 import macro from 'vtk.js/Sources/macro';
-import * as vtkMath from 'vtk.js/Sources/Common/Core/Math';
+import vtkMath from 'vtk.js/Sources/Common/Core/Math';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkInteractorStyleManipulator from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator';
 import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
+import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
+import ViewportData from './ViewportData';
+import EVENTS from '../events';
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -56,18 +59,22 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
     button: 3,
   });
+
   model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
     scrollEnabled: true,
     dragEnabled: false,
   });
+
+  // model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
+  //   scrollEnabled: true,
+  //   dragEnabled: false,
+  // });
 
   // cache for sliceRange
   const cache = {
     sliceNormal: [0, 0, 0],
     sliceRange: [0, 0],
   };
-
-  let cameraSub = null;
 
   function updateScrollManipulator() {
     const range = publicAPI.getSliceRange();
@@ -90,7 +97,38 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     updateScrollManipulator();
   }
 
-  let interactorSub;
+  publicAPI.setViewport = viewportData => {
+    if (model.viewportData) {
+      const oldWindow = model.viewportData.getEventWindow();
+
+      oldWindow.removeEventListener(EVENTS.VIEWPORT_ROTATED, onRotateChanged);
+    }
+
+    model.viewportData = viewportData;
+
+    if (model.scrollManipulator.setViewportData) {
+      model.scrollManipulator.setViewportData(viewportData);
+    }
+
+    if (viewportData) {
+      setSliceNormalInternal(
+        viewportData.getInitialSliceNormal(),
+        viewportData.getInitialViewUp()
+      );
+      viewportData
+        .getEventWindow()
+        .addEventListener(EVENTS.VIEWPORT_ROTATED, onRotateChanged);
+    }
+  };
+
+  function onRotateChanged(args) {
+    setSliceNormalInternal(args.detail.sliceNormal, args.detail.sliceViewUp);
+  }
+
+  publicAPI.getViewport = () => model.viewportData;
+
+  let cameraSub = null;
+  let interactorSub = null;
   const superSetInteractor = publicAPI.setInteractor;
   publicAPI.setInteractor = interactor => {
     superSetInteractor(interactor);
@@ -110,6 +148,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
+        // TODO: check why this is here?
+        // It overwrites inhirited functions
         updateScrollManipulator();
         publicAPI.modified();
       });
@@ -123,6 +163,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
         camera.setClippingRange(near, far);
       });
+
+      const eventWindow = model.interactor.getContainer();
+
+      publicAPI.setViewport(new ViewportData(eventWindow));
+    } else {
+      publicAPI.setViewport(null);
     }
   };
 
@@ -146,6 +192,16 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         // prevent zoom manipulator from messing with our focal point
         camera.setFreezeFocalPoint(true);
 
+        const viewportData = publicAPI.getViewport();
+
+        if (viewportData) {
+          setSliceNormalInternal(
+            viewportData.getInitialSliceNormal(),
+            viewportData.getInitialViewUp()
+          );
+        }
+
+        updateScrollManipulator();
         // NOTE: Disabling this because it makes it more difficult to switch
         // interactor styles. Need to find a better way to do this!
         //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
@@ -180,6 +236,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const bounds = model.volumeMapper.getBounds();
 
       const clampedSlice = clamp(slice, ...range);
+
       const center = [
         (bounds[0] + bounds[1]) / 2.0,
         (bounds[2] + bounds[3]) / 2.0,
@@ -202,14 +259,18 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         zeroPoint[2] + dop[2] * clampedSlice,
       ];
 
-      const newPos = [
+      const cameraPos = [
         slicePoint[0] - dop[0] * distance,
         slicePoint[1] - dop[1] * distance,
         slicePoint[2] - dop[2] * distance,
       ];
 
-      camera.setPosition(...newPos);
+      camera.setPosition(...cameraPos);
       camera.setFocalPoint(...slicePoint);
+
+      // run Callback
+      const onScroll = publicAPI.getOnScroll;
+      if (onScroll) onScroll(slicePoint);
     }
   };
 
@@ -258,7 +319,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
   // Slice normal is just camera DOP
   publicAPI.getSliceNormal = () => {
-    if (model.volumeMapper) {
+    if (model.volumeMapper && model.interactor) {
       const renderer = model.interactor.getCurrentRenderer();
       const camera = renderer.getActiveCamera();
       return camera.getDirectionOfProjection();
@@ -266,58 +327,102 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     return [0, 0, 0];
   };
 
+  function isCameraViewInitialized(camera) {
+    const dist = camera.getDistance();
+
+    return (
+      typeof dist === 'number' && dist === Number(dist) && Number.isFinite(dist)
+    );
+  }
+
+  publicAPI.setSliceNormal = (normal, viewUp = [0, 1, 0]) => {
+    const viewportData = publicAPI.getViewport();
+
+    if (viewportData) {
+      viewportData.setInitialOrientation(normal, viewUp);
+    }
+
+    setSliceNormalInternal(normal, viewUp);
+  };
+
   // in world space
-  publicAPI.setSliceNormal = (...normal) => {
+  function setSliceNormalInternal(normal, viewUp = [0, 1, 0]) {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
 
-    vtkMath.normalize(normal);
+    // Copy arguments to the model, so they can be GET-ed later
+    model.sliceNormal = [...normal];
+    model.viewUp = [...viewUp];
+
+    //copy arguments for internal editing so we don't cause sideeffects
+    const _normal = [...normal];
+    const _viewUp = [...viewUp];
 
     if (model.volumeMapper) {
-      const bounds = model.volumeMapper.getBounds();
-
-      // diagonal will be used as "width" of camera scene
-      const diagonal = Math.sqrt(
-        vtkMath.distance2BetweenPoints(
-          [bounds[0], bounds[2], bounds[4]],
-          [bounds[1], bounds[3], bounds[5]]
-        )
+      vtkMath.normalize(_normal);
+      let mapper = model.volumeMapper;
+      // get the mapper if the model is actually the actor, not the mapper
+      if (!model.volumeMapper.getInputData && model.volumeMapper.getMapper) {
+        mapper = model.volumeMapper.getMapper();
+      }
+      let volumeCoordinateSpace = vec9toMat3(
+        mapper.getInputData().getDirection()
       );
+      // Transpose the volume's coordinate space to create a transformation matrix
+      vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
+      // Convert the provided normal into the volume's space
+      vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _normal, _normal);
+      let center = camera.getFocalPoint();
+      let dist = camera.getDistance();
+      let angle = camera.getViewAngle();
 
-      // center will be used as initial focal point
-      const center = [
-        (bounds[0] + bounds[1]) / 2.0,
-        (bounds[2] + bounds[3]) / 2.0,
-        (bounds[4] + bounds[5]) / 2.0,
-      ];
+      if (!isCameraViewInitialized(camera)) {
+        const bounds = model.volumeMapper.getBounds();
+        // diagonal will be used as "width" of camera scene
+        const diagonal = Math.sqrt(
+          vtkMath.distance2BetweenPoints(
+            [bounds[0], bounds[2], bounds[4]],
+            [bounds[1], bounds[3], bounds[5]]
+          )
+        );
 
-      const angle = 90;
-      // distance from camera to focal point
-      const dist = diagonal / (2 * Math.tan((angle / 360) * Math.PI));
+        // center will be used as initial focal point
+        center = [
+          (bounds[0] + bounds[1]) / 2.0,
+          (bounds[2] + bounds[3]) / 2.0,
+          (bounds[4] + bounds[5]) / 2.0,
+        ];
+
+        angle = 90;
+
+        // distance from camera to focal point
+        dist = diagonal / (2 * Math.tan((angle / 360) * Math.PI));
+      }
 
       const cameraPos = [
-        center[0] - normal[0] * dist,
-        center[1] - normal[1] * dist,
-        center[2] - normal[2] * dist,
+        center[0] - _normal[0] * dist,
+        center[1] - _normal[1] * dist,
+        center[2] - _normal[2] * dist,
       ];
 
       // set viewUp based on DOP rotation
-      const oldDop = camera.getDirectionOfProjection();
-      const transform = vtkMatrixBuilder
-        .buildFromDegree()
-        .identity()
-        .rotateFromDirections(oldDop, normal);
+      // const oldDop = camera.getDirectionOfProjection();
+      // const transform = vtkMatrixBuilder
+      //   .buildFromDegree()
+      //   .identity()
+      //   .rotateFromDirections(oldDop, _normal);
 
-      const viewUp = [0, 1, 0];
-      transform.apply(viewUp);
+      // transform.apply(_viewUp);
+
+      vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _viewUp, _viewUp);
 
       const { slabThickness } = model;
 
       camera.setPosition(...cameraPos);
       camera.setDistance(dist);
       // should be set after pos and distance
-      camera.setDirectionOfProjection(...normal);
-      camera.setViewUp(...viewUp);
+      camera.setDirectionOfProjection(..._normal);
+      camera.setViewUp(..._viewUp);
       camera.setViewAngle(angle);
       camera.setClippingRange(
         dist - slabThickness / 2,
@@ -326,7 +431,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       publicAPI.setCenterOfRotation(center);
     }
-  };
+  }
 
   publicAPI.setSlabThickness = slabThickness => {
     model.slabThickness = slabThickness;
@@ -378,3 +483,16 @@ export const newInstance = macro.newInstance(
 // ----------------------------------------------------------------------------
 
 export default Object.assign({ newInstance, extend });
+
+// TODO: work with VTK to change the internal formatting of arrays.
+function vec9toMat3(vec9) {
+  if (vec9.length !== 9) {
+    throw Error('Array not length 9');
+  }
+  //prettier-ignore
+  return [
+    [vec9[0], vec9[1], vec9[2]],
+    [vec9[3], vec9[4], vec9[5]],
+    [vec9[6], vec9[7], vec9[8]],
+  ];
+}
