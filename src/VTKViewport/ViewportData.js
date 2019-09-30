@@ -19,14 +19,25 @@ function areInitialRotationValues(horizontalRotation, verticalRotation) {
 }
 
 function createNewViewportData() {
-  return {
+  const data = {
     horizontalRotation: 0,
     verticalRotation: 0,
     initialViewUp: [0, 1, 0],
     initialSliceNormal: [0, 0, 1],
     viewUp: [0, 1, 0],
     sliceNormal: [0, 0, 1],
+    initialHorizontal: [],
+    horizontal: [],
   };
+
+  let sliceXRot = [];
+  vec3.cross(sliceXRot, data.initialViewUp, data.initialSliceNormal);
+  vec3.normalize(sliceXRot, sliceXRot);
+
+  data.initialHorizontal = sliceXRot;
+  data.horizontal = sliceXRot;
+
+  return data;
 }
 
 export default class {
@@ -105,6 +116,15 @@ export default class {
     this._state.sliceNormal = sliceNormal;
     this._state.sliceViewUp = sliceViewUp;
 
+    let tempHori = [];
+    vec3.cross(tempHori, sliceViewUp, sliceNormal);
+
+    for (let index = 0; index < tempHori.length; index++) {
+      tempHori[index] *= -1;
+    }
+
+    this._state.horizontal = tempHori;
+
     var event = new CustomEvent(EVENTS.VIEWPORT_ROTATED, {
       detail: {
         horizontalRotation,
@@ -119,6 +139,14 @@ export default class {
     this.eventWindow.dispatchEvent(event);
   };
 
+  getInitialHorizontal = () => {
+    return this._state.initialHorizontal;
+  };
+
+  getHorizontal = () => {
+    return this._state.horizontal;
+  };
+
   getInitialViewUp = () => {
     return this._state.initialViewUp;
   };
@@ -130,13 +158,30 @@ export default class {
   setInitialOrientation = (initialSliceNormal, initialViewUp = [0, 1, 0]) => {
     this._state.initialSliceNormal = initialSliceNormal;
     this._state.initialViewUp = initialViewUp;
+
+    this._state.sliceNormal = initialSliceNormal;
+    this._state.viewUp = initialViewUp;
+
+    let sliceXRot = [];
+    vec3.cross(
+      sliceXRot,
+      this._state.initialViewUp,
+      this._state.initialSliceNormal
+    );
+    vec3.normalize(sliceXRot, sliceXRot);
+
+    this._state.initialHorizontal = sliceXRot;
+    this._state.horizontal = sliceXRot;
+
+    this._state.horizontalRotation = 0;
+    this._state.verticalRotation = 0;
   };
 
-  getviewUp = () => {
+  getViewUp = () => {
     return this._state.viewUp;
   };
 
-  getsliceNormal = () => {
+  getSliceNormal = () => {
     return this._state.sliceNormal;
   };
 

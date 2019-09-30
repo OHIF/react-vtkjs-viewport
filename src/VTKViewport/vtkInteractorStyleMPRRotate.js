@@ -3,6 +3,7 @@ import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import { vec3, mat4 } from 'gl-matrix';
 import { degrees2radians } from '../lib/math/angles.js';
+import ViewportData from './ViewportData.js';
 
 const { States } = Constants;
 const MAX_SAFE_INTEGER = 2147483647;
@@ -46,8 +47,34 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     const dx = Math.round((pos[0] - model.rotateStartPos[0]) * xSensitivity);
     const dy = Math.round((pos[1] - model.rotateStartPos[1]) * ySensitivity);
     const viewport = publicAPI.getViewport();
-    let horizontalRotation = viewport.getHRotation() + dx;
-    let verticalRotation = viewport.getVRotation() + dy;
+
+    const initialHori = viewport.getInitialHorizontal();
+    const initialViewup = viewport.getInitialViewUp();
+
+    let x = [];
+    vec3.cross(x, viewport.getViewUp(), viewport.getSliceNormal());
+    vec3.normalize(x, x);
+
+    // for (let index = 0; index < x.length; index++) {
+    //   x[index] *= -1;
+    // }
+
+    const rotationAroundViewup = [dx * x[0], dx * x[1]];
+    let y = viewport.getViewUp();
+    const rotationAroundHori = [dy * y[0], dy * y[1]];
+
+    let xDotHori = vec3.dot(x, initialHori);
+    let yDotHori = vec3.dot(y, initialHori);
+    let xDotViewUp = vec3.dot(x, initialViewup);
+    let yDotViewUp = vec3.dot(y, initialViewup);
+    let totalX = dx * xDotHori + dy * yDotHori;
+    let totalY = dx * xDotViewUp + dy * yDotViewUp;
+
+    let horizontalRotation = viewport.getHRotation() + totalX;
+    let verticalRotation = viewport.getVRotation() + totalY;
+
+    // let horizontalRotation = viewport.getHRotation() + dx;
+    // let verticalRotation = viewport.getVRotation() + dy;
 
     horizontalRotation %= 360;
     verticalRotation %= 360;
