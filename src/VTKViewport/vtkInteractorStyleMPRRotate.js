@@ -47,15 +47,8 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     const dThetaX = -((pos[1] - model.rotateStartPos[1]) * ySensitivity);
     const dThetaY = -((pos[0] - model.rotateStartPos[0]) * xSensitivity);
     const viewport = publicAPI.getViewport();
-    const camera = renderer.getActiveCamera();
 
-    let xAxis = [];
-    vec3.cross(xAxis, viewport.getViewUp(), viewport.getSliceNormal());
-    vec3.normalize(xAxis, xAxis);
-
-    let yAxis = viewport.getViewUp();
-
-    viewport.rotate(xAxis, dThetaX, yAxis, dThetaY);
+    viewport.rotate(dThetaX, dThetaY);
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);

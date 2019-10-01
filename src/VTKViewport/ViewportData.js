@@ -14,30 +14,11 @@ function validateNumber(numberValue) {
   throw `Invalid number ${numberValue}`;
 }
 
-function areInitialRotationValues(horizontalRotation, verticalRotation) {
-  return horizontalRotation === 0 && verticalRotation === 0;
-}
-
 function createNewViewportData() {
-  const data = {
-    horizontalRotation: 0,
-    verticalRotation: 0,
-    initialViewUp: [0, 1, 0],
-    initialSliceNormal: [0, 0, 1],
+  return {
     viewUp: [0, 1, 0],
     sliceNormal: [0, 0, 1],
-    initialHorizontal: [],
-    horizontal: [],
   };
-
-  let sliceXRot = [];
-  vec3.cross(sliceXRot, data.initialViewUp, data.initialSliceNormal);
-  vec3.normalize(sliceXRot, sliceXRot);
-
-  data.initialHorizontal = sliceXRot;
-  data.horizontal = sliceXRot;
-
-  return data;
 }
 
 export default class {
@@ -57,15 +38,15 @@ export default class {
     return this.eventWindow;
   };
 
-  getHRotation = () => {
-    return this._state.horizontalRotation;
-  };
+  rotate = (dThetaX, dThetaY) => {
+    validateNumber(dThetaX);
+    validateNumber(dThetaY);
 
-  getVRotation = () => {
-    return this._state.verticalRotation;
-  };
+    let xAxis = [];
+    vec3.cross(xAxis, this._state.viewUp, this._state.sliceNormal);
+    vec3.normalize(xAxis, xAxis);
 
-  rotate = (xAxis, dThetaX, yAxis, dThetaY) => {
+    let yAxis = this._state.viewUp;
     // rotate around the vector of the cross product of the
     // plane and viewup as the X component
 
@@ -90,6 +71,8 @@ export default class {
       detail: {
         sliceNormal,
         sliceViewUp,
+        dThetaX,
+        dThetaY,
       },
       bubbles: true,
       cancelable: true,
@@ -98,42 +81,9 @@ export default class {
     this.eventWindow.dispatchEvent(event);
   };
 
-  getInitialHorizontal = () => {
-    return this._state.initialHorizontal;
-  };
-
-  getHorizontal = () => {
-    return this._state.horizontal;
-  };
-
-  getInitialViewUp = () => {
-    return this._state.initialViewUp;
-  };
-
-  getInitialSliceNormal = () => {
-    return this._state.initialSliceNormal;
-  };
-
-  setInitialOrientation = (initialSliceNormal, initialViewUp = [0, 1, 0]) => {
-    this._state.initialSliceNormal = initialSliceNormal;
-    this._state.initialViewUp = initialViewUp;
-
-    this._state.sliceNormal = initialSliceNormal;
-    this._state.viewUp = initialViewUp;
-
-    let sliceXRot = [];
-    vec3.cross(
-      sliceXRot,
-      this._state.initialViewUp,
-      this._state.initialSliceNormal
-    );
-    vec3.normalize(sliceXRot, sliceXRot);
-
-    this._state.initialHorizontal = sliceXRot;
-    this._state.horizontal = sliceXRot;
-
-    this._state.horizontalRotation = 0;
-    this._state.verticalRotation = 0;
+  setOrientation = (sliceNormal, viewUp = [0, 1, 0]) => {
+    this._state.sliceNormal = sliceNormal;
+    this._state.viewUp = viewUp;
   };
 
   getViewUp = () => {
@@ -143,11 +93,6 @@ export default class {
   getSliceNormal = () => {
     return this._state.sliceNormal;
   };
-
-  // this.setOrientation = (viewUp, sliceNormal) => {
-  //   state.viewUp = viewUp;
-  //   state.sliceNormal = sliceNormal;
-  // };
 
   getReadOnlyViewPort = () => {
     const readOnlyState = JSON.parse(JSON.stringify(this._state));
