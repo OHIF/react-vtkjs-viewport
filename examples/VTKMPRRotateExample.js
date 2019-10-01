@@ -415,22 +415,20 @@ class VTKMPRRotateExample extends Component {
     const renderWindow = api.genericRenderWindow.getRenderWindow();
 
     const istyle = renderWindow.getInteractor().getInteractorStyle();
-
+    /*
     istyle
       .getViewport()
       .rotate(
         volumeData[index].horizontalRotation,
         volumeData[index].verticalRotation
       );
+    */
 
     this.apis.orientations[index].updateMarkerOrientation();
 
     renderWindow.render();
   };
 
-  getSliceXRotation = index => {
-    return volumeData[index].horizontalRotation;
-  };
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
       return <h4>Loading...</h4>;

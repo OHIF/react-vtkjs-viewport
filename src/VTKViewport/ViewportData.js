@@ -65,70 +65,29 @@ export default class {
     return this._state.verticalRotation;
   };
 
-  rotate = (horizontalRotation, verticalRotation) => {
-    validateNumber(horizontalRotation);
-    validateNumber(verticalRotation);
-
-    if (
-      !areInitialRotationValues(horizontalRotation, verticalRotation) &&
-      this._state.horizontalRotation === horizontalRotation &&
-      this._state.verticalRotation === verticalRotation
-    ) {
-      return;
-    }
-
+  rotate = (xAxis, dThetaX, yAxis, dThetaY) => {
     // rotate around the vector of the cross product of the
     // plane and viewup as the X component
-    const sliceXRot = [];
+
     const sliceNormal = [];
     const sliceViewUp = [];
 
-    vec3.cross(
-      sliceXRot,
-      this._state.initialViewUp,
-      this._state.initialSliceNormal
-    );
-    vec3.normalize(sliceXRot, sliceXRot);
-
     const planeMat = mat4.create();
 
-    // Rotate around the vertical (slice-up) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-horizontalRotation),
-      this._state.initialViewUp
-    );
+    //Rotate around the vertical (slice-up) vector
+    mat4.rotate(planeMat, planeMat, degrees2radians(dThetaY), yAxis);
 
-    // Rotate around the horizontal (screen-x) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-verticalRotation),
-      sliceXRot
-    );
+    //Rotate around the horizontal (screen-x) vector
+    mat4.rotate(planeMat, planeMat, degrees2radians(dThetaX), xAxis);
 
-    vec3.transformMat4(sliceNormal, this._state.initialSliceNormal, planeMat);
-    vec3.transformMat4(sliceViewUp, this._state.initialViewUp, planeMat);
+    vec3.transformMat4(sliceNormal, this._state.sliceNormal, planeMat);
+    vec3.transformMat4(sliceViewUp, this._state.viewUp, planeMat);
 
-    this._state.horizontalRotation = horizontalRotation;
-    this._state.verticalRotation = verticalRotation;
     this._state.sliceNormal = sliceNormal;
-    this._state.sliceViewUp = sliceViewUp;
-
-    let tempHori = [];
-    vec3.cross(tempHori, sliceViewUp, sliceNormal);
-
-    for (let index = 0; index < tempHori.length; index++) {
-      tempHori[index] *= -1;
-    }
-
-    this._state.horizontal = tempHori;
+    this._state.viewUp = sliceViewUp;
 
     var event = new CustomEvent(EVENTS.VIEWPORT_ROTATED, {
       detail: {
-        horizontalRotation,
-        verticalRotation,
         sliceNormal,
         sliceViewUp,
       },
