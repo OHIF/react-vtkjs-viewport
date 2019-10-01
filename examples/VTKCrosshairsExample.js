@@ -134,16 +134,18 @@ class VTKCrosshairsExample extends Component {
         default:
         case 0:
           //Axial
-          istyle.setSliceNormal([0, 0, 1], [0, -1, 0]);
-
+          istyle.setSliceNormal(0, 0, 1);
+          istyle.setViewUp(0, -1, 0);
           break;
         case 1:
           // sagittal
-          istyle.setSliceNormal([1, 0, 0], [0, 0, 1]);
+          istyle.setSliceNormal(1, 0, 0);
+          istyle.setViewUp(0, 0, 1);
           break;
         case 2:
           // Coronal
-          istyle.setSliceNormal([0, 1, 0], [0, 0, 1]);
+          istyle.setSliceNormal(0, 1, 0);
+          istyle.setViewUp(0, 0, 1);
           break;
       }
 
