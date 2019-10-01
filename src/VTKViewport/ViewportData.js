@@ -14,16 +14,8 @@ function validateNumber(numberValue) {
   throw `Invalid number ${numberValue}`;
 }
 
-function areInitialRotationValues(horizontalRotation, verticalRotation) {
-  return horizontalRotation === 0 && verticalRotation === 0;
-}
-
 function createNewViewportData() {
   return {
-    horizontalRotation: 0,
-    verticalRotation: 0,
-    initialViewUp: [0, 1, 0],
-    initialSliceNormal: [0, 0, 1],
     viewUp: [0, 1, 0],
     sliceNormal: [0, 0, 1],
   };
@@ -46,71 +38,41 @@ export default class {
     return this.eventWindow;
   };
 
-  getHRotation = () => {
-    return this._state.horizontalRotation;
-  };
+  rotate = (dThetaX, dThetaY) => {
+    validateNumber(dThetaX);
+    validateNumber(dThetaY);
 
-  getVRotation = () => {
-    return this._state.verticalRotation;
-  };
+    let xAxis = [];
+    vec3.cross(xAxis, this._state.viewUp, this._state.sliceNormal);
+    vec3.normalize(xAxis, xAxis);
 
-  rotate = (horizontalRotation, verticalRotation) => {
-    validateNumber(horizontalRotation);
-    validateNumber(verticalRotation);
-
-    if (
-      !areInitialRotationValues(horizontalRotation, verticalRotation) &&
-      this._state.horizontalRotation === horizontalRotation &&
-      this._state.verticalRotation === verticalRotation
-    ) {
-      return;
-    }
-
+    let yAxis = this._state.viewUp;
     // rotate around the vector of the cross product of the
     // plane and viewup as the X component
-    const sliceXRot = [];
+
     const sliceNormal = [];
     const sliceViewUp = [];
 
-    vec3.cross(
-      sliceXRot,
-      this._state.initialViewUp,
-      this._state.initialSliceNormal
-    );
-    vec3.normalize(sliceXRot, sliceXRot);
-
     const planeMat = mat4.create();
 
-    // Rotate around the vertical (slice-up) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-horizontalRotation),
-      this._state.initialViewUp
-    );
+    //Rotate around the vertical (slice-up) vector
+    mat4.rotate(planeMat, planeMat, degrees2radians(dThetaY), yAxis);
 
-    // Rotate around the horizontal (screen-x) vector
-    mat4.rotate(
-      planeMat,
-      planeMat,
-      degrees2radians(-verticalRotation),
-      sliceXRot
-    );
+    //Rotate around the horizontal (screen-x) vector
+    mat4.rotate(planeMat, planeMat, degrees2radians(dThetaX), xAxis);
 
-    vec3.transformMat4(sliceNormal, this._state.initialSliceNormal, planeMat);
-    vec3.transformMat4(sliceViewUp, this._state.initialViewUp, planeMat);
+    vec3.transformMat4(sliceNormal, this._state.sliceNormal, planeMat);
+    vec3.transformMat4(sliceViewUp, this._state.viewUp, planeMat);
 
-    this._state.horizontalRotation = horizontalRotation;
-    this._state.verticalRotation = verticalRotation;
     this._state.sliceNormal = sliceNormal;
-    this._state.sliceViewUp = sliceViewUp;
+    this._state.viewUp = sliceViewUp;
 
     var event = new CustomEvent(EVENTS.VIEWPORT_ROTATED, {
       detail: {
-        horizontalRotation,
-        verticalRotation,
         sliceNormal,
         sliceViewUp,
+        dThetaX,
+        dThetaY,
       },
       bubbles: true,
       cancelable: true,
@@ -119,31 +81,18 @@ export default class {
     this.eventWindow.dispatchEvent(event);
   };
 
-  getInitialViewUp = () => {
-    return this._state.initialViewUp;
+  setOrientation = (sliceNormal, viewUp = [0, 1, 0]) => {
+    this._state.sliceNormal = sliceNormal;
+    this._state.viewUp = viewUp;
   };
 
-  getInitialSliceNormal = () => {
-    return this._state.initialSliceNormal;
-  };
-
-  setInitialOrientation = (initialSliceNormal, initialViewUp = [0, 1, 0]) => {
-    this._state.initialSliceNormal = initialSliceNormal;
-    this._state.initialViewUp = initialViewUp;
-  };
-
-  getviewUp = () => {
+  getViewUp = () => {
     return this._state.viewUp;
   };
 
-  getsliceNormal = () => {
+  getSliceNormal = () => {
     return this._state.sliceNormal;
   };
-
-  // this.setOrientation = (viewUp, sliceNormal) => {
-  //   state.viewUp = viewUp;
-  //   state.sliceNormal = sliceNormal;
-  // };
 
   getReadOnlyViewPort = () => {
     const readOnlyState = JSON.parse(JSON.stringify(this._state));

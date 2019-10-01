@@ -355,7 +355,7 @@ class VTKMPRRotateExample extends Component {
 
       const viewport = istyle.getViewport();
 
-      viewport.setInitialOrientation(
+      viewport.setOrientation(
         volumeData[viewportIndex].slicePlaneNormal,
         volumeData[viewportIndex].sliceViewUp
       );
@@ -367,15 +367,14 @@ class VTKMPRRotateExample extends Component {
         .addEventListener(EVENTS.VIEWPORT_ROTATED, args => {
           const rotation = this.state.rotation;
 
-          if (
-            rotation[viewportIndex].x === args.detail.horizontalRotation &&
-            rotation[viewportIndex].y === args.detail.verticalRotation
-          ) {
+          if (args.detail.dThetaX === 0 && args.detail.dThetaY === 0) {
             return;
           }
 
-          rotation[viewportIndex].x = args.detail.horizontalRotation;
-          rotation[viewportIndex].y = args.detail.verticalRotation;
+          rotation[viewportIndex].x =
+            (rotation[viewportIndex].x + args.detail.dThetaY) % 360;
+          rotation[viewportIndex].y =
+            (rotation[viewportIndex].y + args.detail.dThetaX) % 360;
 
           this.setState({ rotation });
         });
@@ -387,8 +386,6 @@ class VTKMPRRotateExample extends Component {
   };
 
   handleChangeX = (index, event) => {
-    volumeData[index].horizontalRotation = +event.target.value;
-
     const rotation = this.state.rotation;
 
     rotation[index].x = +event.target.value;
@@ -399,8 +396,6 @@ class VTKMPRRotateExample extends Component {
   };
 
   handleChangeY = (index, event) => {
-    volumeData[index].verticalRotation = +event.target.value;
-
     const rotation = this.state.rotation;
 
     rotation[index].y = +event.target.value;
@@ -413,24 +408,22 @@ class VTKMPRRotateExample extends Component {
   updateRotate = index => {
     const api = this.apis[index];
     const renderWindow = api.genericRenderWindow.getRenderWindow();
-
+    const rotation = this.state.rotation;
     const istyle = renderWindow.getInteractor().getInteractorStyle();
+    const viewport = istyle.getViewport();
+    const dThetaY = rotation[index].x - volumeData[index].horizontalRotation;
+    const dThetaX = rotation[index].y - volumeData[index].verticalRotation;
 
-    istyle
-      .getViewport()
-      .rotate(
-        volumeData[index].horizontalRotation,
-        volumeData[index].verticalRotation
-      );
+    viewport.rotate(-dThetaX, -dThetaY);
+
+    volumeData[index].horizontalRotation = rotation[index].x;
+    volumeData[index].verticalRotation = rotation[index].y;
 
     this.apis.orientations[index].updateMarkerOrientation();
 
     renderWindow.render();
   };
 
-  getSliceXRotation = index => {
-    return volumeData[index].horizontalRotation;
-  };
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
       return <h4>Loading...</h4>;
@@ -441,7 +434,7 @@ class VTKMPRRotateExample extends Component {
     for (let index = 0; index < volumeData.length; index++) {
       columns.push(
         <div key={index.toString()} className="col-xs-12 col-sm-6">
-          <div>
+          {/* <div>
             <input
               className="rotate"
               type="range"
@@ -468,7 +461,7 @@ class VTKMPRRotateExample extends Component {
               }}
             />
             <span>{this.state.rotation[index].y}</span>
-          </div>
+          </div> */}
           <View2D
             volumes={this.state.volumes}
             onCreated={this.storeApi(index)}

@@ -6,7 +6,7 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
-import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
+//import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
 import ViewportData from './ViewportData';
 import EVENTS from '../events';
 
@@ -226,8 +226,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
 
     if (viewportData) {
-      setSliceNormalInternal(viewportData.getInitialSliceNormal());
-      setViewUpInternal(viewportData.getInitialViewUp());
+      setSliceNormalInternal(viewportData.getSliceNormal());
+      setViewUpInternal(viewportData.getViewUp());
 
       viewportData
         .getEventWindow()
@@ -305,8 +305,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         const viewportData = publicAPI.getViewport();
 
         if (viewportData) {
-          setSliceNormalInternal(viewportData.getInitialSliceNormal());
-          setViewUpInternal(viewportData.getInitialViewUp());
+          setSliceNormalInternal(viewportData.getSliceNormal());
+          setViewUpInternal(viewportData.getViewUp());
         }
 
         updateScrollManipulator();
@@ -439,10 +439,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const viewportData = publicAPI.getViewport();
 
     if (viewportData) {
-      viewportData.setInitialOrientation(
-        normal,
-        viewportData.getInitialViewUp()
-      );
+      viewportData.setOrientation(normal, viewportData.getViewUp());
     }
 
     setSliceNormalInternal(normal);
@@ -463,10 +460,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const viewportData = publicAPI.getViewport();
 
     if (viewportData) {
-      viewportData.setInitialOrientation(
-        viewportData.getInitialSliceNormal(),
-        viewUp
-      );
+      viewportData.setOrientation(viewportData.getSliceNormal(), viewUp);
     }
 
     setViewUpInternal(viewUp);
