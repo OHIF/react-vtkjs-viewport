@@ -5,7 +5,7 @@ import cornerstone from 'cornerstone-core';
 // insert the slice at the z index location.
 export default function insertSlice(imageData, index, image) {
   const pixels = image.getPixelData();
-  const scalingParameters = _calculateScalingParametersForModality(image);
+  const pixelScalingFunction = _getScalingFunctionForModality(image);
 
   const datasetDefinition = imageData.get('extent', 'spacing', 'origin');
   const scalars = imageData.getPointData().getScalars();
@@ -26,7 +26,7 @@ export default function insertSlice(imageData, index, image) {
       );
       const pixel = pixels[pixelIndex];
 
-      scalarData[destIdx] = _getModalityPixelsOrSUV(pixel, scalingParameters);
+      scalarData[destIdx] = pixelScalingFunction(pixel);
 
       pixelIndex++;
     }
@@ -34,7 +34,7 @@ export default function insertSlice(imageData, index, image) {
   imageData.modified();
 }
 
-function _calculateScalingParametersForModality(image) {
+function _getScalingFunctionForModality(image) {
   const patientStudyModule = cornerstone.metaData.get(
     'patientStudyModule',
     image.imageId
@@ -43,6 +43,8 @@ function _calculateScalingParametersForModality(image) {
     'generalSeriesModule',
     image.imageId
   );
+
+  const { slope, intercept } = image;
 
   if (!patientStudyModule) {
     throw new Error('patientStudyModule metadata is required');
@@ -53,12 +55,6 @@ function _calculateScalingParametersForModality(image) {
   }
 
   const modality = seriesModule.modality;
-
-  const scalingParameters = {
-    slope: image.slope,
-    intercept: image.intercept,
-    modality,
-  };
 
   if (modality === 'PT') {
     const patientWeight = patientStudyModule.patientWeight; // In kg
@@ -109,28 +105,18 @@ function _calculateScalingParametersForModality(image) {
     const correctedDose =
       totalDose * Math.exp((-durationInSeconds * Math.log(2)) / halfLife);
 
-    scalingParameters.patientWeight = patientWeight;
-    scalingParameters.correctedDose = correctedDose;
+    return _getSUV.bind(null, slope, intercept, patientWeight, correctedDose);
   }
 
-  return scalingParameters;
+  return _getModalityScaledPixel.bind(null, slope, intercept);
 }
 
-function _getModalityPixelsOrSUV(pixel, scalingParameters) {
-  if (scalingParameters.modality === 'PT') {
-    const {
-      slope,
-      intercept,
-      patientWeight,
-      correctedDose,
-    } = scalingParameters;
+function _getSUV(slope, intercept, patientWeight, correctedDose, pixel) {
+  const modalityPixelValue = pixel * slope + intercept;
 
-    const modalityPixelValue = pixel * slope + intercept;
-    const suv = (1000 * modalityPixelValue * patientWeight) / correctedDose;
-    return suv;
-  }
+  return (1000 * modalityPixelValue * patientWeight) / correctedDose;
+}
 
-  const { slope, intercept } = scalingParameters;
-
+function _getModalityScaledPixel(slope, intercept, pixel) {
   return pixel * slope + intercept;
 }
