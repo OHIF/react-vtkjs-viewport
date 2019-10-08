@@ -4,17 +4,7 @@ import cornerstone from 'cornerstone-core';
 
 // insert the slice at the z index location.
 export default function insertSlice(imageData, index, image) {
-  console.log('JAMESAPETTS INSERT SLICE');
-
   const pixels = image.getPixelData();
-  const numPixels = pixels.length;
-
-  // TODO: Sometimes after scaling from stored pixel value to modality
-  // pixel value, the result is negative. In this case, we need to use a
-  // signed array. I've hardcoded Int16 for now but I guess we can try to
-  // figure out if Int8 is also an option.
-  const modalityPixelsOrSUV = new Int16Array(numPixels);
-
   const scalingParameters = _calculateScalingParametersForModality(image);
 
   const datasetDefinition = imageData.get('extent', 'spacing', 'origin');
