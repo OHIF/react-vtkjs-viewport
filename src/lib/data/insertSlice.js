@@ -91,12 +91,12 @@ function _getScalingFunctionForModality(image) {
     }
 
     const acquisitionTimeInSeconds =
-      fracToDec(seriesAcquisitionTime.fractionalSeconds || 0) +
+      _fracToDec(seriesAcquisitionTime.fractionalSeconds || 0) +
       seriesAcquisitionTime.seconds +
       seriesAcquisitionTime.minutes * 60 +
       seriesAcquisitionTime.hours * 60 * 60;
     const injectionStartTimeInSeconds =
-      fracToDec(startTime.fractionalSeconds) +
+      _fracToDec(startTime.fractionalSeconds) +
       startTime.seconds +
       startTime.minutes * 60 +
       startTime.hours * 60 * 60;
@@ -119,4 +119,17 @@ function _getSUV(slope, intercept, patientWeight, correctedDose, pixel) {
 
 function _getModalityScaledPixel(slope, intercept, pixel) {
   return pixel * slope + intercept;
+}
+
+/**
+ * Returns a decimal value given a fractional value.
+ * @private
+ * @method
+ * @name _fracToDec
+ *
+ * @param  {number} fractionalValue The value to convert.
+ * @returns {number}                 The value converted to decimal.
+ */
+function _fracToDec(fractionalValue) {
+  return parseFloat(`.${fractionalValue}`);
 }

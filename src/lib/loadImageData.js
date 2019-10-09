@@ -27,19 +27,6 @@ function loadImageDataProgressively(imageIds, imageData, metaDataMap, zAxis) {
   return Promise.all(loadImagePromises);
 }
 
-/**
- * Returns a decimal value given a fractional value.
- * @private
- * @method
- * @name fracToDec
- *
- * @param  {number} fractionalValue The value to convert.
- * @returns {number}                 The value converted to decimal.
- */
-function fracToDec(fractionalValue) {
-  return parseFloat(`.${fractionalValue}`);
-}
-
 export default function loadImageData(imageDataObject) {
   return loadImageDataProgressively(
     imageDataObject.imageIds,
