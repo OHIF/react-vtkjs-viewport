@@ -3425,10 +3425,10 @@ cornerstone-math@^0.1.8:
   resolved "https://registry.yarnpkg.com/cornerstone-math/-/cornerstone-math-0.1.8.tgz#68ab1f9e4fdcd7c5cb23a0d2eb4263f9f894f1c5"
   integrity sha512-x7NEQHBtVG7j1yeyj/aRoKTpXv1Vh2/H9zNLMyqYJDtJkNng8C4Q8M3CgZ1qer0Yr7eVq2x+Ynmj6kfOm5jXKw==
 
-cornerstone-tools@^4.0.9:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-4.1.1.tgz#69139314e24a667093a41f74ce1310cb34e53544"
-  integrity sha512-/eyhVvL+OLtwn7jIJuF0RC8kR1rP3fjuYhRgfuJEYWcwmEetYHQhYTFzZVqGWlUynjMVVp4s742JW82P9jQZOw==
+cornerstone-tools@^4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-4.5.2.tgz#1eec8d8bb7e6674f16dcc054d477486b6b9477ee"
+  integrity sha512-FDRqt6JxcICCD0U34lpZ3uHYPaQr6jypAtyX0KL6GaMzC8X7cR0XE2Rm2bLT85oewyyQpHZC5tAFmr//noYxUQ==
   dependencies:
     "@babel/runtime" "7.1.2"
     cornerstone-math "0.1.7"
@@ -13602,10 +13602,10 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.0.tgz#bd76d6a23323e2ca8ffa12028dc04559c75f9019"
   integrity sha512-iq+S7vZJE60yejDYM0ek6zg308+UZsdtPExWP9VZoCFCz1zkJoXFnAX7aZfd/ZwrkidzdUZL0C/ryW+JwAiIGw==
 
-vtk.js@^11.1.3:
-  version "11.2.0"
-  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.2.0.tgz#ce11863623f4f9ef64dfe6c5be1bb2fd2ed7ef6f"
-  integrity sha512-d++pvYLLc+/TGfNhGL/USZBwDoQGBV14UFOBLPZs4SjZGYdUEISFtG2FI4/MmoZOpzH/4vSoAlgbHAuCstYIQQ==
+vtk.js@^11.2.0:
+  version "11.4.2"
+  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.4.2.tgz#6a967a4522a88704b6982a0d1356f24f77b09989"
+  integrity sha512-lr0GFZM5fGVUwM008KhxaSCB9dIeqKeD1ZZJQGcP+4rfcrPgC7Zp2L16kgQkj6rupPTseI+Nsk6UV5Dc8lJN4w==
   dependencies:
     blueimp-md5 "2.10.0"
     commander "2.11.0"
