@@ -14,7 +14,7 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
-function setupSyncedBrush(imageDataObject, element) {
+function setupSyncedBrush(imageDataObject) {
   // Create buffer the size of the 3D volume
   const dimensions = imageDataObject.dimensions;
   const width = dimensions[0];
@@ -128,10 +128,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
         };
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(
-          imageDataObject,
-          this.cornerstoneElements[0]
-        );
+        const labelMapInputData = setupSyncedBrush(imageDataObject);
 
         this.onMeasurementsChanged = event => {
           if (event.type !== EVENTS.LABELMAP_MODIFIED) {
@@ -160,7 +157,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
     );
   }
 
-  onPaintEnd = () => {
+  onPaintEnd = strokeBuffer => {
     const element = this.cornerstoneElements[0];
     const enabledElement = cornerstone.getEnabledElement(element);
     const { getters, setters } = cornerstoneTools.getModule('segmentation');
@@ -174,16 +171,35 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
     const stackData = stackState.data[0];
     const numberOfFrames = stackData.imageIds.length;
+    const segmentIndex = labelmap3D.activeSegmentIndex;
 
-    // TODO -> Can do more efficiently if we can grab the strokeBuffer from vtk-js.
     for (let i = 0; i < numberOfFrames; i++) {
-      const labelmap2D = getters.labelmap2DByImageIdIndex(
-        labelmap3D,
-        i,
-        rows,
-        columns
-      );
-      setters.updateSegmentsOnLabelmap2D(labelmap2D);
+      let labelmap2D = labelmap3D.labelmaps2D[i];
+
+      if (labelmap2D && labelmap2D.segmentsOnLabelmap.includes(segmentIndex)) {
+        continue;
+      }
+
+      const frameLength = rows * columns;
+      const byteOffset = frameLength * i;
+      const strokeArray = new Uint8Array(strokeBuffer, byteOffset, frameLength);
+
+      const strokeOnFrame = strokeArray.some(element => element === 1);
+
+      if (!strokeOnFrame) {
+        continue;
+      }
+
+      if (labelmap2D) {
+        labelmap2D.segmentsOnLabelmap.push(segmentIndex);
+      } else {
+        labelmap2D = getters.labelmap2DByImageIdIndex(
+          labelmap3D,
+          i,
+          rows,
+          columns
+        );
+      }
     }
 
     cornerstone.updateImage(element);

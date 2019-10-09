@@ -23,7 +23,7 @@
   "peerDependencies": {
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "vtk.js": "^11.1.3"
+    "vtk.js": "^11.2.0"
   },
   "dependencies": {
     "date-fns": "^2.2.1",
@@ -46,7 +46,7 @@
     "copy-webpack-plugin": "^5.0.4",
     "cornerstone-core": "^2.3.0",
     "cornerstone-math": "^0.1.8",
-    "cornerstone-tools": "^4.0.9",
+    "cornerstone-tools": "^4.5.2",
     "cornerstone-wado-image-loader": "^3.0.5",
     "cross-env": "^5.2.0",
     "css-loader": "^3.0.0",
@@ -81,7 +81,7 @@
     "style-loader": "^0.23.1",
     "stylelint": "^10.1.0",
     "stylelint-config-recommended": "^2.2.0",
-    "vtk.js": "^11.1.3",
+    "vtk.js": "^11.2.0",
     "webpack": "4.34.0",
     "webpack-cli": "^3.3.4",
     "webpack-dev-server": "^3.8.0",
