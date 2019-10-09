@@ -12,11 +12,11 @@ import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 const PRESETS = {
   BONE: {
     windowWidth: 100,
-    windowCenter: 500,
+    windowCenter: 500 + 1024, // TODO: The data we load is unscaled, so we need to move our preset.
   },
   HEAD: {
     windowWidth: 1000,
-    windowCenter: 300,
+    windowCenter: 300 + 1024, // TODO: The data we load is unscaled, so we need to move our preset.
   },
 };
 class VTKBasicExample extends Component {
@@ -51,6 +51,9 @@ class VTKBasicExample extends Component {
 
     const volume = this.state.volumes[0];
     const rgbTransferFunction = volume.getProperty().getRGBTransferFunction(0);
+
+    this.state.volume;
+
     const low = voi.windowCenter - voi.windowWidth / 2;
     const high = voi.windowCenter + voi.windowWidth / 2;
 
