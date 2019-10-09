@@ -14,7 +14,7 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
-function setupSyncedBrush(imageDataObject, element) {
+function setupSyncedBrush(imageDataObject) {
   // Create buffer the size of the 3D volume
   const dimensions = imageDataObject.dimensions;
   const width = dimensions[0];
@@ -128,10 +128,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
         };
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(
-          imageDataObject,
-          this.cornerstoneElements[0]
-        );
+        const labelMapInputData = setupSyncedBrush(imageDataObject);
 
         this.onMeasurementsChanged = event => {
           if (event.type !== EVENTS.LABELMAP_MODIFIED) {
