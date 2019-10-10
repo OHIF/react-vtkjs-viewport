@@ -434,34 +434,6 @@ class VTKMPRRotateExample extends Component {
     for (let index = 0; index < volumeData.length; index++) {
       columns.push(
         <div key={index.toString()} className="col-xs-12 col-sm-6">
-          {/* <div>
-            <input
-              className="rotate"
-              type="range"
-              min={min}
-              max={max}
-              step="1"
-              value={this.state.rotation[index].x}
-              onChange={event => {
-                this.handleChangeX(index, event);
-              }}
-            />
-            <span>{this.state.rotation[index].x}</span>
-          </div>
-          <div>
-            <input
-              className="rotate"
-              type="range"
-              min={min}
-              max={max}
-              step="1"
-              value={this.state.rotation[index].y}
-              onChange={event => {
-                this.handleChangeY(index, event);
-              }}
-            />
-            <span>{this.state.rotation[index].y}</span>
-          </div> */}
           <View2D
             volumes={this.state.volumes}
             onCreated={this.storeApi(index)}

@@ -93,16 +93,6 @@ const imageIds = [
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
 ];
 
-// Pre-retrieve the images for demo purposes
-// Note: In a real application you wouldn't need to do this
-// since you would probably have the image metadata ahead of time.
-// In this case, we preload the images so the WADO Image Loader can
-// read and store all of their metadata and subsequently the 'getImageData'
-// can run properly (it requires metadata).
-const promises = imageIds.map(imageId => {
-  return cornerstone.loadAndCacheImage(imageId);
-});
-
 class VTKCornerstonePaintingSyncExample extends Component {
   state = {
     volumes: null,
@@ -115,6 +105,16 @@ class VTKCornerstonePaintingSyncExample extends Component {
   componentDidMount() {
     this.components = {};
     this.cornerstoneElements = {};
+
+    // Pre-retrieve the images for demo purposes
+    // Note: In a real application you wouldn't need to do this
+    // since you would probably have the image metadata ahead of time.
+    // In this case, we preload the images so the WADO Image Loader can
+    // read and store all of their metadata and subsequently the 'getImageData'
+    // can run properly (it requires metadata).
+    const promises = imageIds.map(imageId => {
+      return cornerstone.loadAndCacheImage(imageId);
+    });
 
     Promise.all(promises).then(
       () => {
@@ -257,10 +257,11 @@ class VTKCornerstonePaintingSyncExample extends Component {
             accessed in 2D.
           </p>
           <p>
-            Both components are displaying the same labelmap UInt8Array. For
+            Both components are displaying the same labelmap UInt16Array. For
             VTK, it has been encapsulated in a vtkDataArray and then a
-            vtkImageData Object. For Cornerstone Tools, it is accessed by
-            reference and index for each of the 2D slices.
+            vtkImageData Object. For Cornerstone Tools, the Uint16Array is
+            accessed through helpers based on the actively displayed image stack
+            and the index of the currently displayed image
           </p>
           <p>
             <strong>Note:</strong> The PaintWidget (circle on hover) is not

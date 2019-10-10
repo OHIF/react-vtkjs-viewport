@@ -5,6 +5,7 @@ import VTKBasicExample from './VTKBasicExample.js';
 import VTKFusionExample from './VTKFusionExample.js';
 import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
+import VTKLoadImageDataExample from './VTKLoadImageDataExample.js';
 import VTKCrosshairsExample from './VTKCrosshairsExample.js';
 import VTKMPRRotateExample from './VTKMPRRotateExample.js';
 
@@ -69,6 +70,12 @@ function Index() {
       url: '/rotate',
       text: 'Demonstrates how to set up the MPR Rotate interactor style',
     },
+    {
+      title: 'LoadImageData Example',
+      url: '/cornerstone-load-image-data',
+      text:
+        'Generating vtkjs imagedata from cornerstone images and displaying them in a VTK viewport.',
+    },
   ];
 
   const exampleComponents = examples.map(e => {
@@ -125,6 +132,7 @@ function AppRouter() {
   const basic = () => Example({ children: <VTKBasicExample /> });
   const fusion = () => Example({ children: <VTKFusionExample /> });
   const painting = () => Example({ children: <VTKMPRPaintingExample /> });
+  const loadImage = () => Example({ children: <VTKLoadImageDataExample /> });
   const synced = () =>
     Example({ children: <VTKCornerstonePaintingSyncExample /> });
   const crosshairs = () => Example({ children: <VTKCrosshairsExample /> });
@@ -140,6 +148,7 @@ function AppRouter() {
         <Route exact path="/cornerstone-sync-painting" render={synced} />
         <Route exact path="/crosshairs" render={crosshairs} />
         <Route exact path="/rotate" render={rotateMPR} />
+        <Route exact path="/cornerstone-load-image-data" render={loadImage} />
         <Route exact component={Index} />
       </Switch>
     </Router>
