@@ -14,7 +14,7 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
-function setupSyncedBrush(imageDataObject, element) {
+function setupSyncedBrush(imageDataObject) {
   // Create buffer the size of the 3D volume
   const dimensions = imageDataObject.dimensions;
   const width = dimensions[0];
@@ -93,16 +93,6 @@ const imageIds = [
   `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
 ];
 
-// Pre-retrieve the images for demo purposes
-// Note: In a real application you wouldn't need to do this
-// since you would probably have the image metadata ahead of time.
-// In this case, we preload the images so the WADO Image Loader can
-// read and store all of their metadata and subsequently the 'getImageData'
-// can run properly (it requires metadata).
-const promises = imageIds.map(imageId => {
-  return cornerstone.loadAndCacheImage(imageId);
-});
-
 class VTKCornerstonePaintingSyncExample extends Component {
   state = {
     volumes: null,
@@ -116,6 +106,16 @@ class VTKCornerstonePaintingSyncExample extends Component {
     this.components = {};
     this.cornerstoneElements = {};
 
+    // Pre-retrieve the images for demo purposes
+    // Note: In a real application you wouldn't need to do this
+    // since you would probably have the image metadata ahead of time.
+    // In this case, we preload the images so the WADO Image Loader can
+    // read and store all of their metadata and subsequently the 'getImageData'
+    // can run properly (it requires metadata).
+    const promises = imageIds.map(imageId => {
+      return cornerstone.loadAndCacheImage(imageId);
+    });
+
     Promise.all(promises).then(
       () => {
         const displaySetInstanceUid = '12345';
@@ -128,10 +128,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
         };
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(
-          imageDataObject,
-          this.cornerstoneElements[0]
-        );
+        const labelMapInputData = setupSyncedBrush(imageDataObject);
 
         this.onMeasurementsChanged = event => {
           if (event.type !== EVENTS.LABELMAP_MODIFIED) {
@@ -160,7 +157,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
     );
   }
 
-  onPaintEnd = () => {
+  onPaintEnd = strokeBuffer => {
     const element = this.cornerstoneElements[0];
     const enabledElement = cornerstone.getEnabledElement(element);
     const { getters, setters } = cornerstoneTools.getModule('segmentation');
@@ -174,16 +171,35 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
     const stackData = stackState.data[0];
     const numberOfFrames = stackData.imageIds.length;
+    const segmentIndex = labelmap3D.activeSegmentIndex;
 
-    // TODO -> Can do more efficiently if we can grab the strokeBuffer from vtk-js.
     for (let i = 0; i < numberOfFrames; i++) {
-      const labelmap2D = getters.labelmap2DByImageIdIndex(
-        labelmap3D,
-        i,
-        rows,
-        columns
-      );
-      setters.updateSegmentsOnLabelmap2D(labelmap2D);
+      let labelmap2D = labelmap3D.labelmaps2D[i];
+
+      if (labelmap2D && labelmap2D.segmentsOnLabelmap.includes(segmentIndex)) {
+        continue;
+      }
+
+      const frameLength = rows * columns;
+      const byteOffset = frameLength * i;
+      const strokeArray = new Uint8Array(strokeBuffer, byteOffset, frameLength);
+
+      const strokeOnFrame = strokeArray.some(element => element === 1);
+
+      if (!strokeOnFrame) {
+        continue;
+      }
+
+      if (labelmap2D) {
+        labelmap2D.segmentsOnLabelmap.push(segmentIndex);
+      } else {
+        labelmap2D = getters.labelmap2DByImageIdIndex(
+          labelmap3D,
+          i,
+          rows,
+          columns
+        );
+      }
     }
 
     cornerstone.updateImage(element);
@@ -241,10 +257,11 @@ class VTKCornerstonePaintingSyncExample extends Component {
             accessed in 2D.
           </p>
           <p>
-            Both components are displaying the same labelmap UInt8Array. For
+            Both components are displaying the same labelmap UInt16Array. For
             VTK, it has been encapsulated in a vtkDataArray and then a
-            vtkImageData Object. For Cornerstone Tools, it is accessed by
-            reference and index for each of the 2D slices.
+            vtkImageData Object. For Cornerstone Tools, the Uint16Array is
+            accessed through helpers based on the actively displayed image stack
+            and the index of the currently displayed image
           </p>
           <p>
             <strong>Note:</strong> The PaintWidget (circle on hover) is not

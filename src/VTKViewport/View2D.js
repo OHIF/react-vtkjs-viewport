@@ -170,7 +170,7 @@ export default class View2D extends Component {
       this.props.interactorStyleVolumeMapper ||
       this.props.volumes[0].getMapper();
 
-    istyle.setSliceNormal([0, 0, 1]);
+    istyle.setSliceNormal(0, 0, 1);
 
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();
@@ -302,9 +302,12 @@ export default class View2D extends Component {
         );
         this.subs.paintEnd.sub(
           this.viewWidget.onEndInteractionEvent(() => {
-            this.paintFilter.endStroke();
+            const strokeBufferPromise = this.paintFilter.endStroke();
+
             if (this.props.onPaintEnd) {
-              this.props.onPaintEnd();
+              strokeBufferPromise.then(strokeBuffer => {
+                this.props.onPaintEnd(strokeBuffer);
+              });
             }
           })
         );

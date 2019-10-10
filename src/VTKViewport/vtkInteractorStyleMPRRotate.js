@@ -3,6 +3,7 @@ import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import { vec3, mat4 } from 'gl-matrix';
 import { degrees2radians } from '../lib/math/angles.js';
+import ViewportData from './ViewportData.js';
 
 const { States } = Constants;
 const MAX_SAFE_INTEGER = 2147483647;
@@ -43,16 +44,11 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     const size = rwi.getView().getViewportSize(renderer);
     const xSensitivity = 100.0 / size[0];
     const ySensitivity = 100.0 / size[1];
-    const dx = Math.round((pos[0] - model.rotateStartPos[0]) * xSensitivity);
-    const dy = Math.round((pos[1] - model.rotateStartPos[1]) * ySensitivity);
+    const dThetaX = -((pos[1] - model.rotateStartPos[1]) * ySensitivity);
+    const dThetaY = -((pos[0] - model.rotateStartPos[0]) * xSensitivity);
     const viewport = publicAPI.getViewport();
-    let horizontalRotation = viewport.getHRotation() + dx;
-    let verticalRotation = viewport.getVRotation() + dy;
 
-    horizontalRotation %= 360;
-    verticalRotation %= 360;
-
-    viewport.rotate(horizontalRotation, verticalRotation);
+    viewport.rotate(dThetaX, dThetaY);
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);

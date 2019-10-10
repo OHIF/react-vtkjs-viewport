@@ -239,9 +239,12 @@ export default class View3D extends Component {
         );
         this.subs.paintEnd.sub(
           this.viewWidget.onEndInteractionEvent(() => {
-            this.paintFilter.endStroke();
+            const strokeBufferPromise = this.paintFilter.endStroke();
+
             if (this.props.onPaintEnd) {
-              this.props.onPaintEnd();
+              strokeBufferPromise.then(strokeBuffer => {
+                this.props.onPaintEnd(strokeBuffer);
+              });
             }
           })
         );

@@ -16,11 +16,11 @@ function vtkMouseRangeRotateManipulator(publicAPI, model) {
       -MAX_SAFE_INTEGER,
       MAX_SAFE_INTEGER,
       1,
-      model.viewportData.getHRotation,
-      horizontalRotation => {
-        let hRotation = horizontalRotation % 360;
+      () => 0,
+      dThetaY => {
+        let thetaY = dThetaY % 360;
 
-        model.viewportData.rotate(hRotation, model.viewportData.getVRotation());
+        model.viewportData.rotate(0, thetaY);
 
         // onInteractiveRotationChanged();
       }
