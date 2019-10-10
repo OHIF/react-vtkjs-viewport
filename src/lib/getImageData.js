@@ -55,7 +55,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
       }
 
     case 16:
-      pixelArray = new Int16Array(xVoxels * yVoxels * zVoxels);
+      pixelArray = new Float32Array(xVoxels * yVoxels * zVoxels);
 
       break;
   }
