@@ -95,8 +95,6 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
   });
 }
 
-const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
-
 function loadDataset(imageIds, displaySetInstanceUid) {
   return new Promise((resolve, reject) => {
     const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
@@ -181,7 +179,7 @@ class VTKMPRRotateExample extends Component {
   }
 
   async loadFromWadors() {
-    const imageIds = await imageIdPromise;
+    const imageIds = await createStudyImageIds(url, searchInstanceOptions);
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     );

@@ -10,6 +10,26 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 
 window.cornerstoneTools = cornerstoneTools;
 
+const ORIENTATION = {
+  AXIAL: {
+    slicePlaneNormal: [0, 0, 1],
+    sliceViewUp: [0, -1, 0],
+  },
+  SAGITTAL: {
+    slicePlaneNormal: [1, 0, 0],
+    sliceViewUp: [0, 0, 1],
+  },
+  CORONAL: {
+    slicePlaneNormal: [0, 1, 0],
+    sliceViewUp: [0, 0, 1],
+  },
+};
+
+const voi = {
+  windowCenter: 35,
+  windowWidth: 80,
+};
+
 function createActorMapper(imageData) {
   const mapper = vtkVolumeMapper.newInstance();
   mapper.setInputData(imageData);
@@ -23,18 +43,48 @@ function createActorMapper(imageData) {
   };
 }
 
-const ROOT_URL =
-  window.location.hostname === 'localhost'
-    ? window.location.host
-    : window.location.hostname;
+function getImageIds() {
+  const ROOT_URL =
+    window.location.hostname === 'localhost'
+      ? window.location.host
+      : window.location.hostname;
 
-const imageIds = [
-  `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.1.dcm`,
-  `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.2.dcm`,
-  `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.3.dcm`,
-  `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.4.dcm`,
-  `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
-];
+  return [
+    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.1.dcm`,
+    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.2.dcm`,
+    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.3.dcm`,
+    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.4.dcm`,
+    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
+  ];
+}
+/*
+function getImageIds() {
+  const ROOT_URL =
+    'https://s3.amazonaws.com/IsomicsPublic/SampleData/QIN-H%2BN-0139/PET-sorted/';
+
+  const imageNames = [];
+
+  for (var i = 1; i < 546; i++) {
+    imageNames.push('PET_HeadNeck_0-' + i + '.dcm');
+  }
+
+  return imageNames.map(name => `dicomweb:${ROOT_URL}${name}`);
+}
+*/
+
+const storeApi = orientation => {
+  return api => {
+    const renderWindow = api.genericRenderWindow.getRenderWindow();
+    const istyle = renderWindow.getInteractor().getInteractorStyle();
+
+    const { slicePlaneNormal, sliceViewUp } = ORIENTATION[orientation];
+
+    istyle.setSliceNormal(...slicePlaneNormal);
+    istyle.setViewUp(...sliceViewUp);
+
+    renderWindow.render();
+  };
+};
 
 class VTKLoadImageDataExample extends Component {
   state = {
@@ -48,6 +98,8 @@ class VTKLoadImageDataExample extends Component {
   componentDidMount() {
     this.components = {};
     this.cornerstoneElements = {};
+
+    const imageIds = getImageIds();
 
     // Pre-retrieve the images for demo purposes
     // Note: In a real application you wouldn't need to do this
@@ -75,6 +127,15 @@ class VTKLoadImageDataExample extends Component {
         loadImageData(imageDataObject).then(() => {
           const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
+          const rgbTransferFunction = actor
+            .getProperty()
+            .getRGBTransferFunction(0);
+
+          const low = voi.windowCenter - voi.windowWidth / 2;
+          const high = voi.windowCenter + voi.windowWidth / 2;
+
+          rgbTransferFunction.setMappingRange(low, high);
+
           this.setState({
             vtkImageData: imageDataObject.vtkImageData,
             volumes: [actor],
@@ -87,22 +148,6 @@ class VTKLoadImageDataExample extends Component {
       }
     );
   }
-
-  saveCornerstoneElements = viewportIndex => {
-    return event => {
-      this.cornerstoneElements[viewportIndex] = event.detail.element;
-    };
-  };
-
-  setWidget = event => {
-    const widgetId = event.target.value;
-
-    if (widgetId === 'rotate') {
-      this.setState({
-        focusedWidgetId: null,
-      });
-    }
-  };
 
   render() {
     return (
@@ -129,7 +174,28 @@ class VTKLoadImageDataExample extends Component {
             </label>
           </div>
           <div className="col-xs-12 col-sm-6">
-            {this.state.volumes && <View2D volumes={this.state.volumes} />}
+            {this.state.volumes && (
+              <>
+                <div className="col-xs-12 col-sm-6">
+                  <View2D
+                    volumes={this.state.volumes}
+                    onCreated={storeApi('AXIAL')}
+                  />
+                </div>
+                <div className="col-xs-12 col-sm-6">
+                  <View2D
+                    volumes={this.state.volumes}
+                    onCreated={storeApi('SAGITTAL')}
+                  />
+                </div>
+                <div className="col-xs-12 col-sm-6">
+                  <View2D
+                    volumes={this.state.volumes}
+                    onCreated={storeApi('CORONAL')}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
