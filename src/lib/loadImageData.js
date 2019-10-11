@@ -4,6 +4,14 @@ import insertSlice from './data/insertSlice.js';
 
 const resolveStack = [];
 
+async function testLoadAndCacheImage(imageId) {
+  const latency = Math.floor(Math.random() * 10000);
+
+  return new Promise(resolve => {
+    setTimeout(() => resolve(cornerstone.loadAndCacheImage(imageId)), latency);
+  });
+}
+
 // TODO: If we attempt to load multiple imageDataObjects at once this will break.
 export default function loadImageDataProgressively(imageDataObject) {
   if (imageDataObject.loaded) {
@@ -20,7 +28,8 @@ export default function loadImageDataProgressively(imageDataObject) {
 
   return new Promise((resolve, reject) => {
     const { imageIds, vtkImageData, metaDataMap, zAxis } = imageDataObject;
-    const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
+    //const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
+    const loadImagePromises = imageIds.map(testLoadAndCacheImage);
 
     imageDataObject.isLoading = true;
 
@@ -40,18 +49,20 @@ export default function loadImageDataProgressively(imageDataObject) {
 
       console.log(slicesInserted);
 
-      if (!resolved) {
-        //if (slicesInserted === numberOfSlices) {
+      //if (!resolved) {
+      if (slicesInserted === numberOfSlices) {
         imageDataObject.isLoading = false;
         imageDataObject.loaded = true;
         console.log('LOADED');
+        /*
         while (resolveStack.length) {
           resolveStack.pop()();
         }
+        */
 
-        resolved = true;
+        //resolved = true;
 
-        resolve();
+        //resolve();
       }
     };
 
@@ -61,6 +72,10 @@ export default function loadImageDataProgressively(imageDataObject) {
         reject(error);
       });
     });
+
+    console.log('RESOLVING');
+
+    resolve();
 
     // TODO: Investigate progressive loading. Right now the UI gets super slow because
     // we are rendering and decoding simultaneously. We might want to use fewer web workers
