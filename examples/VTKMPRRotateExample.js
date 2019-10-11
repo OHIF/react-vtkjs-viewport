@@ -26,7 +26,6 @@ window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 //const url = 'http://localhost:44301/wadors'
 //const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
 const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
-const client = new api.DICOMwebClient({ url });
 const studyInstanceUID =
   // '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969';
   '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
@@ -39,8 +38,6 @@ const searchInstanceOptions = {
   studyInstanceUID,
 };
 
-const min = -360;
-const max = 360;
 const volumeData = [
   {
     slicePlaneNormal: [0, 0, 1],
@@ -68,6 +65,8 @@ const volumeData = [
 function createStudyImageIds(baseUrl, studySearchOptions) {
   const SOP_INSTANCE_UID = '00080018';
   const SERIES_INSTANCE_UID = '0020000E';
+
+  const client = new api.DICOMwebClient({ url });
 
   return new Promise((resolve, reject) => {
     client.retrieveStudyMetadata(studySearchOptions).then(instances => {

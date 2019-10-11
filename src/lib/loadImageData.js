@@ -28,7 +28,7 @@ export default function loadImageDataProgressively(imageDataObject) {
 
     let slicesInserted = 0;
 
-    //let resolved = false;
+    let resolved = false;
 
     const insertPixelData = image => {
       const { imagePositionPatient } = metaDataMap.get(image.imageId);
@@ -38,8 +38,8 @@ export default function loadImageDataProgressively(imageDataObject) {
 
       slicesInserted++;
 
-      //if (!resolved) {
-      if (slicesInserted === numberOfSlices) {
+      if (!resolved) {
+        //if (slicesInserted === numberOfSlices) {
         imageDataObject.isLoading = false;
         imageDataObject.loaded = true;
         console.log('LOADED');
@@ -47,7 +47,7 @@ export default function loadImageDataProgressively(imageDataObject) {
           resolveStack.pop()();
         }
 
-        //resolved = true;
+        resolved = true;
 
         resolve();
       }
