@@ -35,28 +35,21 @@ export default function insertSlice(imageData, index, image) {
 }
 
 function _getScalingFunctionForModality(image) {
-  const patientStudyModule = cornerstone.metaData.get(
-    'patientStudyModule',
-    image.imageId
-  );
+  const { slope, intercept } = image;
+
   const seriesModule = cornerstone.metaData.get(
     'generalSeriesModule',
     image.imageId
   );
 
-  const { slope, intercept } = image;
-
-  if (!patientStudyModule) {
-    throw new Error('patientStudyModule metadata is required');
-  }
-
-  if (!seriesModule) {
-    throw new Error('seriesModule metadata is required');
-  }
-
-  const modality = seriesModule.modality;
-
-  if (modality === 'PT') {
+  if (seriesModule && seriesModule.modality === 'PT') {
+    const patientStudyModule = cornerstone.metaData.get(
+      'patientStudyModule',
+      image.imageId
+    );
+    if (!patientStudyModule) {
+      throw new Error('patientStudyModule metadata is required');
+    }
     const patientWeight = patientStudyModule.patientWeight; // In kg
 
     if (!patientWeight) {
@@ -112,7 +105,7 @@ function _getScalingFunctionForModality(image) {
 }
 
 function _getSUV(slope, intercept, patientWeight, correctedDose, pixel) {
-  const modalityPixelValue = pixel * slope + intercept;
+  const modalityPixelValue = _getModalityScaledPixel(slope, intercept, pixel);
 
   return (1000 * modalityPixelValue * patientWeight) / correctedDose;
 }
