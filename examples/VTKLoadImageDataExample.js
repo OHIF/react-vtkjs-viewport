@@ -26,8 +26,8 @@ const ORIENTATION = {
 };
 
 const voi = {
-  windowCenter: 35,
-  windowWidth: 80,
+  windowCenter: 2.5,
+  windowWidth: 2.5,
 };
 
 function createActorMapper(imageData) {
@@ -42,7 +42,7 @@ function createActorMapper(imageData) {
     mapper,
   };
 }
-
+/*
 function getImageIds() {
   const ROOT_URL =
     window.location.hostname === 'localhost'
@@ -57,20 +57,20 @@ function getImageIds() {
     `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
   ];
 }
-/*
+*/
+
 function getImageIds() {
   const ROOT_URL =
     'https://s3.amazonaws.com/IsomicsPublic/SampleData/QIN-H%2BN-0139/PET-sorted/';
 
   const imageNames = [];
 
-  for (var i = 1; i < 546; i++) {
+  for (let i = 1; i < 546; i++) {
     imageNames.push('PET_HeadNeck_0-' + i + '.dcm');
   }
 
   return imageNames.map(name => `dicomweb:${ROOT_URL}${name}`);
 }
-*/
 
 const storeApi = orientation => {
   return api => {
