@@ -18,10 +18,12 @@ export default function loadImageDataProgressively(imageDataObject) {
 
   // This is straight up a hack: vtkjs cries when you feed it data with a range of zero.
   // So lets set the first voxel to 1, which will be replaced when the first image comes in.
-  //const scalars = vtkImageData.getPointData().getScalars();
-  //const scalarData = scalars.getData();
+  const scalars = vtkImageData.getPointData().getScalars();
+  const scalarData = scalars.getData();
 
-  //scalarData[0] = 1;
+  console.log('SET SCALAR 1');
+
+  scalarData[0] = 1;
 
   const insertPixelData = image => {
     return new Promise(resolve => {

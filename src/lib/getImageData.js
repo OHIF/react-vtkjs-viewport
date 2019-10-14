@@ -89,6 +89,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const imageDataObject = {
     imageIds,
     metaData0,
+    imageMetaData0,
     dimensions: [xVoxels, yVoxels, zVoxels],
     spacing: [xSpacing, ySpacing, zSpacing],
     origin: zAxis.origin,

@@ -46,6 +46,9 @@ export default class View2D extends Component {
       paintStart: createSub(),
       paintEnd: createSub(),
     };
+    this.state = {
+      voi: this.getVOI(props.volumes[0]),
+    };
   }
 
   updatePaintbrush() {
@@ -184,6 +187,8 @@ export default class View2D extends Component {
     // TODO: Not sure why this is necessary to force the initial draw
     this.genericRenderWindow.resize();
 
+    const boundUpdateVOI = this.updateVOI.bind(this);
+
     if (this.props.onCreated) {
       /**
        * Note: The contents of this Object are
@@ -199,12 +204,15 @@ export default class View2D extends Component {
         actors,
         volumes,
         _component: this,
-
-        //register,
+        updateVOI: boundUpdateVOI,
       };
 
       this.props.onCreated(api);
     }
+  }
+
+  updateVOI(windowWidth, windowCenter) {
+    this.setState({ voi: { windowWidth, windowCenter } });
   }
 
   componentDidUpdate(prevProps) {
@@ -361,7 +369,7 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
 
-    const voi = this.getVOI(this.props.volumes[0]);
+    const voi = this.state.voi;
 
     return (
       <div style={style}>
