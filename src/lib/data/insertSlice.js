@@ -31,7 +31,7 @@ export default function insertSlice(imageData, index, image) {
       pixelIndex++;
     }
   }
-  imageData.modified();
+  //imageData.modified();
 }
 
 function _getScalingFunctionForModality(image) {

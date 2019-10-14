@@ -95,25 +95,25 @@ class VTKLoadImageDataExample extends Component {
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
 
-        loadImageData(imageDataObject).then(insertPixelDataPromises => {
-          const { actor } = createActorMapper(imageDataObject.vtkImageData);
+        loadImageData(imageDataObject);
 
-          this.insertPixelDataPromises = insertPixelDataPromises;
+        const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
-          const rgbTransferFunction = actor
-            .getProperty()
-            .getRGBTransferFunction(0);
+        this.imageDataObject = imageDataObject;
 
-          const low = voi.windowCenter - voi.windowWidth / 2;
-          const high = voi.windowCenter + voi.windowWidth / 2;
+        const rgbTransferFunction = actor
+          .getProperty()
+          .getRGBTransferFunction(0);
 
-          rgbTransferFunction.setMappingRange(low, high);
+        const low = voi.windowCenter - voi.windowWidth / 2;
+        const high = voi.windowCenter + voi.windowWidth / 2;
 
-          this.setState({
-            vtkImageData: imageDataObject.vtkImageData,
-            volumes: [actor],
-            cornerstoneViewportData,
-          });
+        rgbTransferFunction.setMappingRange(low, high);
+
+        this.setState({
+          vtkImageData: imageDataObject.vtkImageData,
+          volumes: [actor],
+          cornerstoneViewportData,
         });
       },
       error => {
@@ -132,7 +132,7 @@ class VTKLoadImageDataExample extends Component {
       istyle.setSliceNormal(...slicePlaneNormal);
       istyle.setViewUp(...sliceViewUp);
 
-      this.insertPixelDataPromises.forEach(promise => {
+      this.imageDataObject.insertPixelDataPromises.forEach(promise => {
         promise.then(() => renderWindow.render());
       });
 
