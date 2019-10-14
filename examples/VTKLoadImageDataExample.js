@@ -26,6 +26,7 @@ const ORIENTATION = {
 };
 
 const voi = {
+  // In SUV as this example uses a PET
   windowCenter: 2.5,
   windowWidth: 2.5,
 };
@@ -42,22 +43,6 @@ function createActorMapper(imageData) {
     mapper,
   };
 }
-/*
-function getImageIds() {
-  const ROOT_URL =
-    window.location.hostname === 'localhost'
-      ? window.location.host
-      : window.location.hostname;
-
-  return [
-    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.1.dcm`,
-    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.2.dcm`,
-    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.3.dcm`,
-    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.4.dcm`,
-    `dicomweb://${ROOT_URL}/PTCTStudy/1.3.6.1.4.1.25403.52237031786.3872.20100510032221.5.dcm`,
-  ];
-}
-*/
 
 function getImageIds() {
   const ROOT_URL =
@@ -71,20 +56,6 @@ function getImageIds() {
 
   return imageNames.map(name => `dicomweb:${ROOT_URL}${name}`);
 }
-
-const storeApi = orientation => {
-  return api => {
-    const renderWindow = api.genericRenderWindow.getRenderWindow();
-    const istyle = renderWindow.getInteractor().getInteractorStyle();
-
-    const { slicePlaneNormal, sliceViewUp } = ORIENTATION[orientation];
-
-    istyle.setSliceNormal(...slicePlaneNormal);
-    istyle.setViewUp(...sliceViewUp);
-
-    renderWindow.render();
-  };
-};
 
 class VTKLoadImageDataExample extends Component {
   state = {
@@ -124,8 +95,10 @@ class VTKLoadImageDataExample extends Component {
 
         const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
 
-        loadImageData(imageDataObject).then(() => {
+        loadImageData(imageDataObject).then(insertPixelDataPromises => {
           const { actor } = createActorMapper(imageDataObject.vtkImageData);
+
+          this.insertPixelDataPromises = insertPixelDataPromises;
 
           const rgbTransferFunction = actor
             .getProperty()
@@ -148,6 +121,24 @@ class VTKLoadImageDataExample extends Component {
       }
     );
   }
+
+  storeApi = orientation => {
+    return api => {
+      const renderWindow = api.genericRenderWindow.getRenderWindow();
+      const istyle = renderWindow.getInteractor().getInteractorStyle();
+
+      const { slicePlaneNormal, sliceViewUp } = ORIENTATION[orientation];
+
+      istyle.setSliceNormal(...slicePlaneNormal);
+      istyle.setViewUp(...sliceViewUp);
+
+      this.insertPixelDataPromises.forEach(promise => {
+        promise.then(() => renderWindow.render());
+      });
+
+      renderWindow.render();
+    };
+  };
 
   render() {
     return (
@@ -179,19 +170,19 @@ class VTKLoadImageDataExample extends Component {
                 <div className="col-xs-12 col-sm-6">
                   <View2D
                     volumes={this.state.volumes}
-                    onCreated={storeApi('AXIAL')}
+                    onCreated={this.storeApi('AXIAL')}
                   />
                 </div>
                 <div className="col-xs-12 col-sm-6">
                   <View2D
                     volumes={this.state.volumes}
-                    onCreated={storeApi('SAGITTAL')}
+                    onCreated={this.storeApi('SAGITTAL')}
                   />
                 </div>
                 <div className="col-xs-12 col-sm-6">
                   <View2D
                     volumes={this.state.volumes}
-                    onCreated={storeApi('CORONAL')}
+                    onCreated={this.storeApi('CORONAL')}
                   />
                 </div>
               </>

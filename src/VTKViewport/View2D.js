@@ -199,6 +199,8 @@ export default class View2D extends Component {
         actors,
         volumes,
         _component: this,
+
+        //register,
       };
 
       this.props.onCreated(api);
