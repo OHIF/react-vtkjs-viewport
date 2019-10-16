@@ -121,59 +121,54 @@ class VTKCornerstonePaintingSyncExample extends Component {
       return cornerstone.loadAndCacheImage(imageId);
     });
 
-    Promise.all(promises).then(
-      () => {
-        const displaySetInstanceUid = '12345';
-        const cornerstoneViewportData = {
-          stack: {
-            imageIds,
-            currentImageIdIndex: 0,
-          },
-          displaySetInstanceUid,
-        };
+    Promise.all(promises).then(() => {
+      const displaySetInstanceUid = '12345';
+      const cornerstoneViewportData = {
+        stack: {
+          imageIds,
+          currentImageIdIndex: 0,
+        },
+        displaySetInstanceUid,
+      };
 
-        const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(imageDataObject);
+      const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+      const labelMapInputData = setupSyncedBrush(imageDataObject);
 
-        this.onMeasurementsChanged = event => {
-          if (event.type !== EVENTS.LABELMAP_MODIFIED) {
-            return;
-          }
+      this.onMeasurementsChanged = event => {
+        if (event.type !== EVENTS.LABELMAP_MODIFIED) {
+          return;
+        }
 
-          labelMapInputData.modified();
+        labelMapInputData.modified();
 
-          this.rerenderAllVTKViewports();
-        };
+        this.rerenderAllVTKViewports();
+      };
 
-        loadImageData(imageDataObject).then(() => {
-          const { actor } = createActorMapper(imageDataObject.vtkImageData);
+      loadImageData(imageDataObject);
 
-          const rgbTransferFunction = actor
-            .getProperty()
-            .getRGBTransferFunction(0);
+      Promise.all(imageDataObject.insertPixelDataPromises).then(() => {
+        const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
-          const low = voi.windowCenter - voi.windowWidth / 2;
-          const high = voi.windowCenter + voi.windowWidth / 2;
+        const rgbTransferFunction = actor
+          .getProperty()
+          .getRGBTransferFunction(0);
 
-          rgbTransferFunction.setMappingRange(low, high);
+        const low = voi.windowCenter - voi.windowWidth / 2;
+        const high = voi.windowCenter + voi.windowWidth / 2;
 
-          this.setState({
-            vtkImageData: imageDataObject.vtkImageData,
-            volumes: [actor],
-            cornerstoneViewportData,
-            labelMapInputData,
-          });
+        rgbTransferFunction.setMappingRange(low, high);
+
+        this.setState({
+          vtkImageData: imageDataObject.vtkImageData,
+          volumes: [actor],
+          cornerstoneViewportData,
+          labelMapInputData,
         });
-      },
-      error => {
-        throw new Error(error);
-      }
-    );
+      });
+    });
   }
 
   setVtkjsPortOrientation(api) {
-    debugger;
-
     const renderWindow = api.genericRenderWindow.getRenderWindow();
     const istyle = renderWindow.getInteractor().getInteractorStyle();
 
@@ -326,6 +321,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
                 onPaintEnd={this.onPaintEnd}
+                initialOrientation
                 onCreated={api => {
                   this.saveComponentReference(0);
                   this.setVtkjsPortOrientation(api);

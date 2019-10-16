@@ -64,16 +64,3 @@ function _getScalingFunction(
     };
   }
 }
-
-/**
- * Returns a decimal value given a fractional value.
- * @private
- * @method
- * @name _fracToDec
- *
- * @param  {number} fractionalValue The value to convert.
- * @returns {number}                 The value converted to decimal.
- */
-function _fracToDec(fractionalValue) {
-  return parseFloat(`.${fractionalValue}`);
-}

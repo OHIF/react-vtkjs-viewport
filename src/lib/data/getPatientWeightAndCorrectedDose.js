@@ -1,4 +1,8 @@
+import cornerstone from 'cornerstone-core';
+
 export default function getPatientWeightAndCorrectedDose(imageId) {
+  const seriesModule = cornerstone.metaData.get('generalSeriesModule', imageId);
+
   const patientStudyModule = cornerstone.metaData.get(
     'patientStudyModule',
     imageId
@@ -57,4 +61,17 @@ export default function getPatientWeightAndCorrectedDose(imageId) {
     totalDose * Math.exp((-durationInSeconds * Math.log(2)) / halfLife);
 
   return { patientWeight, correctedDose };
+}
+
+/**
+ * Returns a decimal value given a fractional value.
+ * @private
+ * @method
+ * @name _fracToDec
+ *
+ * @param  {number} fractionalValue The value to convert.
+ * @returns {number}                 The value converted to decimal.
+ */
+function _fracToDec(fractionalValue) {
+  return parseFloat(`.${fractionalValue}`);
 }

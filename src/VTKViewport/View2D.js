@@ -26,6 +26,7 @@ export default class View2D extends Component {
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
+    orientation: PropTypes.object,
   };
 
   static defaultProps = {
@@ -173,7 +174,15 @@ export default class View2D extends Component {
       this.props.interactorStyleVolumeMapper ||
       this.props.volumes[0].getMapper();
 
-    istyle.setSliceNormal(0, 0, 1);
+    // Set orientation based on props
+    if (this.props.orientation) {
+      const { orientation } = this.props;
+
+      istyle.setSliceNormal(...orientation.sliceNormal);
+      istyle.setViewUp(...orientation.viewUp);
+    } else {
+      istyle.setSliceNormal(0, 0, 1);
+    }
 
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();
@@ -188,6 +197,7 @@ export default class View2D extends Component {
     this.genericRenderWindow.resize();
 
     const boundUpdateVOI = this.updateVOI.bind(this);
+    const boundGetOrienation = this.getOrientation.bind(this);
 
     if (this.props.onCreated) {
       /**
@@ -205,6 +215,7 @@ export default class View2D extends Component {
         volumes,
         _component: this,
         updateVOI: boundUpdateVOI,
+        getOrientation: boundGetOrienation,
       };
 
       this.props.onCreated(api);
@@ -213,6 +224,10 @@ export default class View2D extends Component {
 
   updateVOI(windowWidth, windowCenter) {
     this.setState({ voi: { windowWidth, windowCenter } });
+  }
+
+  getOrientation() {
+    return this.props.orientation;
   }
 
   componentDidUpdate(prevProps) {

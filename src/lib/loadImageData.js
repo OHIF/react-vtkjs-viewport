@@ -25,7 +25,6 @@ export default function loadImageDataProgressively(imageDataObject) {
   }
 
   const modality = seriesModule.modality;
-
   let modalitySpecificScalingParameters;
 
   if (modality === 'PT') {

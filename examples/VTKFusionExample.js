@@ -309,13 +309,10 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
 }
 
 function loadDataset(imageIds, displaySetInstanceUid) {
-  return new Promise((resolve, reject) => {
-    const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+  const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
 
-    loadImageData(imageDataObject).then(() => {
-      resolve(imageDataObject.vtkImageData);
-    });
-  });
+  loadImageData(imageDataObject);
+  return imageDataObject;
 }
 
 class VTKFusionExample extends Component {
@@ -342,11 +339,19 @@ class VTKFusionExample extends Component {
     );
     petImageIds = petImageIds.slice(0, petImageIds.length / 4);
 
-    const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
-    const petImageDataPromise = loadDataset(petImageIds, 'petDisplaySet');
-    const promises = [ctImageDataPromise, petImageDataPromise];
+    const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
+    const petImageDataObject = loadDataset(petImageIds, 'petDisplaySet');
+    const promises = [
+      ...ctImageDataObject.insertPixelDataPromises,
+      ...petImageDataObject.insertPixelDataPromises,
+    ];
 
-    Promise.all(promises).then(([ctImageData, petImageData]) => {
+    // TODO -> We could stream this ala 2D but its not done yet, so wait.
+
+    Promise.all(promises).then(() => {
+      const ctImageData = ctImageDataObject.vtkImageData;
+      const petImageData = petImageDataObject.vtkImageData;
+
       const ctVol = createCT2dPipeline(ctImageData);
       const petVol = createPET2dPipeline(
         petImageData,
