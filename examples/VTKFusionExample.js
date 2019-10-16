@@ -9,14 +9,11 @@ import './initCornerstone.js';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
 import vtkColorMaps from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/ColorMaps';
-
 import presets from './presets.js';
 
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
 const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
-//const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
-const client = new api.DICOMwebClient({ url });
 const studyInstanceUID =
   '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
 const ctSeriesInstanceUID =
@@ -60,7 +57,7 @@ function createCT2dPipeline(imageData) {
 
 function createPET2dPipeline(imageData, petColorMapId) {
   const { actor, mapper } = createActorMapper(imageData);
-  mapper.setSampleDistance(5.0);
+  mapper.setSampleDistance(1.0);
 
   const cfun = vtkColorTransferFunction.newInstance();
   const preset = vtkColorMaps.getPresetByName(petColorMapId);
@@ -223,8 +220,14 @@ function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
         .reduce((a, b) => a + b, 0)
     );
 
-  const range = imageData.getPointData().getScalars().getRange();
-  actor.getProperty().getRGBTransferFunction(0).setRange(range[0], range[1])
+  const range = imageData
+    .getPointData()
+    .getScalars()
+    .getRange();
+  actor
+    .getProperty()
+    .getRGBTransferFunction(0)
+    .setRange(range[0], range[1]);
 
   mapper.setSampleDistance(sampleDistance);
 
@@ -276,6 +279,8 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
   const SOP_INSTANCE_UID = '00080018';
   const SERIES_INSTANCE_UID = '0020000E';
 
+  const client = new api.DICOMwebClient({ url });
+
   return new Promise((resolve, reject) => {
     client.retrieveStudyMetadata(studySearchOptions).then(instances => {
       const imageIds = instances.map(metaData => {
@@ -303,16 +308,11 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
   });
 }
 
-const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
-
 function loadDataset(imageIds, displaySetInstanceUid) {
-  return new Promise((resolve, reject) => {
-    const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+  const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
 
-    loadImageData(imageDataObject).then(() => {
-      resolve(imageDataObject.vtkImageData);
-    });
-  });
+  loadImageData(imageDataObject);
+  return imageDataObject;
 }
 
 class VTKFusionExample extends Component {
@@ -324,6 +324,8 @@ class VTKFusionExample extends Component {
   };
 
   async componentDidMount() {
+    const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
+
     this.components = {};
 
     const imageIds = await imageIdPromise;
@@ -337,11 +339,19 @@ class VTKFusionExample extends Component {
     );
     petImageIds = petImageIds.slice(0, petImageIds.length / 4);
 
-    const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
-    const petImageDataPromise = loadDataset(petImageIds, 'petDisplaySet');
-    const promises = [ctImageDataPromise, petImageDataPromise];
+    const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
+    const petImageDataObject = loadDataset(petImageIds, 'petDisplaySet');
+    const promises = [
+      ...ctImageDataObject.insertPixelDataPromises,
+      ...petImageDataObject.insertPixelDataPromises,
+    ];
 
-    Promise.all(promises).then(([ctImageData, petImageData]) => {
+    // TODO -> We could stream this ala 2D but its not done yet, so wait.
+
+    Promise.all(promises).then(() => {
+      const ctImageData = ctImageDataObject.vtkImageData;
+      const petImageData = petImageDataObject.vtkImageData;
+
       const ctVol = createCT2dPipeline(ctImageData);
       const petVol = createPET2dPipeline(
         petImageData,

@@ -14,6 +14,11 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
+const voi = {
+  windowCenter: 35,
+  windowWidth: 80,
+};
+
 function setupSyncedBrush(imageDataObject) {
   // Create buffer the size of the 3D volume
   const dimensions = imageDataObject.dimensions;
@@ -116,45 +121,60 @@ class VTKCornerstonePaintingSyncExample extends Component {
       return cornerstone.loadAndCacheImage(imageId);
     });
 
-    Promise.all(promises).then(
-      () => {
-        const displaySetInstanceUid = '12345';
-        const cornerstoneViewportData = {
-          stack: {
-            imageIds,
-            currentImageIdIndex: 0,
-          },
-          displaySetInstanceUid,
-        };
+    Promise.all(promises).then(() => {
+      const displaySetInstanceUid = '12345';
+      const cornerstoneViewportData = {
+        stack: {
+          imageIds,
+          currentImageIdIndex: 0,
+        },
+        displaySetInstanceUid,
+      };
 
-        const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(imageDataObject);
+      const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+      const labelMapInputData = setupSyncedBrush(imageDataObject);
 
-        this.onMeasurementsChanged = event => {
-          if (event.type !== EVENTS.LABELMAP_MODIFIED) {
-            return;
-          }
+      this.onMeasurementsChanged = event => {
+        if (event.type !== EVENTS.LABELMAP_MODIFIED) {
+          return;
+        }
 
-          labelMapInputData.modified();
+        labelMapInputData.modified();
 
-          this.rerenderAllVTKViewports();
-        };
+        this.rerenderAllVTKViewports();
+      };
 
-        loadImageData(imageDataObject).then(() => {
-          const { actor } = createActorMapper(imageDataObject.vtkImageData);
+      loadImageData(imageDataObject);
+      Promise.all(imageDataObject.insertPixelDataPromises).then(() => {
+        const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
-          this.setState({
-            vtkImageData: imageDataObject.vtkImageData,
-            volumes: [actor],
-            cornerstoneViewportData,
-            labelMapInputData,
-          });
+        const rgbTransferFunction = actor
+          .getProperty()
+          .getRGBTransferFunction(0);
+
+        const low = voi.windowCenter - voi.windowWidth / 2;
+        const high = voi.windowCenter + voi.windowWidth / 2;
+
+        rgbTransferFunction.setMappingRange(low, high);
+
+        this.setState({
+          vtkImageData: imageDataObject.vtkImageData,
+          volumes: [actor],
+          cornerstoneViewportData,
+          labelMapInputData,
         });
-      },
-      error => {
-        throw new Error(error);
-      }
-    );
+      });
+    });
+  }
+
+  setVtkjsPortOrientation(api) {
+    const renderWindow = api.genericRenderWindow.getRenderWindow();
+    const istyle = renderWindow.getInteractor().getInteractorStyle();
+
+    istyle.setSliceNormal(0, 0, 1);
+    istyle.setViewUp(0, -1, 0);
+
+    renderWindow.render();
   }
 
   onPaintEnd = strokeBuffer => {
@@ -300,7 +320,11 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
                 onPaintEnd={this.onPaintEnd}
-                onCreated={this.saveComponentReference(0)}
+                initialOrientation
+                onCreated={api => {
+                  this.saveComponentReference(0);
+                  this.setVtkjsPortOrientation(api);
+                }}
               />
             )}
           </div>

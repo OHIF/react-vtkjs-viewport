@@ -26,6 +26,7 @@ export default class View2D extends Component {
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
+    orientation: PropTypes.object,
   };
 
   static defaultProps = {
@@ -45,6 +46,9 @@ export default class View2D extends Component {
       paint: createSub(),
       paintStart: createSub(),
       paintEnd: createSub(),
+    };
+    this.state = {
+      voi: this.getVOI(props.volumes[0]),
     };
   }
 
@@ -170,7 +174,15 @@ export default class View2D extends Component {
       this.props.interactorStyleVolumeMapper ||
       this.props.volumes[0].getMapper();
 
-    istyle.setSliceNormal(0, 0, 1);
+    // Set orientation based on props
+    if (this.props.orientation) {
+      const { orientation } = this.props;
+
+      istyle.setSliceNormal(...orientation.sliceNormal);
+      istyle.setViewUp(...orientation.viewUp);
+    } else {
+      istyle.setSliceNormal(0, 0, 1);
+    }
 
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();
@@ -183,6 +195,9 @@ export default class View2D extends Component {
 
     // TODO: Not sure why this is necessary to force the initial draw
     this.genericRenderWindow.resize();
+
+    const boundUpdateVOI = this.updateVOI.bind(this);
+    const boundGetOrienation = this.getOrientation.bind(this);
 
     if (this.props.onCreated) {
       /**
@@ -199,10 +214,20 @@ export default class View2D extends Component {
         actors,
         volumes,
         _component: this,
+        updateVOI: boundUpdateVOI,
+        getOrientation: boundGetOrienation,
       };
 
       this.props.onCreated(api);
     }
+  }
+
+  updateVOI(windowWidth, windowCenter) {
+    this.setState({ voi: { windowWidth, windowCenter } });
+  }
+
+  getOrientation() {
+    return this.props.orientation;
   }
 
   componentDidUpdate(prevProps) {
@@ -359,7 +384,7 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
 
-    const voi = this.getVOI(this.props.volumes[0]);
+    const voi = this.state.voi;
 
     return (
       <div style={style}>
