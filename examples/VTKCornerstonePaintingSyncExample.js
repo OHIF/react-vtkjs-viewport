@@ -145,7 +145,6 @@ class VTKCornerstonePaintingSyncExample extends Component {
       };
 
       loadImageData(imageDataObject);
-
       Promise.all(imageDataObject.insertPixelDataPromises).then(() => {
         const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
