@@ -18,8 +18,6 @@ const studyInstanceUID =
   '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
 const ctSeriesInstanceUID =
   '1.3.6.1.4.1.14519.5.2.1.2744.7002.182837959725425690842769990419';
-const petSeriesInstanceUID =
-  '1.3.6.1.4.1.14519.5.2.1.2744.7002.886851941687931416391879144903';
 const searchInstanceOptions = {
   studyInstanceUID,
 };
@@ -35,46 +33,6 @@ function createActorMapper(imageData) {
     actor,
     mapper,
   };
-}
-
-function createCT2dPipeline(imageData) {
-  const { actor } = createActorMapper(imageData);
-  const cfun = vtkColorTransferFunction.newInstance();
-  /*
-    0: { description: 'Soft tissue', window: 400, level: 40 },
-  1: { description: 'Lung', window: 1500, level: -600 },
-  2: { description: 'Liver', window: 150, level: 90 },
-  3: { description: 'Bone', window: 2500, level: 480 },
-  4: { description: 'Brain', window: 80, level: 40 },*/
-  const preset = vtkColorMaps.getPresetByName('Grayscale');
-  cfun.applyColorMap(preset);
-  cfun.setMappingRange(-360, 440);
-
-  actor.getProperty().setRGBTransferFunction(0, cfun);
-
-  return actor;
-}
-
-function createPET2dPipeline(imageData, petColorMapId) {
-  const { actor, mapper } = createActorMapper(imageData);
-  mapper.setSampleDistance(1.0);
-
-  const cfun = vtkColorTransferFunction.newInstance();
-  const preset = vtkColorMaps.getPresetByName(petColorMapId);
-  cfun.applyColorMap(preset);
-  cfun.setMappingRange(0, 5);
-
-  actor.getProperty().setRGBTransferFunction(0, cfun);
-
-  // Create scalar opacity function
-  const ofun = vtkPiecewiseFunction.newInstance();
-  ofun.addPoint(0, 0.0);
-  ofun.addPoint(0.1, 0.9);
-  ofun.addPoint(5, 1.0);
-
-  actor.getProperty().setScalarOpacity(0, ofun);
-
-  return actor;
 }
 
 function getShiftRange(colorTransferArray) {
@@ -237,39 +195,6 @@ function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
   return actor;
 }
 
-function createPET3dPipeline(imageData, petColorMapId) {
-  const { actor, mapper } = createActorMapper(imageData);
-  const sampleDistance =
-    0.7 *
-    Math.sqrt(
-      imageData
-        .getSpacing()
-        .map(v => v * v)
-        .reduce((a, b) => a + b, 0)
-    );
-
-  mapper.setSampleDistance(sampleDistance);
-
-  // Apply colormap
-  const cfun = vtkColorTransferFunction.newInstance();
-  const preset = vtkColorMaps.getPresetByName(petColorMapId);
-  cfun.applyColorMap(preset);
-  cfun.setMappingRange(0, 5);
-
-  actor.getProperty().setRGBTransferFunction(0, cfun);
-
-  // Create scalar opacity function
-  const ofun = vtkPiecewiseFunction.newInstance();
-  ofun.addPoint(0.0, 0.0);
-  ofun.addPoint(0.1, 0.1);
-  ofun.addPoint(5, 0.2);
-
-  actor.getProperty().setScalarOpacity(0, ofun);
-  actor.getProperty().setScalarOpacityUnitDistance(0, 2.5);
-
-  return actor;
-}
-
 function createStudyImageIds(baseUrl, studySearchOptions) {
   const SOP_INSTANCE_UID = '00080018';
   const SERIES_INSTANCE_UID = '0020000E';
@@ -312,7 +237,6 @@ function loadDataset(imageIds, displaySetInstanceUid) {
 
 class VTKFusionExample extends Component {
   state = {
-    volumes: null,
     volumeRenderingVolumes: null,
     ctTransferFunctionPresetId: 'vtkMRMLVolumePropertyNode4',
     petColorMapId: 'hsv',
@@ -327,44 +251,25 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     );
-    //ctImageIds = ctImageIds.slice(0, ctImageIds.length / 4)
-
-    let petImageIds = imageIds.filter(imageId =>
-      imageId.includes(petSeriesInstanceUID)
-    );
-    petImageIds = petImageIds.slice(0, petImageIds.length / 4);
+    ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2)
 
     const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
-    const petImageDataObject = loadDataset(petImageIds, 'petDisplaySet');
     const promises = [
       ...ctImageDataObject.insertPixelDataPromises,
-      ...petImageDataObject.insertPixelDataPromises,
     ];
 
     // TODO -> We could stream this ala 2D but its not done yet, so wait.
 
     Promise.all(promises).then(() => {
       const ctImageData = ctImageDataObject.vtkImageData;
-      const petImageData = petImageDataObject.vtkImageData;
-
-      const ctVol = createCT2dPipeline(ctImageData);
-      const petVol = createPET2dPipeline(
-        petImageData,
-        this.state.petColorMapId
-      );
 
       const ctVolVR = createCT3dPipeline(
         ctImageData,
         this.state.ctTransferFunctionPresetId
       );
-      const petVolVR = createPET3dPipeline(
-        petImageData,
-        this.state.petColorMapId
-      );
 
       this.setState({
-        volumes: [ctVol, petVol],
-        volumeRenderingVolumes: [ctVolVR, petVolVR],
+        volumeRenderingVolumes: [ctVolVR],
       });
     });
   }
@@ -390,42 +295,6 @@ class VTKFusionExample extends Component {
     });
   };
 
-  handleChangePETColorMapId = event => {
-    const petColorMapId = event.target.value;
-    const actor2d = this.state.volumes[1];
-    const actor3d = this.state.volumeRenderingVolumes[1];
-
-    const preset = vtkColorMaps.getPresetByName(petColorMapId);
-
-    [actor2d, actor3d].forEach(actor => {
-      if (!actor) {
-        return;
-      }
-
-      const cfun = actor.getProperty().getRGBTransferFunction(0);
-
-      // TODO: Looks like this is returned by reference and mutated when
-      // applyColorMap is run, so we are copying the array with .slice().
-      // - Bit surprised we have to do this though. I wonder where else this is
-      // causing issues
-      const cRange = cfun.getMappingRange().slice();
-      cfun.applyColorMap(preset);
-
-      const newCfun = vtkColorTransferFunction.newInstance();
-      newCfun.applyColorMap(preset);
-      newCfun.setMappingRange(cRange[0], cRange[1]);
-
-      // TODO: Why doesn't mutating the current RGBTransferFunction work?
-      actor.getProperty().setRGBTransferFunction(0, newCfun);
-    });
-
-    this.setState({
-      petColorMapId,
-    });
-
-    this.rerenderAll();
-  };
-
   rerenderAll = () => {
     // Update all render windows, since the automatic re-render might not
     // happen if the viewport is not currently using the painting widget
@@ -439,7 +308,7 @@ class VTKFusionExample extends Component {
   };
 
   render() {
-    if (!this.state.volumes) {
+    if (!this.state.volumeRenderingVolumes) {
       return <h4>Loading...</h4>;
     }
 
@@ -451,25 +320,12 @@ class VTKFusionExample extends Component {
       );
     });
 
-    const petColorMapPresetOptions = vtkColorMaps.rgbPresetNames.map(preset => {
-      return (
-        <option key={preset} value={preset}>
-          {preset}
-        </option>
-      );
-    });
-
     return (
       <div className="row">
         <div className="col-xs-12">
           <h1>Image Fusion</h1>
           <p>
-            This example demonstrates how to use both the 2D and 3D components
-            to display multiple volumes simultaneously. A PET volume is overlaid
-            on a CT volume and controls are provided to update the CT Volume
-            Rendering presets (manipulating scalar opacity, gradient opacity,
-            RGB transfer function, etc...) and the PET Colormap (i.e. RGB
-            Transfer Function).
+            This example demonstrates volume rendering of a CT Volume.
           </p>
           <p>
             Images are retrieved via DICOMWeb from a publicly available server
@@ -479,16 +335,6 @@ class VTKFusionExample extends Component {
           </p>
         </div>
         <div className="col-xs-12">
-          <div>
-            <label htmlFor="select_PET_colormap">PET Colormap: </label>
-            <select
-              id="select_PET_colormap"
-              value={this.state.petColorMapId}
-              onChange={this.handleChangePETColorMapId}
-            >
-              {petColorMapPresetOptions}
-            </select>
-          </div>
           <div>
             <label htmlFor="select_CT_xfer_fn">
               CT Transfer Function Preset (for Volume Rendering):{' '}
@@ -503,12 +349,6 @@ class VTKFusionExample extends Component {
           </div>
         </div>
         <hr />
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.saveComponentReference(0)}
-          />
-        </div>
         <div className="col-xs-12 col-sm-6">
           <View3D
             volumes={this.state.volumeRenderingVolumes}
