@@ -12,11 +12,11 @@ import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 const PRESETS = {
   BONE: {
     windowWidth: 100,
-    windowCenter: 500 + 1024, // TODO: The data we load is unscaled, so we need to move our preset.
+    windowCenter: 500 + 1024, // The data here is is unscaled, so we need to move our preset.
   },
   HEAD: {
     windowWidth: 1000,
-    windowCenter: 300 + 1024, // TODO: The data we load is unscaled, so we need to move our preset.
+    windowCenter: 300 + 1024, // The data here is unscaled, so we need to move our preset.
   },
 };
 class VTKBasicExample extends Component {
@@ -26,7 +26,7 @@ class VTKBasicExample extends Component {
   };
 
   componentDidMount() {
-    this.components = {};
+    this.apis = [];
 
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
@@ -72,93 +72,48 @@ class VTKBasicExample extends Component {
   };
 
   updateAllViewports = () => {
-    Object.keys(this.components).forEach(viewportIndex => {
-      const component = this.components[viewportIndex];
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const api = this.apis[viewportIndex];
 
-      component.genericRenderWindow.getRenderWindow().render();
+      api.genericRenderWindow.getRenderWindow().render();
     });
   };
 
-  linkInteractors(renderWindow1, renderWindow2) {
-    const i1 = renderWindow1.getInteractor();
-    const i2 = renderWindow2.getInteractor();
-    const sync = {};
-
-    let src = null;
-
-    function linkOneWay(from, to) {
-      from.onStartAnimation(() => {
-        if (!src) {
-          src = from;
-          to.requestAnimation(sync);
-        }
-      });
-
-      from.onEndAnimation(() => {
-        if (src === from) {
-          src = null;
-          to.cancelAnimation(sync);
-          // roughly wait for widgetManager.capture() to finish
-          setTimeout(to.render, 1000);
-        }
-      });
-    }
-
-    linkOneWay(i1, i2);
-    linkOneWay(i2, i1);
-  }
-
-  linkAllInteractors(renderWindows) {
-    if (renderWindows.length < 2) {
-      return;
-    }
-
-    for (let i = 0; i < renderWindows.length - 1; i++) {
-      for (let j = i + 1; j < renderWindows.length; j++) {
-        this.linkInteractors(renderWindows[i], renderWindows[j]);
-      }
-    }
-  }
-
   saveRenderWindow = viewportIndex => {
-    return component => {
-      this.components[viewportIndex] = component;
+    return api => {
+      this.apis[viewportIndex] = api;
+
+      const apis = this.apis;
 
       if (viewportIndex === 1) {
-        const renderWindow = component.genericRenderWindow.getRenderWindow();
-
-        // TODO: This is a hacky workaround because disabling the vtkInteractorStyleMPRSlice is currently
-        // broken. The camera.onModified is never removed.
-        renderWindow
-          .getInteractor()
-          .getInteractorStyle()
-          .setVolumeMapper(null);
-
         const istyle = vtkInteractorStyleMPRWindowLevel.newInstance();
 
-        renderWindow.getInteractor().setInteractorStyle(istyle);
-        istyle.setVolumeMapper(component.volumes[0]);
+        const callbacks = {
+          setOnLevelsChanged: voi => {
+            const { windowWidth, windowCenter } = voi;
+            const levels = this.state.levels || {};
 
-        istyle.setOnLevelsChanged(levels => this.handleLevelsChanged(levels));
+            debugger;
+            apis.forEach(api => {
+              const renderWindow = api.genericRenderWindow.getRenderWindow();
 
-        const renderWindows = Object.values(this.components).map(a =>
-          a.genericRenderWindow.getRenderWindow()
-        );
-        this.linkAllInteractors(renderWindows);
+              api.updateVOI(windowWidth, windowCenter);
+              renderWindow.render();
+            });
+
+            levels.windowCenter = windowCenter;
+            levels.windowWidth = windowWidth;
+
+            this.setState({
+              levels,
+            });
+          },
+        };
+
+        api.setInteractorStyle({ istyle, callbacks });
       }
     };
   };
-
-  handleLevelsChanged({ windowCenter, windowWidth }) {
-    const levels = this.state.levels || {};
-
-    levels.windowCenter = windowCenter;
-    levels.windowWidth = windowWidth;
-
-    this.setState({
-      levels,
-    });
-  }
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {

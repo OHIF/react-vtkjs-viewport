@@ -62,18 +62,60 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
     updateScrollManipulator();
   }
 
-  function launchCallback(callData) {
+  function moveCrosshairs(callData) {
     const pos = [callData.position.x, callData.position.y];
     const renderer = callData.pokedRenderer;
-    const callback = publicAPI.getCallback();
     const dPos = vtkCoordinate.newInstance();
     dPos.setCoordinateSystemToDisplay();
     dPos.setValue(pos[0], pos[1], 0);
     const worldPos = dPos.getComputedWorldValue(renderer);
 
-    if (worldPos.length) {
-      callback({ worldPos, displayPos: pos });
+    const { apis, apiIndex } = model;
+
+    if (apis === undefined || apiIndex === undefined) {
+      console.error(
+        'apis and apiIndex must be set on the vtkInteractorStyleMPRCrosshairs.'
+      );
     }
+
+    // Set camera focal point to world coordinate for linked views
+    apis.forEach((api, viewportIndex) => {
+      if (viewportIndex !== apiIndex) {
+        // We are basically doing the same as getSlice but with the world coordinate
+        // that we want to jump to instead of the camera focal point.
+        // I would rather do the camera adjustment directly but I keep
+        // doing it wrong and so this is good enough for now.
+        const renderWindow = api.genericRenderWindow.getRenderWindow();
+
+        const istyle = renderWindow.getInteractor().getInteractorStyle();
+        const sliceNormal = istyle.getSliceNormal();
+        const transform = vtkMatrixBuilder
+          .buildFromDegree()
+          .identity()
+          .rotateFromDirections(sliceNormal, [1, 0, 0]);
+
+        const mutatedWorldPos = worldPos.slice();
+        transform.apply(mutatedWorldPos);
+        const slice = mutatedWorldPos[0];
+
+        istyle.setSlice(slice);
+
+        renderWindow.render();
+      }
+
+      const renderer = api.genericRenderWindow.getRenderer();
+      const wPos = vtkCoordinate.newInstance();
+      wPos.setCoordinateSystemToWorld();
+      wPos.setValue(worldPos);
+
+      const displayPosition = wPos.getComputedDisplayValue(renderer);
+      const { svgWidgetManager } = api;
+      api.svgWidgets.crosshairsWidget.setPoint(
+        displayPosition[0],
+        displayPosition[1]
+      );
+      svgWidgetManager.render();
+    });
 
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
   }
@@ -81,7 +123,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     if (model.state === States.IS_WINDOW_LEVEL) {
-      launchCallback(callData);
+      moveCrosshairs(callData);
     }
 
     if (superHandleMouseMove) {
@@ -93,7 +135,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
   publicAPI.handleLeftButtonPress = callData => {
     if (!callData.shiftKey && !callData.controlKey) {
       if (model.volumeMapper) {
-        launchCallback(callData);
+        moveCrosshairs(callData);
         publicAPI.startWindowLevel();
       }
     } else if (superHandleLeftButtonPress) {
@@ -130,6 +172,13 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
         publicAPI.superHandleLeftButtonRelease();
         break;
     }
+  };
+
+  publicAPI.setApis = apis => {
+    model.apis = apis;
+  };
+  publicAPI.setApiIndex = apiIndex => {
+    model.apiIndex = apiIndex;
   };
 
   setManipulators();

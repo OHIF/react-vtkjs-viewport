@@ -108,7 +108,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
   };
 
   componentDidMount() {
-    this.components = {};
+    this.apis = [];
     this.cornerstoneElements = {};
 
     // Pre-retrieve the images for demo purposes
@@ -167,16 +167,6 @@ class VTKCornerstonePaintingSyncExample extends Component {
     });
   }
 
-  setVtkjsPortOrientation(api) {
-    const renderWindow = api.genericRenderWindow.getRenderWindow();
-    const istyle = renderWindow.getInteractor().getInteractorStyle();
-
-    istyle.setSliceNormal(0, 0, 1);
-    istyle.setViewUp(0, -1, 0);
-
-    renderWindow.render();
-  }
-
   onPaintEnd = strokeBuffer => {
     const element = this.cornerstoneElements[0];
     const enabledElement = cornerstone.getEnabledElement(element);
@@ -227,8 +217,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
   rerenderAllVTKViewports = () => {
     // TODO: Find out why this is not quick to update either
-    Object.keys(this.components).forEach(viewportIndex => {
-      const renderWindow = this.components[
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const renderWindow = this.apis[
         viewportIndex
       ].genericRenderWindow.getRenderWindow();
 
@@ -236,14 +226,14 @@ class VTKCornerstonePaintingSyncExample extends Component {
     });
   };
 
-  saveComponentReference = viewportIndex => {
-    return component => {
-      this.components[viewportIndex] = component;
+  saveApiReference = api => {
+    this.apis = [api];
 
-      const paintFilter = component.filters[0];
+    api.updateVOI(voi.windowWidth, voi.windowCenter);
 
-      paintFilter.setRadius(10);
-    };
+    const paintFilter = api.filters[0];
+
+    paintFilter.setRadius(10);
   };
 
   saveCornerstoneElements = viewportIndex => {
@@ -320,11 +310,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
                 onPaintEnd={this.onPaintEnd}
-                initialOrientation
-                onCreated={api => {
-                  this.saveComponentReference(0);
-                  this.setVtkjsPortOrientation(api);
-                }}
+                orietnation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
+                onCreated={this.saveApiReference}
               />
             )}
           </div>
