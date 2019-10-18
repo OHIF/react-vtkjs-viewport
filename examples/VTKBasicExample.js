@@ -9,14 +9,15 @@ import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 
+// The data here is read from an unscaled *.vti, so we translate our windowCenter.
 const PRESETS = {
   BONE: {
     windowWidth: 100,
-    windowCenter: 500 + 1024, // The data here is is unscaled, so we need to move our preset.
+    windowCenter: 500 + 1024,
   },
   HEAD: {
     windowWidth: 1000,
-    windowCenter: 300 + 1024, // The data here is unscaled, so we need to move our preset.
+    windowCenter: 300 + 1024,
   },
 };
 class VTKBasicExample extends Component {
