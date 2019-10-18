@@ -310,7 +310,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
                 onPaintEnd={this.onPaintEnd}
-                orietnation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
+                orientation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
                 onCreated={this.saveApiReference}
               />
             )}
