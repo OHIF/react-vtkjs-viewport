@@ -1,158 +1,40 @@
 import React from 'react';
 import { Component } from 'react';
-import {
-  View2D,
-  getImageData,
-  loadImageData,
-  vtkInteractorStyleMPRRotate,
-  EVENTS,
-} from '@vtk-viewport';
-import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
-import vtkColorMaps from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/ColorMaps';
+import { View2D, vtkInteractorStyleMPRRotate } from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkOrientationMarkerWidget from 'vtk.js/Sources/Interaction/Widgets/OrientationMarkerWidget';
 import vtkAnnotatedCubeActor from 'vtk.js/Sources/Rendering/Core/AnnotatedCubeActor';
-import { api } from 'dicomweb-client';
+
 import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import './initCornerstone.js';
-import Constants from 'vtk.js/Sources/Rendering/Core/VolumeMapper/Constants.js';
-
-const { BlendMode } = Constants;
 
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
 //const url = 'http://localhost:44301/wadors'
 //const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
-const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
-const client = new api.DICOMwebClient({ url });
-const studyInstanceUID =
-  // '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969';
-  '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
-const ctSeriesInstanceUID =
-  // '1.3.6.1.4.1.14519.5.2.1.2744.7002.453958960749354309542907936863'
-  '1.3.6.1.4.1.14519.5.2.1.2744.7002.182837959725425690842769990419';
-const petSeriesInstanceUID =
-  '1.3.6.1.4.1.14519.5.2.1.2744.7002.117357550898198415937979788256';
-const searchInstanceOptions = {
-  studyInstanceUID,
+//const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
+//const studyInstanceUID =
+// '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969';
+//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
+//const ctSeriesInstanceUID =
+// '1.3.6.1.4.1.14519.5.2.1.2744.7002.453958960749354309542907936863'
+//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.182837959725425690842769990419';
+//const petSeriesInstanceUID =
+//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.117357550898198415937979788256';
+//const searchInstanceOptions = {
+//  studyInstanceUID,
+//};
+
+const voi = {
+  windowWidth: 1000,
+  windowCenter: 300 + 1024,
 };
-
-const min = -360;
-const max = 360;
-const volumeData = [
-  {
-    slicePlaneNormal: [0, 0, 1],
-    sliceViewUp: [0, -1, 0],
-    horizontalRotation: 0,
-    verticalRotation: 0,
-    viewRotation: 0,
-  },
-  {
-    slicePlaneNormal: [1, 0, 0],
-    sliceViewUp: [0, 0, 1],
-    horizontalRotation: 0,
-    verticalRotation: 0,
-    viewRotation: 0,
-  },
-  {
-    slicePlaneNormal: [0, 1, 0],
-    sliceViewUp: [0, 0, 1],
-    horizontalRotation: 0,
-    verticalRotation: 0,
-    viewRotation: 0,
-  },
-];
-
-function createStudyImageIds(baseUrl, studySearchOptions) {
-  const SOP_INSTANCE_UID = '00080018';
-  const SERIES_INSTANCE_UID = '0020000E';
-
-  return new Promise((resolve, reject) => {
-    client.retrieveStudyMetadata(studySearchOptions).then(instances => {
-      const imageIds = instances.map(metaData => {
-        const imageId =
-          `wadors:` +
-          baseUrl +
-          '/studies/' +
-          studyInstanceUID +
-          '/series/' +
-          metaData[SERIES_INSTANCE_UID].Value[0] +
-          '/instances/' +
-          metaData[SOP_INSTANCE_UID].Value[0] +
-          '/frames/1';
-
-        cornerstoneWADOImageLoader.wadors.metaDataManager.add(
-          imageId,
-          metaData
-        );
-
-        return imageId;
-      });
-
-      resolve(imageIds);
-    }, reject);
-  });
-}
-
-const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
-
-function loadDataset(imageIds, displaySetInstanceUid) {
-  return new Promise((resolve, reject) => {
-    const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-
-    loadImageData(imageDataObject).then(() => {
-      resolve(imageDataObject.vtkImageData);
-    });
-  });
-}
-
-function createActorMapper(imageData) {
-  const mapper = vtkVolumeMapper.newInstance();
-  mapper.setInputData(imageData);
-
-  const actor = vtkVolume.newInstance();
-  actor.setMapper(mapper);
-
-  return {
-    actor,
-    mapper,
-  };
-}
-
-function createCT2dPipeline(imageData) {
-  const { actor, mapper } = createActorMapper(imageData);
-  const cfun = vtkColorTransferFunction.newInstance();
-  /*
-    0: { description: 'Soft tissue', window: 400, level: 40 },
-  1: { description: 'Lung', window: 1500, level: -600 },
-  2: { description: 'Liver', window: 150, level: 90 },
-  3: { description: 'Bone', window: 2500, level: 480 },
-  4: { description: 'Brain', window: 80, level: 40 },*/
-  const preset = vtkColorMaps.getPresetByName('Grayscale');
-  cfun.applyColorMap(preset);
-  cfun.setMappingRange(-360, 440);
-
-  actor.getProperty().setRGBTransferFunction(0, cfun);
-
-  const sampleDistance =
-    0.7 *
-    Math.sqrt(
-      imageData
-        .getSpacing()
-        .map(v => v * v)
-        .reduce((a, b) => a + b, 0)
-    );
-
-  mapper.setSampleDistance(sampleDistance);
-  return actor;
-}
 
 class VTKMPRRotateExample extends Component {
   state = {
     volumes: [],
-    rotation: [],
   };
 
   async componentDidMount() {
@@ -181,42 +63,6 @@ class VTKMPRRotateExample extends Component {
     }
   }
 
-  async loadFromWadors() {
-    const imageIds = await imageIdPromise;
-    let ctImageIds = imageIds.filter(imageId =>
-      imageId.includes(ctSeriesInstanceUID)
-    );
-
-    const ctImageDataPromise = loadDataset(ctImageIds, 'ctDisplaySet');
-    const promises = [ctImageDataPromise];
-
-    return new Promise((resolve, reject) => {
-      Promise.all(promises).then(([ctImageData, petImageData]) => {
-        const ctVol = createCT2dPipeline(ctImageData);
-
-        this.setState({
-          volumes: [ctVol],
-          rotation: [
-            {
-              x: 0,
-              y: 0,
-            },
-            {
-              x: 0,
-              y: 0,
-            },
-            {
-              x: 0,
-              y: 0,
-            },
-          ],
-        });
-
-        resolve();
-      });
-    });
-  }
-
   loadFromVti() {
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
@@ -225,38 +71,21 @@ class VTKMPRRotateExample extends Component {
     const volumeMapper = vtkVolumeMapper.newInstance();
 
     volumeActor.setMapper(volumeMapper);
-
     reader.setUrl('/headsq.vti', { loadData: true }).then(() => {
       const data = reader.getOutputData();
       volumeMapper.setInputData(data);
 
       this.setState({
         volumes: [volumeActor],
-        rotation: [
-          {
-            x: 0,
-            y: 0,
-          },
-          {
-            x: 0,
-            y: 0,
-          },
-          {
-            x: 0,
-            y: 0,
-          },
-        ],
       });
     });
   }
 
-  addWidget(index) {
-    this.apis.orientations = this.apis.orientations || [];
+  addCubeWidget(api) {
     // ----------------------------------------------------------------------------
     // Standard rendering code setup
     // ----------------------------------------------------------------------------
 
-    const api = this.apis[index];
     const renderer = api.genericRenderWindow.getRenderer();
     const renderWindow = api.genericRenderWindow.getRenderWindow();
 
@@ -280,7 +109,6 @@ class VTKMPRRotateExample extends Component {
       edgeColor: 'black',
       resolution: 400,
     });
-    // axes.setXPlusFaceProperty({ text: '+X' });
     axes.setXMinusFaceProperty({
       text: '-X',
       faceColor: '#ffff00',
@@ -324,102 +152,24 @@ class VTKMPRRotateExample extends Component {
 
     renderer.resetCamera();
     renderWindow.render();
-
-    this.apis.orientations[index] = orientationWidget;
   }
 
-  storeApi = viewportIndex => {
-    return api => {
-      this.apis[viewportIndex] = api;
+  storeApi = api => {
+    const istyle = vtkInteractorStyleMPRRotate.newInstance();
 
-      const renderWindow = api.genericRenderWindow.getRenderWindow();
+    this.apis = [api];
+    this.addCubeWidget(api);
+    api.setInteractorStyle({ istyle });
 
-      // TODO: This is a hacky workaround because disabling the vtkInteractorStyleMPRSlice is currently
-      // broken. The camera.onModified is never removed.
-      renderWindow
-        .getInteractor()
-        .getInteractorStyle()
-        .setVolumeMapper(null);
+    const volume = api.volumes[0];
+    const rgbTransferFunction = volume.getProperty().getRGBTransferFunction(0);
 
-      const istyle = vtkInteractorStyleMPRRotate.newInstance();
-      //const istyle = vtkInteractorStyleMPRCrosshairs.newInstance();
+    const low = voi.windowCenter - voi.windowWidth / 2;
+    const high = voi.windowCenter + voi.windowWidth / 2;
 
-      renderWindow.getInteractor().setInteractorStyle(istyle);
-      istyle.setVolumeMapper(api.volumes[0]);
+    rgbTransferFunction.setMappingRange(low, high);
 
-      // api.volumes[0]
-      //   .getMapper()
-      //   .setBlendMode(BlendMode.MAXIMUM_INTENSITY_BLEND);
-      //api.volumes[0].getMapper().setBlendModeToMaximumIntensity();
-      //istyle.setSlabThickness(3);
-
-      const viewport = istyle.getViewport();
-
-      viewport.setOrientation(
-        volumeData[viewportIndex].slicePlaneNormal,
-        volumeData[viewportIndex].sliceViewUp
-      );
-
-      istyle.setViewport(viewport);
-
-      viewport
-        .getEventWindow()
-        .addEventListener(EVENTS.VIEWPORT_ROTATED, args => {
-          const rotation = this.state.rotation;
-
-          if (args.detail.dThetaX === 0 && args.detail.dThetaY === 0) {
-            return;
-          }
-
-          rotation[viewportIndex].x =
-            (rotation[viewportIndex].x + args.detail.dThetaY) % 360;
-          rotation[viewportIndex].y =
-            (rotation[viewportIndex].y + args.detail.dThetaX) % 360;
-
-          this.setState({ rotation });
-        });
-
-      this.addWidget(viewportIndex);
-
-      this.updateRotate(viewportIndex);
-    };
-  };
-
-  handleChangeX = (index, event) => {
-    const rotation = this.state.rotation;
-
-    rotation[index].x = +event.target.value;
-
-    this.setState({ rotation });
-
-    this.updateRotate(index);
-  };
-
-  handleChangeY = (index, event) => {
-    const rotation = this.state.rotation;
-
-    rotation[index].y = +event.target.value;
-
-    this.setState({ rotation });
-
-    this.updateRotate(index);
-  };
-
-  updateRotate = index => {
-    const api = this.apis[index];
     const renderWindow = api.genericRenderWindow.getRenderWindow();
-    const rotation = this.state.rotation;
-    const istyle = renderWindow.getInteractor().getInteractorStyle();
-    const viewport = istyle.getViewport();
-    const dThetaY = rotation[index].x - volumeData[index].horizontalRotation;
-    const dThetaX = rotation[index].y - volumeData[index].verticalRotation;
-
-    viewport.rotate(-dThetaX, -dThetaY);
-
-    volumeData[index].horizontalRotation = rotation[index].x;
-    volumeData[index].verticalRotation = rotation[index].y;
-
-    this.apis.orientations[index].updateMarkerOrientation();
 
     renderWindow.render();
   };
@@ -429,19 +179,6 @@ class VTKMPRRotateExample extends Component {
       return <h4>Loading...</h4>;
     }
 
-    const columns = [];
-
-    for (let index = 0; index < volumeData.length; index++) {
-      columns.push(
-        <div key={index.toString()} className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.storeApi(index)}
-          />
-        </div>
-      );
-    }
-
     return (
       <>
         <div className="row">
@@ -449,19 +186,17 @@ class VTKMPRRotateExample extends Component {
             <p>
               This example demonstrates how to use the MPR Rotate manipulator.
             </p>
-            {/* <div>
-              <label htmlFor="select_volume">Select Volume: </label>
-              <select
-                id="select_volume"
-                onChange={() => this.loadSelectedVolume()}
-              >
-                <option value="0">headsq.vti (small)</option>
-                <option value="1">Full Body (large)</option>
-              </select>
-            </div> */}
           </div>
         </div>
-        <div className="row">{columns}</div>
+        <div className="row">
+          <div className="col-xs-12 col-sm-6">
+            <View2D
+              volumes={this.state.volumes}
+              onCreated={this.storeApi}
+              orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, -1] }}
+            />
+          </div>
+        </div>
       </>
     );
   }

@@ -8,6 +8,7 @@ import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExamp
 import VTKLoadImageDataExample from './VTKLoadImageDataExample.js';
 import VTKCrosshairsExample from './VTKCrosshairsExample.js';
 import VTKMPRRotateExample from './VTKMPRRotateExample.js';
+import VTKVolumeRenderingExample from './VTKVolumeRenderingExample.js';
 
 function LinkOut({ href, text }) {
   return (
@@ -46,6 +47,12 @@ function Index() {
       url: '/fusion',
       text:
         'Demonstrates how to display two volumes simultaneously with different transfer functions for PET/CT Fusion.',
+    },
+    {
+      title: 'Volume Rendering',
+      url: '/volume-rendering',
+      text:
+        'Demonstrates how to perform volume rendering for a CT volume.',
     },
     {
       title: 'Image Segmentation via Paint Widget',
@@ -137,6 +144,7 @@ function AppRouter() {
     Example({ children: <VTKCornerstonePaintingSyncExample /> });
   const crosshairs = () => Example({ children: <VTKCrosshairsExample /> });
   const rotateMPR = () => Example({ children: <VTKMPRRotateExample /> });
+  const volumeRendering = () => Example({ children: <VTKVolumeRenderingExample /> });
 
   return (
     <Router>
@@ -148,6 +156,7 @@ function AppRouter() {
         <Route exact path="/cornerstone-sync-painting" render={synced} />
         <Route exact path="/crosshairs" render={crosshairs} />
         <Route exact path="/rotate" render={rotateMPR} />
+        <Route exact path="/volume-rendering" render={volumeRendering} />
         <Route exact path="/cornerstone-load-image-data" render={loadImage} />
         <Route exact component={Index} />
       </Switch>

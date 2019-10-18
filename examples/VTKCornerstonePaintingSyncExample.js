@@ -14,6 +14,11 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
+const voi = {
+  windowCenter: 35,
+  windowWidth: 80,
+};
+
 function setupSyncedBrush(imageDataObject) {
   // Create buffer the size of the 3D volume
   const dimensions = imageDataObject.dimensions;
@@ -103,7 +108,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
   };
 
   componentDidMount() {
-    this.components = {};
+    this.apis = [];
     this.cornerstoneElements = {};
 
     // Pre-retrieve the images for demo purposes
@@ -116,45 +121,50 @@ class VTKCornerstonePaintingSyncExample extends Component {
       return cornerstone.loadAndCacheImage(imageId);
     });
 
-    Promise.all(promises).then(
-      () => {
-        const displaySetInstanceUid = '12345';
-        const cornerstoneViewportData = {
-          stack: {
-            imageIds,
-            currentImageIdIndex: 0,
-          },
-          displaySetInstanceUid,
-        };
+    Promise.all(promises).then(() => {
+      const displaySetInstanceUid = '12345';
+      const cornerstoneViewportData = {
+        stack: {
+          imageIds,
+          currentImageIdIndex: 0,
+        },
+        displaySetInstanceUid,
+      };
 
-        const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-        const labelMapInputData = setupSyncedBrush(imageDataObject);
+      const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+      const labelMapInputData = setupSyncedBrush(imageDataObject);
 
-        this.onMeasurementsChanged = event => {
-          if (event.type !== EVENTS.LABELMAP_MODIFIED) {
-            return;
-          }
+      this.onMeasurementsChanged = event => {
+        if (event.type !== EVENTS.LABELMAP_MODIFIED) {
+          return;
+        }
 
-          labelMapInputData.modified();
+        labelMapInputData.modified();
 
-          this.rerenderAllVTKViewports();
-        };
+        this.rerenderAllVTKViewports();
+      };
 
-        loadImageData(imageDataObject).then(() => {
-          const { actor } = createActorMapper(imageDataObject.vtkImageData);
+      loadImageData(imageDataObject);
+      Promise.all(imageDataObject.insertPixelDataPromises).then(() => {
+        const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
-          this.setState({
-            vtkImageData: imageDataObject.vtkImageData,
-            volumes: [actor],
-            cornerstoneViewportData,
-            labelMapInputData,
-          });
+        const rgbTransferFunction = actor
+          .getProperty()
+          .getRGBTransferFunction(0);
+
+        const low = voi.windowCenter - voi.windowWidth / 2;
+        const high = voi.windowCenter + voi.windowWidth / 2;
+
+        rgbTransferFunction.setMappingRange(low, high);
+
+        this.setState({
+          vtkImageData: imageDataObject.vtkImageData,
+          volumes: [actor],
+          cornerstoneViewportData,
+          labelMapInputData,
         });
-      },
-      error => {
-        throw new Error(error);
-      }
-    );
+      });
+    });
   }
 
   onPaintEnd = strokeBuffer => {
@@ -207,8 +217,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
 
   rerenderAllVTKViewports = () => {
     // TODO: Find out why this is not quick to update either
-    Object.keys(this.components).forEach(viewportIndex => {
-      const renderWindow = this.components[
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const renderWindow = this.apis[
         viewportIndex
       ].genericRenderWindow.getRenderWindow();
 
@@ -216,14 +226,14 @@ class VTKCornerstonePaintingSyncExample extends Component {
     });
   };
 
-  saveComponentReference = viewportIndex => {
-    return component => {
-      this.components[viewportIndex] = component;
+  saveApiReference = api => {
+    this.apis = [api];
 
-      const paintFilter = component.filters[0];
+    api.updateVOI(voi.windowWidth, voi.windowCenter);
 
-      paintFilter.setRadius(10);
-    };
+    const paintFilter = api.filters[0];
+
+    paintFilter.setRadius(10);
   };
 
   saveCornerstoneElements = viewportIndex => {
@@ -300,7 +310,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 paintFilterLabelMapImageData={this.state.labelMapInputData}
                 painting={this.state.focusedWidgetId === 'PaintWidget'}
                 onPaintEnd={this.onPaintEnd}
-                onCreated={this.saveComponentReference(0)}
+                orientation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
+                onCreated={this.saveApiReference}
               />
             )}
           </div>

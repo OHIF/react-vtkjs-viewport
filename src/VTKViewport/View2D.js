@@ -6,6 +6,7 @@ import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
+import vtkSVGWidgetManager from './vtkSVGWidgetManager';
 
 import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
@@ -26,6 +27,7 @@ export default class View2D extends Component {
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
+    orientation: PropTypes.object,
   };
 
   static defaultProps = {
@@ -45,6 +47,10 @@ export default class View2D extends Component {
       paint: createSub(),
       paintStart: createSub(),
       paintEnd: createSub(),
+    };
+    this.interactorStyleSubs = [];
+    this.state = {
+      voi: this.getVOI(props.volumes[0]),
     };
   }
 
@@ -170,7 +176,15 @@ export default class View2D extends Component {
       this.props.interactorStyleVolumeMapper ||
       this.props.volumes[0].getMapper();
 
-    istyle.setSliceNormal(0, 0, 1);
+    // Set orientation based on props
+    if (this.props.orientation) {
+      const { orientation } = this.props;
+
+      istyle.setSliceNormal(...orientation.sliceNormal);
+      istyle.setViewUp(...orientation.viewUp);
+    } else {
+      istyle.setSliceNormal(0, 0, 1);
+    }
 
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();
@@ -181,8 +195,24 @@ export default class View2D extends Component {
     });
     this.updatePaintbrush();
 
+    const svgWidgetManager = vtkSVGWidgetManager.newInstance();
+
+    svgWidgetManager.setRenderer(this.renderer);
+    svgWidgetManager.setScale(1);
+
+    this.svgWidgetManager = svgWidgetManager;
+
     // TODO: Not sure why this is necessary to force the initial draw
     this.genericRenderWindow.resize();
+
+    const boundUpdateVOI = this.updateVOI.bind(this);
+    const boundGetOrienation = this.getOrientation.bind(this);
+    const boundSetInteractorStyle = this.setInteractorStyle.bind(this);
+    const boundGetSlabThickness = this.getSlabThickness.bind(this);
+    const boundSetSlabThickness = this.setSlabThickness.bind(this);
+    const boundAddSVGWidget = this.addSVGWidget.bind(this);
+
+    this.svgWidgets = {};
 
     if (this.props.onCreated) {
       /**
@@ -193,16 +223,126 @@ export default class View2D extends Component {
       const api = {
         genericRenderWindow: this.genericRenderWindow,
         widgetManager: this.widgetManager,
+        svgWidgetManager: this.svgWidgetManager,
+        addSVGWidget: boundAddSVGWidget,
         container: this.container.current,
         widgets,
+        svgWidgets: this.svgWidgets,
         filters,
         actors,
         volumes,
         _component: this,
+        updateVOI: boundUpdateVOI,
+        getOrientation: boundGetOrienation,
+        setInteractorStyle: boundSetInteractorStyle,
+        getSlabThickness: boundGetSlabThickness,
+        setSlabThickness: boundSetSlabThickness,
       };
 
       this.props.onCreated(api);
     }
+  }
+
+  addSVGWidget(widget, name) {
+    const { svgWidgetManager } = this;
+
+    svgWidgetManager.addWidget(widget);
+    svgWidgetManager.render();
+
+    this.svgWidgets[name] = widget;
+  }
+
+  getSlabThickness() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    if (currentIStyle.getSlabThickness) {
+      return currentIStyle.getSlabThickness();
+    }
+
+    //return this.currentSlabThickness;
+  }
+
+  setSlabThickness(slabThickness) {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const istyle = renderWindow.getInteractor().getInteractorStyle();
+
+    if (istyle.setSlabThickness) {
+      istyle.setSlabThickness(slabThickness);
+    }
+
+    renderWindow.render();
+  }
+
+  setInteractorStyle({ istyle, callbacks = {}, configuration = {} }) {
+    const { volumes } = this.props;
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    // unsubscribe from previous iStyle's callbacks.
+    while (this.interactorStyleSubs.length) {
+      this.interactorStyleSubs.pop().unsubscribe();
+    }
+
+    let currentViewport;
+    if (currentIStyle.getViewport && istyle.getViewport) {
+      currentViewport = currentIStyle.getViewport();
+    }
+
+    const slabThickness = this.getSlabThickness();
+
+    /*
+    let currentSlabThickness;
+    if (currentIStyle.getSlabThickness && istyle.getSlabThickness) {
+      currentSlabThickness = currentIStyle.getSlabThickness();
+      this.currentSlabThickness = currentSlabThickness;
+    }
+    */
+
+    const interactor = renderWindow.getInteractor();
+
+    interactor.setInteractorStyle(istyle);
+
+    // TODO: Not sure why this is required the second time this function is called
+    istyle.setInteractor(interactor);
+
+    if (currentViewport) {
+      istyle.setViewport(currentViewport);
+    }
+
+    if (istyle.getVolumeMapper() !== volumes[0]) {
+      if (slabThickness && istyle.setSlabThickness) {
+        istyle.setSlabThickness(slabThickness);
+      }
+
+      istyle.setVolumeMapper(volumes[0]);
+    }
+
+    // Add appropriate callbacks
+    Object.keys(callbacks).forEach(key => {
+      if (typeof istyle[key] === 'function') {
+        const subscription = istyle[key](callbacks[key]);
+
+        if (subscription && typeof subscription.unsubscribe === 'function') {
+          this.interactorStyleSubs.push(subscription);
+        }
+      }
+    });
+
+    // Set Configuration
+    if (configuration) {
+      istyle.set(configuration);
+    }
+
+    renderWindow.render();
+  }
+
+  updateVOI(windowWidth, windowCenter) {
+    this.setState({ voi: { windowWidth, windowCenter } });
+  }
+
+  getOrientation() {
+    return this.props.orientation;
   }
 
   componentDidUpdate(prevProps) {
@@ -359,7 +499,7 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
 
-    const voi = this.getVOI(this.props.volumes[0]);
+    const voi = this.state.voi;
 
     return (
       <div style={style}>
