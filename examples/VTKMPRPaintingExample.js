@@ -90,7 +90,7 @@ class VTKMPRPaintingExample extends Component {
   };
 
   componentDidMount() {
-    this.components = {};
+    this.apis = [];
 
     const reader = vtkHttpDataSetReader.newInstance({
       fetchGzip: true,
@@ -146,8 +146,8 @@ class VTKMPRPaintingExample extends Component {
   };
 
   setThresholdFromValue = threshold => {
-    Object.keys(this.components).forEach(viewportIndex => {
-      const paintFilter = this.components[viewportIndex].filters[0];
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const paintFilter = this.apis[viewportIndex].filters[0];
 
       paintFilter.setVoxelFunc((bgValue, idx) => {
         return bgValue[0] > threshold;
@@ -174,9 +174,9 @@ class VTKMPRPaintingExample extends Component {
     this.rerenderAllViewports();
   };
 
-  saveComponentReference = viewportIndex => {
-    return component => {
-      this.components[viewportIndex] = component;
+  saveApiReference = viewportIndex => {
+    return api => {
+      this.apis[viewportIndex] = api;
 
       this.setThresholdFromValue(this.state.threshold);
     };
@@ -185,8 +185,8 @@ class VTKMPRPaintingExample extends Component {
   rerenderAllViewports = () => {
     // Update all render windows, since the automatic re-render might not
     // happen if the viewport is not currently using the painting widget
-    Object.keys(this.components).forEach(viewportIndex => {
-      const renderWindow = this.components[
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const renderWindow = this.apis[
         viewportIndex
       ].genericRenderWindow.getRenderWindow();
 
@@ -274,7 +274,7 @@ class VTKMPRPaintingExample extends Component {
             paintFilterLabelMapImageData={
               this.state.paintFilterLabelMapImageData
             }
-            onCreated={this.saveComponentReference(0)}
+            onCreated={this.saveApiReference(0)}
             painting={this.state.focusedWidgetId === 'PaintWidget'}
           />
         </div>
@@ -287,7 +287,7 @@ class VTKMPRPaintingExample extends Component {
             paintFilterLabelMapImageData={
               this.state.paintFilterLabelMapImageData
             }
-            onCreated={this.saveComponentReference(1)}
+            onCreated={this.saveApiReference(1)}
             painting={this.state.focusedWidgetId === 'PaintWidget'}
           />
         </div>

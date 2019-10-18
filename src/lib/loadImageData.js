@@ -47,6 +47,12 @@ export default function loadImageDataProgressively(imageDataObject) {
     min: Number.POSITIVE_INFINITY,
   };
 
+  const numberOfFrames = imageIds.length;
+  let numberProcessed = 0;
+
+  const reRenderFraction = numberOfFrames / 5;
+  let reRenderTarget = reRenderFraction;
+
   const insertPixelData = image => {
     return new Promise(resolve => {
       const { imagePositionPatient } = metaDataMap.get(image.imageId);
@@ -71,8 +77,15 @@ export default function loadImageDataProgressively(imageDataObject) {
       const dataArray = vtkImageData.getPointData().getScalars();
 
       dataArray.setRange(range, 1);
+      numberProcessed++;
 
-      resolve();
+      if (numberProcessed > reRenderTarget) {
+        reRenderTarget += reRenderFraction;
+
+        vtkImageData.modified();
+      }
+
+      resolve(numberProcessed);
     });
   };
 
