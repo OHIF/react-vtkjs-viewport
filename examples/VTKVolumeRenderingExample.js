@@ -1,6 +1,6 @@
 import React from 'react';
 import { Component } from 'react';
-import { getImageData, loadImageData, View2D, View3D } from '@vtk-viewport';
+import { getImageData, loadImageData, View3D } from '@vtk-viewport';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import { api } from 'dicomweb-client';
@@ -164,8 +164,9 @@ function applyPreset(actor, preset) {
 
 function createCT3dPipeline(imageData, ctTransferFunctionPresetId) {
   const { actor, mapper } = createActorMapper(imageData);
+
   const sampleDistance =
-    0.7 *
+    1.2 *
     Math.sqrt(
       imageData
         .getSpacing()
@@ -245,20 +246,20 @@ class VTKFusionExample extends Component {
   async componentDidMount() {
     const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
 
-    this.components = {};
+    this.apis = [];
 
     const imageIds = await imageIdPromise;
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     );
-    ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2)
+    ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2);
 
     const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
-    const promises = [
-      ...ctImageDataObject.insertPixelDataPromises,
-    ];
+    const promises = [...ctImageDataObject.insertPixelDataPromises];
 
     // TODO -> We could stream this ala 2D but its not done yet, so wait.
+    // TODO -> @Erik ^ We also don't have the metadata ahead of time in
+    // These examples anyway right now.
 
     Promise.all(promises).then(() => {
       const ctImageData = ctImageDataObject.vtkImageData;
@@ -274,10 +275,8 @@ class VTKFusionExample extends Component {
     });
   }
 
-  saveComponentReference = viewportIndex => {
-    return component => {
-      this.components[viewportIndex] = component;
-    };
+  saveApiReference = api => {
+    this.apis = [api];
   };
 
   handleChangeCTTransferFunction = event => {
@@ -290,6 +289,8 @@ class VTKFusionExample extends Component {
 
     applyPreset(actor, preset);
 
+    this.rerenderAll();
+
     this.setState({
       ctTransferFunctionPresetId,
     });
@@ -298,8 +299,8 @@ class VTKFusionExample extends Component {
   rerenderAll = () => {
     // Update all render windows, since the automatic re-render might not
     // happen if the viewport is not currently using the painting widget
-    Object.keys(this.components).forEach(viewportIndex => {
-      const renderWindow = this.components[
+    Object.keys(this.apis).forEach(viewportIndex => {
+      const renderWindow = this.apis[
         viewportIndex
       ].genericRenderWindow.getRenderWindow();
 
@@ -323,10 +324,8 @@ class VTKFusionExample extends Component {
     return (
       <div className="row">
         <div className="col-xs-12">
-          <h1>Image Fusion</h1>
-          <p>
-            This example demonstrates volume rendering of a CT Volume.
-          </p>
+          <h1>Volume Rendering</h1>
+          <p>This example demonstrates volume rendering of a CT Volume.</p>
           <p>
             Images are retrieved via DICOMWeb from a publicly available server
             and constructed into <code>vtkImageData</code> volumes before they
@@ -352,7 +351,7 @@ class VTKFusionExample extends Component {
         <div className="col-xs-12 col-sm-6">
           <View3D
             volumes={this.state.volumeRenderingVolumes}
-            onCreated={this.saveComponentReference(1)}
+            onCreated={this.saveApiReference}
           />
         </div>
       </div>

@@ -385,6 +385,8 @@ class VTKFusionExample extends Component {
 
     applyPreset(actor, preset);
 
+    this.rerenderAll();
+
     this.setState({
       ctTransferFunctionPresetId,
     });
