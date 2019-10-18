@@ -94,7 +94,6 @@ class VTKBasicExample extends Component {
             const { windowWidth, windowCenter } = voi;
             const levels = this.state.levels || {};
 
-            debugger;
             apis.forEach(api => {
               const renderWindow = api.genericRenderWindow.getRenderWindow();
 

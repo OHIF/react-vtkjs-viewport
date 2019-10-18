@@ -27,6 +27,11 @@ window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 //  studyInstanceUID,
 //};
 
+const voi = {
+  windowWidth: 1000,
+  windowCenter: 300 + 1024,
+};
+
 class VTKMPRRotateExample extends Component {
   state = {
     volumes: [],
@@ -156,6 +161,18 @@ class VTKMPRRotateExample extends Component {
     this.apis = [api];
     this.addCubeWidget(api);
     api.setInteractorStyle({ istyle });
+
+    const volume = api.volumes[0];
+    const rgbTransferFunction = volume.getProperty().getRGBTransferFunction(0);
+
+    const low = voi.windowCenter - voi.windowWidth / 2;
+    const high = voi.windowCenter + voi.windowWidth / 2;
+
+    rgbTransferFunction.setMappingRange(low, high);
+
+    const renderWindow = api.genericRenderWindow.getRenderWindow();
+
+    renderWindow.render();
   };
 
   render() {
