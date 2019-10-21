@@ -23,7 +23,12 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     columnCosines[1],
     columnCosines[2]
   );
-  const crossProduct = colCosineVec.cross(rowCosineVec);
+
+  const crossProduct = new Vector3(
+    rowCosines[0],
+    rowCosines[1],
+    rowCosines[2]
+  ).cross(colCosineVec);
 
   const orientation = determineOrientation(crossProduct);
   const zAxis = computeZAxis(orientation, metaDataMap);
