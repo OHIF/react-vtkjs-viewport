@@ -77,21 +77,21 @@ class VTKCrosshairsExample extends Component {
     return (
       <>
         <div className="row">
-          <div className="col-xs-12">
+          <div className="col-xs-6">
             <p>
               This example demonstrates how to use the Crosshairs manipulator.
             </p>
           </div>
         </div>
         <div className="row">
-          <div className="col-xs-12 col-sm-6">
+          <div className="col-xs-6 col-xs-6">
             <View2D
               volumes={this.state.volumes}
               onCreated={this.storeApi(2)}
               orientation={{ sliceNormal: [0, 1, 0], viewUp: [0, 0, 1] }}
             />
           </div>
-          <div className="col-xs-12 col-sm-6">
+          <div className="col-xs-6 col-xs-6">
             <View2D
               volumes={this.state.volumes}
               onCreated={this.storeApi(1)}
@@ -101,7 +101,7 @@ class VTKCrosshairsExample extends Component {
         </div>
 
         <div className="row">
-          <div className="col-xs-12 col-sm-6">
+          <div className="col-xs-6 col-xs-6">
             <View2D
               volumes={this.state.volumes}
               onCreated={this.storeApi(0)}

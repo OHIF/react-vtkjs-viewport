@@ -186,6 +186,11 @@ export default class View2D extends Component {
       istyle.setSliceNormal(0, 0, 1);
     }
 
+    const camera = this.renderer.getActiveCamera();
+
+    camera.setParallelProjection(true);
+    this.renderer.resetCamera();
+
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
