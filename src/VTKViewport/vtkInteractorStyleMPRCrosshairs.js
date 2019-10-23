@@ -63,14 +63,28 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
   }
 
   function moveCrosshairs(callData) {
+    const { apis, apiIndex } = model;
     const pos = [callData.position.x, callData.position.y];
     const renderer = callData.pokedRenderer;
+
     const dPos = vtkCoordinate.newInstance();
     dPos.setCoordinateSystemToDisplay();
-    dPos.setValue(pos[0], pos[1], 0);
-    const worldPos = dPos.getComputedWorldValue(renderer);
 
-    const { apis, apiIndex } = model;
+    dPos.setValue(pos[0], pos[1], 0);
+    let worldPos = dPos.getComputedWorldValue(renderer);
+
+    const camera = renderer.getActiveCamera();
+    const directionOfProjection = camera.getDirectionOfProjection();
+
+    const api = apis[apiIndex];
+    const halfSlabThickness = api.getSlabThickness() / 2;
+
+    for (let i = 0; i < worldPos.length; i++) {
+      worldPos[i] += halfSlabThickness * directionOfProjection[i];
+    }
+
+    // Add half of the slab thickness to the world position, such that we select
+    // The center of the slice.
 
     if (apis === undefined || apiIndex === undefined) {
       console.error(
