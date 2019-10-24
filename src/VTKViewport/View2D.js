@@ -107,6 +107,8 @@ export default class View2D extends Component {
       const viewUp = baseCamera.getReferenceByName('viewUp');
       const viewAngle = baseCamera.getReferenceByName('viewAngle');
 
+      console.log(viewAngle);
+
       paintCamera.set({
         position,
         focalPoint,
@@ -190,6 +192,9 @@ export default class View2D extends Component {
 
     camera.setParallelProjection(true);
     this.renderer.resetCamera();
+
+    // TEMP -> Set view angle. Does nothing for parallel projection, as expected.
+    camera.setViewAngle(1.0);
 
     istyle.setVolumeMapper(istyleVolumeMapper);
     const range = istyle.getSliceRange();

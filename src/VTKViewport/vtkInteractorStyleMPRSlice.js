@@ -175,7 +175,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
           (bounds[4] + bounds[5]) / 2.0,
         ];
 
-        angle = 90;
+        angle = 1;
 
         // distance from camera to focal point
         dist = diagonal / (2 * Math.tan((angle / 360) * Math.PI));
@@ -338,6 +338,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   publicAPI.setSlice = slice => {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
+
+    console.log(camera.getParallelProjection());
 
     if (model.volumeMapper) {
       const range = publicAPI.getSliceRange();
