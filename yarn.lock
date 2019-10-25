@@ -13602,10 +13602,10 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.0.tgz#bd76d6a23323e2ca8ffa12028dc04559c75f9019"
   integrity sha512-iq+S7vZJE60yejDYM0ek6zg308+UZsdtPExWP9VZoCFCz1zkJoXFnAX7aZfd/ZwrkidzdUZL0C/ryW+JwAiIGw==
 
-vtk.js@^11.7.1:
-  version "11.7.1"
-  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.7.1.tgz#e9527c75d84e292c5d25fc4cacf62d42c777930e"
-  integrity sha512-r6KTDYRF+XBq8gvoi27HJs+1DN4E39FX1k9i15el6JXRuZQebnBjWZ0W8XlfM8Nc6AAAax6DdauBFZdhyG0s/Q==
+vtk.js@^11.7.2:
+  version "11.7.2"
+  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.7.2.tgz#451031a4a03756cfdf44c05490c8c28dee80dd3f"
+  integrity sha512-ALAJP0gj5kSTOsf/YSicp2wy2YrbCns4vuUQVVKh/vGdlO3npRPt8gxmJLc7QLB2Gwcwl2DKkngu1/q1OC001g==
   dependencies:
     blueimp-md5 "2.10.0"
     commander "2.11.0"
