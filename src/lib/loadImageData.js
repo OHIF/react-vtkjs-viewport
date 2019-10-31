@@ -15,6 +15,7 @@ export default function loadImageDataProgressively(imageDataObject) {
     vtkImageData,
     metaDataMap,
     sortedDatasets,
+    acquistionDirection,
   } = imageDataObject;
   const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
   const imageId0 = imageIds[0];
@@ -68,6 +69,7 @@ export default function loadImageDataProgressively(imageDataObject) {
       const { max, min } = insertSlice(
         vtkImageData,
         sliceIndex,
+        acquistionDirection,
         image,
         modality,
         modalitySpecificScalingParameters

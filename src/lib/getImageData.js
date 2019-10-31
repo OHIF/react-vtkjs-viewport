@@ -87,10 +87,28 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     scanAxisNormal.z,
   ];
 
-  console.log(direction);
+  const acquistionDirection = _getAcquisitionDirection(scanAxisNormal);
 
-  imageData.setDimensions(xVoxels, yVoxels, zVoxels);
-  imageData.setSpacing(xSpacing, ySpacing, zSpacing);
+  console.log(rowCosineVec);
+  console.log(colCosineVec);
+  console.log(scanAxisNormal);
+  console.log(acquistionDirection);
+
+  switch (acquistionDirection) {
+    case 'sagittal':
+      imageData.setDimensions(zVoxels, xVoxels, yVoxels);
+      imageData.setSpacing(zSpacing, xSpacing, ySpacing);
+      break;
+    case 'coronal':
+      imageData.setDimensions(xVoxels, zVoxels, yVoxels);
+      imageData.setSpacing(xSpacing, zSpacing, ySpacing);
+      break;
+    case 'axial':
+      imageData.setDimensions(xVoxels, yVoxels, zVoxels);
+      imageData.setSpacing(xSpacing, ySpacing, zSpacing);
+      break;
+  }
+
   imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
@@ -105,10 +123,36 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     vtkImageData: imageData,
     metaDataMap,
     sortedDatasets,
+    acquistionDirection,
     loaded: false,
   };
 
   imageDataCache.set(displaySetInstanceUid, imageDataObject);
 
   return imageDataObject;
+}
+
+const sagittal = new Vector3(1, 0, 0);
+const coronal = new Vector3(0, 1, 0);
+const axial = new Vector3(0, 0, 1);
+
+function _getAcquisitionDirection(zDirection) {
+  const zAbs = new Vector3(
+    Math.abs(zDirection.x),
+    Math.abs(zDirection.y),
+    Math.abs(zDirection.z)
+  );
+
+  // Get the direction of the acquisition.
+  const dotProducts = [
+    zAbs.dot(sagittal), // z . Sagittal
+    zAbs.dot(coronal), // z . Coronal
+    zAbs.dot(axial), // z . Axial
+  ];
+
+  const directionIndex = dotProducts.indexOf(Math.max(...dotProducts));
+
+  const acquisitionDirections = ['sagittal', 'coronal', 'axial'];
+
+  return acquisitionDirections[directionIndex];
 }
