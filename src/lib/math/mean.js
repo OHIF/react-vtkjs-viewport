@@ -1,5 +1,5 @@
-import { sum } from './sum.js';
+import sum from './sum.js';
 
-export function mean(array) {
+export default function mean(array) {
   return sum(array) / array.length;
 }

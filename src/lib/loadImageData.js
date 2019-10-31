@@ -1,5 +1,4 @@
 import cornerstone from 'cornerstone-core';
-import getSliceIndex from './data/getSliceIndex.js';
 import insertSlice from './data/insertSlice.js';
 import getPatientWeightAndCorrectedDose from './data/getPatientWeightAndCorrectedDose.js';
 
@@ -11,7 +10,13 @@ export default function loadImageDataProgressively(imageDataObject) {
     return;
   }
 
-  const { imageIds, vtkImageData, metaDataMap, zAxis } = imageDataObject;
+  const {
+    imageIds,
+    vtkImageData,
+    metaDataMap,
+    sortedDatasets,
+    acquistionDirection,
+  } = imageDataObject;
   const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
   const imageId0 = imageIds[0];
 
@@ -56,11 +61,15 @@ export default function loadImageDataProgressively(imageDataObject) {
   const insertPixelData = image => {
     return new Promise(resolve => {
       const { imagePositionPatient } = metaDataMap.get(image.imageId);
-      const sliceIndex = getSliceIndex(zAxis, imagePositionPatient);
+
+      const sliceIndex = sortedDatasets.findIndex(
+        dataset => dataset.imagePositionPatient === imagePositionPatient
+      );
 
       const { max, min } = insertSlice(
         vtkImageData,
         sliceIndex,
+        acquistionDirection,
         image,
         modality,
         modalitySpecificScalingParameters
