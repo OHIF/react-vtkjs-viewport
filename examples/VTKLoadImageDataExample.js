@@ -63,6 +63,7 @@ function getImageIds() {
     imageNames.push('PET_HeadNeck_0-' + i + '.dcm');
   }
 
+  // Shuffle the image names to test that src/lib/data/sortDatasetsByImagePosition.js works.
   shuffleImageNames(imageNames);
 
   return imageNames.map(name => `dicomweb:${ROOT_URL}${name}`);
