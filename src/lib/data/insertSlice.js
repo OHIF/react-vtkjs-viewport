@@ -1,4 +1,12 @@
-// Insert the slice at the correct location in the volume.
+/**
+ *
+ * @param {Object} imageData - The vtkImageData
+ * @param {*} sliceIndex - The index of the slice you are inserting.
+ * @param {*} acquistionDirection - The acquistion direction of the slice.
+ * @param {*} image The cornerstone image to pull pixel data data from.
+ * @param {*} modality The modality of the image.
+ * @param {*} modalitySpecificScalingParameters Specific scaling paramaters for this modality. E.g. Patient weight.
+ */
 export default function insertSlice(
   imageData,
   sliceIndex,
@@ -22,38 +30,50 @@ export default function insertSlice(
 
   switch (acquistionDirection) {
     case 'coronal':
-      minAndMax = insertCoronal(
+      minAndMax = insertCoronalSlice(
         image,
         sliceIndex,
-        vtkImageDimensions[0],
-        vtkImageDimensions[1],
+        vtkImageDimensions,
         scalarData,
         scalingFunction
       );
       break;
     case 'sagittal':
-      minAndMax = insertSagittal(
+      minAndMax = insertSagittalSlice(
         image,
         sliceIndex,
-        vtkImageDimensions[0],
-        vtkImageDimensions[1],
+        vtkImageDimensions,
         scalarData,
         scalingFunction
       );
       break;
     case 'axial':
-      minAndMax = insertAxial(image, sliceIndex, scalarData, scalingFunction);
+      minAndMax = insertAxialSlice(
+        image,
+        sliceIndex,
+        scalarData,
+        scalingFunction
+      );
       break;
   }
 
   return minAndMax;
 }
 
-function insertSagittal(
+/**
+ *
+ * @param {object} image The cornerstone image to pull pixel data data from.
+ * @param {number} xIndex The x index of axially oriented vtk volume to put the sagital slice.
+ * @param {number[]} vtkImageDimensions The dimensions of the axially oriented vtk volume.
+ * @param {number[]} scalarData The data array for the axially oriented vtk volume.
+ * @param {function} scalingFunction The modality specific scaling function.
+ *
+ * @returns {object} The min and max pixel values in the inserted slice.
+ */
+function insertSagittalSlice(
   image,
   xIndex,
-  vtkImageDimensionsX,
-  vtkImageDimensionsY,
+  vtkImageDimensions,
   scalarData,
   scalingFunction
 ) {
@@ -64,22 +84,19 @@ function insertSagittal(
   let max = scalingFunction(pixels[pixelIndex]);
   let min = max;
 
-  //const vtkImageDimensionsX = vtkImageDimensions[0];
-  // const vtkImageDimensionsY = vtkImageDimensions[1];
+  const vtkImageDimensionsX = vtkImageDimensions[0];
+  const vtkImageDimensionsY = vtkImageDimensions[1];
+  const vtkImageDimensionsZ = vtkImageDimensions[2];
 
-  for (let row = 0; row <= rows; row++) {
-    for (let col = 0; col <= columns; col++) {
-      // xIndex === x
-      // row === z
-      // (vtkImageDimensionsY - col) === y
-      // or col === y ?
+  const axialSliceLength = vtkImageDimensionsX * vtkImageDimensionsY;
 
-      // in general destIdx === z * (vktImageDimensions.x * vtkImageDimensions.y) + y * vtkImageDimensions.x + x
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < columns; col++) {
+      const yPos = vtkImageDimensionsY - col;
+      const zPos = vtkImageDimensionsZ - row;
 
       const destIdx =
-        row * (vtkImageDimensionsX * vtkImageDimensionsY) +
-        col * vtkImageDimensionsX +
-        xIndex;
+        zPos * axialSliceLength + yPos * vtkImageDimensionsX + xIndex;
 
       const pixel = pixels[pixelIndex];
       const pixelValue = scalingFunction(pixel);
@@ -98,11 +115,20 @@ function insertSagittal(
   return { min, max };
 }
 
-function insertCoronal(
+/**
+ *
+ * @param {object} image The cornerstone image to pull pixel data data from.
+ * @param {number} yIndex The y index of axially oriented vtk volume to put the coronal slice.
+ * @param {number[]} vtkImageDimensions The dimensions of the axially oriented vtk volume.
+ * @param {number[]} scalarData The data array for the axially oriented vtk volume.
+ * @param {function} scalingFunction The modality specific scaling function.
+ *
+ * @returns {object} The min and max pixel values in the inserted slice.
+ */
+function insertCoronalSlice(
   image,
   yIndex,
-  vtkImageDimensionsX,
-  vtkImageDimensionsY,
+  vtkImageDimensions,
   scalarData,
   scalingFunction
 ) {
@@ -113,21 +139,20 @@ function insertCoronal(
   let max = scalingFunction(pixels[pixelIndex]);
   let min = max;
 
-  //const vtkImageDimensionsX = vtkImageDimensions[0];
-  // const vtkImageDimensionsY = vtkImageDimensions[1];
+  const vtkImageDimensionsX = vtkImageDimensions[0];
+  const vtkImageDimensionsY = vtkImageDimensions[1];
+  const vtkImageDimensionsZ = vtkImageDimensions[2];
 
-  for (let row = 0; row <= rows; row++) {
-    for (let col = 0; col <= columns; col++) {
-      // yIndex === y
-      // row === z
-      // col === x
+  const axialSliceLength = vtkImageDimensionsX * vtkImageDimensionsY;
 
-      // in general destIdx === z * (vktImageDimensions.x * vtkImageDimensions.y) + y * vtkImageDimensions.x + x
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < columns; col++) {
+      const xPos = col;
+      const yPos = yIndex;
+      const zPos = vtkImageDimensionsZ - row;
 
       const destIdx =
-        row * (vtkImageDimensionsX * vtkImageDimensionsY) +
-        yIndex * vtkImageDimensionsX +
-        col;
+        zPos * axialSliceLength + yPos * vtkImageDimensionsX + xPos;
 
       const pixel = pixels[pixelIndex];
       const pixelValue = scalingFunction(pixel);
@@ -146,7 +171,16 @@ function insertCoronal(
   return { min, max };
 }
 
-function insertAxial(image, zIndex, scalarData, scalingFunction) {
+/**
+ *
+ * @param {object} image The cornerstone image to pull pixel data data from.
+ * @param {number} zIndex The z index of axially oriented vtk volume to put the axial slice.
+ * @param {number[]} scalarData The data array for the axially oriented vtk volume.
+ * @param {function} scalingFunction The modality specific scaling function.
+ *
+ * @returns {object} The min and max pixel values in the inserted slice.
+ */
+function insertAxialSlice(image, zIndex, scalarData, scalingFunction) {
   const pixels = image.getPixelData();
   const sliceLength = pixels.length;
 
@@ -154,8 +188,6 @@ function insertAxial(image, zIndex, scalarData, scalingFunction) {
   let max = scalingFunction(pixels[pixelIndex]);
   let min = max;
 
-  //for (let row = 0; row <= rows; row++) {
-  //  for (let col = 0; col <= columns; col++) {
   for (let pixelIndex = 0; pixelIndex < pixels.length; pixelIndex++) {
     const destIdx = pixelIndex + zIndex * sliceLength;
     const pixel = pixels[pixelIndex];
@@ -169,9 +201,6 @@ function insertAxial(image, zIndex, scalarData, scalingFunction) {
 
     scalarData[destIdx] = pixelValue;
   }
-  //pixelIndex++;
-  //  }
-  //}
 
   return { min, max };
 }
