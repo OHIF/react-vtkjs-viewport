@@ -15,7 +15,6 @@ export default function loadImageDataProgressively(imageDataObject) {
     vtkImageData,
     metaDataMap,
     sortedDatasets,
-    acquistionDirection,
   } = imageDataObject;
   const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
   const imageId0 = imageIds[0];
@@ -69,7 +68,6 @@ export default function loadImageDataProgressively(imageDataObject) {
       const { max, min } = insertSlice(
         vtkImageData,
         sliceIndex,
-        acquistionDirection,
         image,
         modality,
         modalitySpecificScalingParameters
@@ -114,12 +112,4 @@ export default function loadImageDataProgressively(imageDataObject) {
   });
 
   imageDataObject.insertPixelDataPromises = insertPixelDataPromises;
-
-  // TODO: Investigate progressive loading. Right now the UI gets super slow because
-  // we are rendering and decoding simultaneously. We might want to use fewer web workers
-  // for the decoding tasks.
-  //
-  // Update: Had some success with this locally. But it completely freezes up when stuck
-  // In an app like OHIF. There seems to be many small calls made to various vtk functions.
-  // Putting it aside for now, but a progressive loader still shows promise.
 }
