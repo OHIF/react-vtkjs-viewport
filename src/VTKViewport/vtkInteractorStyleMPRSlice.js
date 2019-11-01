@@ -116,11 +116,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const _viewUp = [...viewUp];
 
     if (model.volumeMapper) {
-      //let mapper = model.volumeMapper;
-      // get the mapper if the model is actually the actor, not the mapper
-      //if (!model.volumeMapper.getInputData && model.volumeMapper.getMapper) {
-      //  mapper = model.volumeMapper.getMapper();
-      //}
       let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
       // Transpose the volume's coordinate space to create a transformation matrix
       vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
@@ -140,11 +135,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
     if (model.volumeMapper) {
       vtkMath.normalize(_normal);
-      //let mapper = model.volumeMapper;
-      // get the mapper if the model is actually the actor, not the mapper
-      //if (!model.volumeMapper.getInputData && model.volumeMapper.getMapper) {
-      //  mapper = model.volumeMapper.getMapper();
-      //}
+
       let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
       // Transpose the volume's coordinate space to create a transformation matrix
       vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
