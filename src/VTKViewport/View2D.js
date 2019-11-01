@@ -315,6 +315,8 @@ export default class View2D extends Component {
       istyle.setViewport(currentViewport);
     }
 
+    istyle.getVolumeMapper();
+
     if (istyle.getVolumeMapper() !== volumes[0]) {
       if (slabThickness && istyle.setSlabThickness) {
         istyle.setSlabThickness(slabThickness);
