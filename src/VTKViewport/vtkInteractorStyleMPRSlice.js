@@ -120,9 +120,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     if (model.volumeActor) {
       let mapper = model.volumeActor.getMapper();
 
-      let volumeCoordinateSpace = vec9toMat3(
-        mapper.getInputData().getDirection()
-      );
+      let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
       // Transpose the volume's coordinate space to create a transformation matrix
       vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
 
@@ -143,9 +141,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       vtkMath.normalize(_normal);
       let mapper = model.volumeActor.getMapper();
 
-      let volumeCoordinateSpace = vec9toMat3(
-        mapper.getInputData().getDirection()
-      );
+      let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
       // Transpose the volume's coordinate space to create a transformation matrix
       vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
       // Convert the provided normal into the volume's space
@@ -489,8 +485,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['volumeMapper']);
-  macro.get(publicAPI, model, ['slabThickness']);
+  macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
 
   // Object specific methods
   vtkInteractorStyleMPRSlice(publicAPI, model);

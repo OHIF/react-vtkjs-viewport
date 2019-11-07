@@ -166,7 +166,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['volumeMapper', 'callback']);
+  macro.setGet(publicAPI, model, ['callback']);
 
   // Object specific methods
   vtkInteractorStyleMPRCrosshairs(publicAPI, model);

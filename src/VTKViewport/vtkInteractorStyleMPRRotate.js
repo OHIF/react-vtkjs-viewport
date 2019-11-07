@@ -96,10 +96,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, [
-    'volumeMapper',
-    'onInteractiveRotateChanged',
-  ]);
+  macro.setGet(publicAPI, model, ['onInteractiveRotateChanged']);
 
   // Object specific methods
   vtkInteractorStyleMPRRotate(publicAPI, model);

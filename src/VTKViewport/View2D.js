@@ -23,7 +23,6 @@ export default class View2D extends Component {
     onPaint: PropTypes.func,
     onPaintStart: PropTypes.func,
     onPaintEnd: PropTypes.func,
-    interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
@@ -311,7 +310,7 @@ export default class View2D extends Component {
       istyle.setViewport(currentViewport);
     }
 
-    if (istyle.getVolumeMapper() !== volumes[0]) {
+    if (istyle.getVolumeActor() !== volumes[0]) {
       if (slabThickness && istyle.setSlabThickness) {
         istyle.setSlabThickness(slabThickness);
       }

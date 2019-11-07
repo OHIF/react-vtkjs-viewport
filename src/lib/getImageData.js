@@ -3,9 +3,8 @@ import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
 import buildMetadata from './data/buildMetadata.js';
-import determineOrientation from './data/determineOrientation.js';
-import computeZAxis from './data/computeZAxis.js';
 import imageDataCache from './data/imageDataCache.js';
+import sortDatasetsByImagePosition from './data/sortDatasetsByImagePosition.js';
 
 export default function getImageData(imageIds, displaySetInstanceUid) {
   const cachedImageDataObject = imageDataCache.get(displaySetInstanceUid);
@@ -24,17 +23,20 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     columnCosines[2]
   );
 
-  const crossProduct = new Vector3(
+  const scanAxisNormal = new Vector3(
     rowCosines[0],
     rowCosines[1],
     rowCosines[2]
   ).cross(colCosineVec);
 
-  const orientation = determineOrientation(crossProduct);
-  const zAxis = computeZAxis(orientation, metaDataMap);
+  const { spacing, origin, sortedDatasets } = sortDatasetsByImagePosition(
+    scanAxisNormal,
+    metaDataMap
+  );
+
   const xSpacing = metaData0.columnPixelSpacing;
   const ySpacing = metaData0.rowPixelSpacing;
-  const zSpacing = zAxis.spacing;
+  const zSpacing = spacing;
   const xVoxels = metaData0.columns;
   const yVoxels = metaData0.rows;
   const zVoxels = metaDataMap.size;
@@ -80,15 +82,17 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     colCosineVec.x,
     colCosineVec.y,
     colCosineVec.z,
-    crossProduct.x,
-    crossProduct.y,
-    crossProduct.z,
+    scanAxisNormal.x,
+    scanAxisNormal.y,
+    scanAxisNormal.z,
   ];
 
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
   imageData.setSpacing(xSpacing, ySpacing, zSpacing);
-  imageData.setOrigin(...zAxis.origin);
-  //imageData.setDirection(direction);
+
+  imageData.setDirection(direction);
+
+  imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
   const imageDataObject = {
@@ -97,12 +101,11 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     imageMetaData0,
     dimensions: [xVoxels, yVoxels, zVoxels],
     spacing: [xSpacing, ySpacing, zSpacing],
-    origin: zAxis.origin,
-    orientation,
+    origin,
     direction,
     vtkImageData: imageData,
     metaDataMap,
-    zAxis,
+    sortedDatasets,
     loaded: false,
   };
 
