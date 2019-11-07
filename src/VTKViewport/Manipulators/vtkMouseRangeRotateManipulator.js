@@ -20,7 +20,7 @@ function vtkMouseRangeRotateManipulator(publicAPI, model) {
       dThetaY => {
         let thetaY = dThetaY % 360;
 
-        model.viewportData.rotate(0, thetaY);
+        model.viewportData.rotateRelative(0, thetaY);
 
         // onInteractiveRotationChanged();
       }

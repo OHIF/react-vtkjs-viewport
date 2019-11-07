@@ -79,12 +79,14 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   function updateScrollManipulator() {
     const range = publicAPI.getSliceRange();
     model.scrollManipulator.removeScrollListener();
+    // The Scroll listener has min, max, step, and getValue setValue as params.
+    // Internally, it checks that the result of the GET has changed, and only calls SET if it is new.
     model.scrollManipulator.setScrollListener(
       range[0],
       range[1],
       1,
       publicAPI.getSlice,
-      publicAPI.setSlice
+      publicAPI.scrollToSlice
     );
   }
 
@@ -105,9 +107,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     );
   }
 
-  function onRotateChanged(args) {
-    setSliceNormalInternal(args.detail.sliceNormal);
-    setViewUpInternal(args.detail.sliceViewUp);
+  function onRotateChanged(event) {
+    setSliceNormalInternal(event.detail.sliceNormal);
+    setViewUpInternal(event.detail.sliceViewUp);
   }
 
   function setViewUpInternal(viewUp) {
@@ -115,12 +117,9 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const camera = renderer.getActiveCamera();
     const _viewUp = [...viewUp];
 
-    if (model.volumeMapper) {
-      let mapper = model.volumeMapper;
-      // get the mapper if the model is actually the actor, not the mapper
-      if (!model.volumeMapper.getInputData && model.volumeMapper.getMapper) {
-        mapper = model.volumeMapper.getMapper();
-      }
+    if (model.volumeActor) {
+      let mapper = model.volumeActor.getMapper();
+
       let volumeCoordinateSpace = vec9toMat3(
         mapper.getInputData().getDirection()
       );
@@ -140,13 +139,10 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     //copy arguments for internal editing so we don't cause sideeffects
     const _normal = [...normal];
 
-    if (model.volumeMapper) {
+    if (model.volumeActor) {
       vtkMath.normalize(_normal);
-      let mapper = model.volumeMapper;
-      // get the mapper if the model is actually the actor, not the mapper
-      if (!model.volumeMapper.getInputData && model.volumeMapper.getMapper) {
-        mapper = model.volumeMapper.getMapper();
-      }
+      let mapper = model.volumeActor.getMapper();
+
       let volumeCoordinateSpace = vec9toMat3(
         mapper.getInputData().getDirection()
       );
@@ -159,7 +155,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       let angle = camera.getViewAngle();
 
       if (!isCameraViewInitialized(camera)) {
-        const bounds = model.volumeMapper.getBounds();
+        const bounds = model.volumeActor.getMapper().getBounds();
         // diagonal will be used as "width" of camera scene
         const diagonal = Math.sqrt(
           vtkMath.distance2BetweenPoints(
@@ -187,15 +183,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         center[2] - _normal[2] * dist,
       ];
 
-      // set viewUp based on DOP rotation
-      // const oldDop = camera.getDirectionOfProjection();
-      // const transform = vtkMatrixBuilder
-      //   .buildFromDegree()
-      //   .identity()
-      //   .rotateFromDirections(oldDop, _normal);
-
-      // transform.apply(_viewUp);
-
       const { slabThickness } = model;
 
       camera.setPosition(...cameraPos);
@@ -222,12 +209,13 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     model.viewportData = viewportData;
 
     if (model.scrollManipulator.setViewportData) {
+      // scroll manipulator is the custom MouseRangeRotate manipulator
       model.scrollManipulator.setViewportData(viewportData);
     }
 
     if (viewportData) {
-      setSliceNormalInternal(viewportData.getSliceNormal());
-      setViewUpInternal(viewportData.getViewUp());
+      setSliceNormalInternal(viewportData.getCurrentSliceNormal());
+      setViewUpInternal(viewportData.getCurrentViewUp());
 
       viewportData
         .getEventWindow()
@@ -258,8 +246,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
-        // TODO: check why this is here?
-        // It overwrites inhirited functions
         updateScrollManipulator();
         publicAPI.modified();
       });
@@ -293,29 +279,27 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     camera.setClippingRange(near, far);
   });
 
-  const superSetVolumeMapper = publicAPI.setVolumeMapper;
-  publicAPI.setVolumeMapper = mapper => {
-    if (superSetVolumeMapper(mapper)) {
-      const renderer = model.interactor.getCurrentRenderer();
-      const camera = renderer.getActiveCamera();
-      if (mapper) {
-        // prevent zoom manipulator from messing with our focal point
-        camera.setFreezeFocalPoint(true);
+  publicAPI.setVolumeActor = actor => {
+    model.volumeActor = actor;
+    const renderer = model.interactor.getCurrentRenderer();
+    const camera = renderer.getActiveCamera();
+    if (actor) {
+      // prevent zoom manipulator from messing with our focal point
+      camera.setFreezeFocalPoint(true);
 
-        const viewportData = publicAPI.getViewport();
+      const viewportData = publicAPI.getViewport();
 
-        if (viewportData) {
-          setSliceNormalInternal(viewportData.getSliceNormal());
-          setViewUpInternal(viewportData.getViewUp());
-        }
-
-        updateScrollManipulator();
-        // NOTE: Disabling this because it makes it more difficult to switch
-        // interactor styles. Need to find a better way to do this!
-        //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
-      } else {
-        camera.setFreezeFocalPoint(false);
+      if (viewportData) {
+        setSliceNormalInternal(viewportData.getCurrentSliceNormal());
+        setViewUpInternal(viewportData.getCurrentViewUp());
       }
+
+      updateScrollManipulator();
+      // NOTE: Disabling this because it makes it more difficult to switch
+      // interactor styles. Need to find a better way to do this!
+      //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
+    } else {
+      camera.setFreezeFocalPoint(false);
     }
   };
 
@@ -335,13 +319,22 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     return fp[0];
   };
 
+  // Only run the onScroll callback if called from scrolling,
+  // preventing manual setSlice calls from triggering the CB.
+  publicAPI.scrollToSlice = slice => {
+    const slicePoint = publicAPI.setSlice(slice);
+    // run Callback
+    const onScroll = publicAPI.getOnScroll();
+    if (onScroll) onScroll(slicePoint);
+  };
+
   publicAPI.setSlice = slice => {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
 
-    if (model.volumeMapper) {
+    if (model.volumeActor) {
       const range = publicAPI.getSliceRange();
-      const bounds = model.volumeMapper.getBounds();
+      const bounds = model.volumeActor.getMapper().getBounds();
 
       const clampedSlice = clamp(slice, ...range);
 
@@ -375,15 +368,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       camera.setPosition(...cameraPos);
       camera.setFocalPoint(...slicePoint);
-
-      // run Callback
-      const onScroll = publicAPI.getOnScroll;
-      if (onScroll) onScroll(slicePoint);
+      return slicePoint;
     }
   };
 
   publicAPI.getSliceRange = () => {
-    if (model.volumeMapper) {
+    if (model.volumeActor) {
       const sliceNormal = publicAPI.getSliceNormal();
 
       if (
@@ -394,7 +384,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         return cache.sliceRange;
       }
 
-      const bounds = model.volumeMapper.getBounds();
+      const bounds = model.volumeActor.getMapper().getBounds();
       const points = boundsToCorners(bounds);
 
       // Get rotation matrix from normal to +X (since bounds is aligned to XYZ)
@@ -427,7 +417,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
   // Slice normal is just camera DOP
   publicAPI.getSliceNormal = () => {
-    if (model.volumeMapper && model.interactor) {
+    if (model.volumeActor && model.interactor) {
       const renderer = model.interactor.getCurrentRenderer();
       const camera = renderer.getActiveCamera();
       return camera.getDirectionOfProjection();
@@ -439,14 +429,14 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const viewportData = publicAPI.getViewport();
 
     if (viewportData) {
-      viewportData.setOrientation(normal, viewportData.getViewUp());
+      viewportData.setOrientation(normal, viewportData.getCurrentViewUp());
     }
 
     setSliceNormalInternal(normal);
   };
 
   publicAPI.getViewUp = () => {
-    if (model.volumeMapper && model.interactor) {
+    if (model.volumeActor && model.interactor) {
       const renderer = model.interactor.getCurrentRenderer();
       const camera = renderer.getActiveCamera();
 

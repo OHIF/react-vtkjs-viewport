@@ -1,12 +1,8 @@
 import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
-import { vec3, mat4 } from 'gl-matrix';
-import { degrees2radians } from '../lib/math/angles.js';
-import ViewportData from './ViewportData.js';
 
 const { States } = Constants;
-const MAX_SAFE_INTEGER = 2147483647;
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -48,7 +44,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     const dThetaY = -((pos[0] - model.rotateStartPos[0]) * xSensitivity);
     const viewport = publicAPI.getViewport();
 
-    viewport.rotate(dThetaX, dThetaY);
+    viewport.rotateRelative(dThetaX, dThetaY);
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);
@@ -59,26 +55,12 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     model.rotateStartPos[0] = Math.round(callData.position.x);
     model.rotateStartPos[1] = Math.round(callData.position.y);
     if (!callData.shiftKey && !callData.controlKey) {
-      const property = model.volumeMapper.getProperty();
+      const property = model.volumeActor.getProperty();
       if (property) {
         publicAPI.startRotate();
       }
     } else if (superHandleLeftButtonPress) {
       superHandleLeftButtonPress(callData);
-    }
-  };
-
-  const superSetVolumeMapper = publicAPI.setVolumeMapper;
-  publicAPI.setVolumeMapper = mapper => {
-    if (superSetVolumeMapper(mapper)) {
-      const renderer = model.interactor.getCurrentRenderer();
-      const camera = renderer.getActiveCamera();
-      if (mapper) {
-        // prevent zoom manipulator from messing with our focal point
-        camera.setFreezeFocalPoint(true);
-      } else {
-        camera.setFreezeFocalPoint(false);
-      }
     }
   };
 

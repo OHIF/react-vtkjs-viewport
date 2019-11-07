@@ -32,45 +32,51 @@ export default class {
     } else {
       this._state = JSON.parse(JSON.stringify(state));
     }
+
+    // copy the state to a cache, so we can modify internally,
+    // but remember the original values for absolute rotations
+    this._state.cache = {
+      ...this._state,
+    };
   }
 
   getEventWindow = () => {
     return this.eventWindow;
   };
 
-  rotate = (dThetaX, dThetaY) => {
+  _rotate = (viewUp, sliceNormal, dThetaX, dThetaY) => {
     validateNumber(dThetaX);
     validateNumber(dThetaY);
 
     let xAxis = [];
-    vec3.cross(xAxis, this._state.viewUp, this._state.sliceNormal);
+    vec3.cross(xAxis, viewUp, sliceNormal);
     vec3.normalize(xAxis, xAxis);
 
-    let yAxis = this._state.viewUp;
+    let yAxis = viewUp;
     // rotate around the vector of the cross product of the
     // plane and viewup as the X component
 
-    const sliceNormal = [];
-    const sliceViewUp = [];
+    const nSliceNormal = [];
+    const nViewUp = [];
 
     const planeMat = mat4.create();
 
-    //Rotate around the vertical (slice-up) vector
+    // Rotate around the vertical (slice-up) vector
     mat4.rotate(planeMat, planeMat, degrees2radians(dThetaY), yAxis);
 
-    //Rotate around the horizontal (screen-x) vector
+    // Rotate around the horizontal (screen-x) vector
     mat4.rotate(planeMat, planeMat, degrees2radians(dThetaX), xAxis);
 
-    vec3.transformMat4(sliceNormal, this._state.sliceNormal, planeMat);
-    vec3.transformMat4(sliceViewUp, this._state.viewUp, planeMat);
+    vec3.transformMat4(nSliceNormal, sliceNormal, planeMat);
+    vec3.transformMat4(nViewUp, viewUp, planeMat);
 
-    this._state.sliceNormal = sliceNormal;
-    this._state.viewUp = sliceViewUp;
+    this._state.cache.sliceNormal = nSliceNormal;
+    this._state.cache.viewUp = nViewUp;
 
     var event = new CustomEvent(EVENTS.VIEWPORT_ROTATED, {
       detail: {
-        sliceNormal,
-        sliceViewUp,
+        sliceNormal: nSliceNormal,
+        sliceViewUp: nViewUp,
         dThetaX,
         dThetaY,
       },
@@ -79,6 +85,18 @@ export default class {
     });
 
     this.eventWindow.dispatchEvent(event);
+  };
+
+  rotateAbsolute = (dThetaX, dThetaY) => {
+    this._rotate(this._state.viewUp, this._state.sliceNormal, dThetaX, dThetaY);
+  };
+  rotateRelative = (dThetaX, dThetaY) => {
+    this._rotate(
+      this._state.cache.viewUp,
+      this._state.cache.sliceNormal,
+      dThetaX,
+      dThetaY
+    );
   };
 
   setOrientation = (sliceNormal, viewUp = [0, 1, 0]) => {
@@ -92,6 +110,14 @@ export default class {
 
   getSliceNormal = () => {
     return this._state.sliceNormal;
+  };
+
+  getCurrentViewUp = () => {
+    return this._state.cache.viewUp;
+  };
+
+  getCurrentSliceNormal = () => {
+    return this._state.cache.sliceNormal;
   };
 
   getReadOnlyViewPort = () => {

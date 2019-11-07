@@ -65,16 +65,6 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     updateScrollManipulator();
   }
 
-  publicAPI.setVolumeMapper = mapper => {
-    model.volumeMapper = mapper;
-
-    updateScrollManipulator();
-  };
-
-  publicAPI.getVolumeMapper = () => {
-    return model.volumeMapper;
-  };
-
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [callData.position.x, callData.position.y];
@@ -89,26 +79,8 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     }
   };
 
-  const superSetVolumeMapper = publicAPI.setVolumeMapper;
-  publicAPI.setVolumeMapper = mapper => {
-    if (superSetVolumeMapper(mapper)) {
-      const renderer = model.interactor.getCurrentRenderer();
-      const camera = renderer.getActiveCamera();
-      if (mapper) {
-        // prevent zoom manipulator from messing with our focal point
-        camera.setFreezeFocalPoint(true);
-
-        // NOTE: Disabling this because it makes it more difficult to switch
-        // interactor styles. Need to find a better way to do this!
-        //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
-      } else {
-        camera.setFreezeFocalPoint(false);
-      }
-    }
-  };
-
   publicAPI.windowLevelFromMouse = pos => {
-    const range = model.volumeMapper
+    const range = model.volumeActor
       .getMapper()
       .getInputData()
       .getPointData()
@@ -144,7 +116,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
   };
 
   publicAPI.getWindowLevel = () => {
-    const range = model.volumeMapper
+    const range = model.volumeActor
       .getProperty()
       .getRGBTransferFunction(0)
       .getMappingRange()
@@ -158,7 +130,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     model.levels.windowWidth = windowWidth;
     model.levels.windowCenter = windowCenter;
 
-    model.volumeMapper
+    model.volumeActor
       .getProperty()
       .getRGBTransferFunction(0)
       .setMappingRange(lowHigh.lower, lowHigh.upper);
@@ -169,7 +141,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     model.wlStartPos[0] = callData.position.x;
     model.wlStartPos[1] = callData.position.y;
     if (!callData.shiftKey && !callData.controlKey) {
-      const property = model.volumeMapper.getProperty();
+      const property = model.volumeActor.getProperty();
       if (property) {
         model.initialMRange = property
           .getRGBTransferFunction(0)

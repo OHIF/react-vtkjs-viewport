@@ -172,10 +172,6 @@ export default class View2D extends Component {
       renderer.getActiveCamera().setClippingRange(...r);
     });*/
 
-    const istyleVolumeMapper =
-      this.props.interactorStyleVolumeMapper ||
-      this.props.volumes[0].getMapper();
-
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
@@ -191,7 +187,7 @@ export default class View2D extends Component {
     camera.setParallelProjection(true);
     this.renderer.resetCamera();
 
-    istyle.setVolumeMapper(istyleVolumeMapper);
+    istyle.setVolumeActor(this.props.volumes[0]);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
 
@@ -320,7 +316,7 @@ export default class View2D extends Component {
         istyle.setSlabThickness(slabThickness);
       }
 
-      istyle.setVolumeMapper(volumes[0]);
+      istyle.setVolumeActor(volumes[0]);
     }
 
     // Add appropriate callbacks
