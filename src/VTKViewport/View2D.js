@@ -175,8 +175,7 @@ export default class View2D extends Component {
     if (this.props.orientation) {
       const { orientation } = this.props;
 
-      istyle.setSliceNormal(...orientation.sliceNormal);
-      istyle.setViewUp(...orientation.viewUp);
+      istyle.setSliceOrientation(orientation.sliceNormal, orientation.viewUp);
     } else {
       istyle.setSliceNormal(0, 0, 1);
     }

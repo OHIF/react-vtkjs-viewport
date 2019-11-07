@@ -100,8 +100,8 @@ export default class {
   };
 
   setOrientation = (sliceNormal, viewUp = [0, 1, 0]) => {
-    this._state.sliceNormal = sliceNormal;
-    this._state.viewUp = viewUp;
+    this._state.sliceNormal = [...sliceNormal];
+    this._state.viewUp = [...viewUp];
   };
 
   getViewUp = () => {

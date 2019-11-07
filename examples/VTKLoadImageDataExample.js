@@ -141,8 +141,7 @@ class VTKLoadImageDataExample extends Component {
 
       const { slicePlaneNormal, sliceViewUp } = ORIENTATION[orientation];
 
-      istyle.setSliceNormal(...slicePlaneNormal);
-      istyle.setViewUp(...sliceViewUp);
+      istyle.setSliceOrientation(slicePlaneNormal, sliceViewUp);
 
       this.imageDataObject.insertPixelDataPromises.forEach(promise => {
         promise.then(() => renderWindow.render());

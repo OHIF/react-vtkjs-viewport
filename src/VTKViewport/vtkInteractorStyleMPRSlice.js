@@ -115,18 +115,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   function setViewUpInternal(viewUp) {
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
-    const _viewUp = [...viewUp];
-
-    if (model.volumeActor) {
-      let mapper = model.volumeActor.getMapper();
-
-      let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-      // Transpose the volume's coordinate space to create a transformation matrix
-      vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
-
-      vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _viewUp, _viewUp);
-      camera.setViewUp(..._viewUp);
-    }
+    camera.setViewUp(...viewUp);
   }
 
   // in world space
@@ -139,13 +128,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
     if (model.volumeActor) {
       vtkMath.normalize(_normal);
-      let mapper = model.volumeActor.getMapper();
 
-      let volumeCoordinateSpace = vec9toMat3([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-      // Transpose the volume's coordinate space to create a transformation matrix
-      vtkMath.transpose3x3(volumeCoordinateSpace, volumeCoordinateSpace);
-      // Convert the provided normal into the volume's space
-      vtkMath.multiply3x3_vect3(volumeCoordinateSpace, _normal, _normal);
       let center = camera.getFocalPoint();
       let dist = camera.getDistance();
       let angle = camera.getViewAngle();
@@ -450,6 +433,17 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
 
     setViewUpInternal(viewUp);
+  };
+
+  publicAPI.setSliceOrientation = (normal, viewUp) => {
+    const viewportData = publicAPI.getViewport();
+
+    if (viewportData) {
+      viewportData.setOrientation(normal, viewUp);
+    }
+
+    setViewUpInternal(viewUp);
+    setSliceNormalInternal(normal);
   };
 
   publicAPI.setSlabThickness = slabThickness => {

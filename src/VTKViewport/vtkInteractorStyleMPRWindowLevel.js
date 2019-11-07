@@ -1,8 +1,4 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
-import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
-import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import {
@@ -23,47 +19,6 @@ const { States } = Constants;
 function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkInteractorStyleMPRWindowLevel');
-  model.wlStartPos = [0, 0];
-
-  model.trackballManipulator = vtkMouseCameraTrackballRotateManipulator.newInstance(
-    {
-      button: 1,
-    }
-  );
-  model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
-    button: 1,
-    shift: true,
-  });
-
-  // TODO: The inherited zoom manipulator does not appear to be working?
-  model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
-    button: 3,
-  });
-  model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
-    scrollEnabled: true,
-    dragEnabled: false,
-  });
-
-  function updateScrollManipulator() {
-    const range = publicAPI.getSliceRange();
-    model.scrollManipulator.removeScrollListener();
-    model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
-      1,
-      publicAPI.getSlice,
-      publicAPI.setSlice
-    );
-  }
-
-  function setManipulators() {
-    publicAPI.removeAllMouseManipulators();
-    publicAPI.addMouseManipulator(model.trackballManipulator);
-    publicAPI.addMouseManipulator(model.panManipulator);
-    publicAPI.addMouseManipulator(model.zoomManipulator);
-    publicAPI.addMouseManipulator(model.scrollManipulator);
-    updateScrollManipulator();
-  }
 
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
@@ -172,8 +127,6 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
         break;
     }
   };
-
-  setManipulators();
 }
 
 // ----------------------------------------------------------------------------
@@ -181,7 +134,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  wlStartPos: [],
+  wlStartPos: [0, 0],
   levelScale: 1,
 };
 

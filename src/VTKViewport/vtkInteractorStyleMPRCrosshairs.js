@@ -1,11 +1,5 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMath from 'vtk.js/Sources/Common/Core/Math';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
-import vtkInteractorStyleManipulator from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator';
-import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
-import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
-import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
@@ -23,18 +17,6 @@ const { States } = Constants;
 function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkInteractorStyleMPRCrosshairs');
-
-  function updateScrollManipulator() {
-    const range = publicAPI.getSliceRange();
-    model.scrollManipulator.removeScrollListener();
-    model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
-      1,
-      publicAPI.getSlice,
-      publicAPI.setSlice
-    );
-  }
 
   function moveCrosshairs(callData) {
     const { apis, apiIndex } = model;
