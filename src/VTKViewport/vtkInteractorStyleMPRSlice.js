@@ -162,17 +162,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         center[2] - _normal[2] * dist,
       ];
 
-      const { slabThickness } = model;
-
       camera.setPosition(...cameraPos);
       camera.setDistance(dist);
       // should be set after pos and distance
       camera.setDirectionOfProjection(..._normal);
       camera.setViewAngle(angle);
-      camera.setClippingRange(
-        dist - slabThickness / 2,
-        dist + slabThickness / 2
-      );
+      camera.setThicknessFromFocalPoint(model.slabThickness);
 
       publicAPI.setCenterOfRotation(center);
     }
@@ -230,13 +225,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       });
 
       interactorSub = interactor.onAnimation(() => {
-        const { slabThickness } = model;
-
-        const dist = camera.getDistance();
-        const near = dist - slabThickness / 2;
-        const far = dist + slabThickness / 2;
-
-        camera.setClippingRange(near, far);
+        camera.setThicknessFromFocalPoint(model.slabThickness);
       });
 
       const eventWindow = model.interactor.getContainer();
@@ -249,13 +238,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
   publicAPI.handleMouseMove = macro.chain(publicAPI.handleMouseMove, () => {
     const renderer = model.interactor.getCurrentRenderer();
-    const { slabThickness } = model;
     const camera = renderer.getActiveCamera();
-    const dist = camera.getDistance();
-    const near = dist - slabThickness / 2;
-    const far = dist + slabThickness / 2;
-
-    camera.setClippingRange(near, far);
+    camera.setThicknessFromFocalPoint(model.slabThickness);
   });
 
   publicAPI.setVolumeActor = actor => {
@@ -453,11 +437,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     // thickness property is changed
     const renderer = model.interactor.getCurrentRenderer();
     const camera = renderer.getActiveCamera();
-    const dist = camera.getDistance();
-    const near = dist - slabThickness / 2;
-    const far = dist + slabThickness / 2;
-
-    camera.setClippingRange(near, far);
+    camera.setThicknessFromFocalPoint(slabThickness);
   };
 
   setManipulators();
