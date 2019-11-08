@@ -28,6 +28,7 @@ export default class View2D extends Component {
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
     orientation: PropTypes.object,
+    labelmapRenderingOptions: PropTypes.object,
   };
 
   static defaultProps = {
@@ -400,7 +401,8 @@ export default class View2D extends Component {
       const labelmapImageData = this.props.paintFilterLabelMapImageData;
       const labelmap = createLabelPipeline(
         this.props.paintFilterBackgroundImageData,
-        labelmapImageData
+        labelmapImageData,
+        this.props.labelmapRenderingOptions
       );
 
       this.labelmap = labelmap;

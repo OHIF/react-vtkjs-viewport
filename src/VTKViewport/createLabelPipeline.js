@@ -8,9 +8,15 @@ import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunct
 export default function createLabelPipeline(
   backgroundImageData,
   paintFilterLabelMapImageData,
+  options,
   useSampleDistance = false
 ) {
   let labelMapData;
+  let { colorLUT, globalOpacity } = options;
+
+  if (globalOpacity === undefined) {
+    globalOpacity = 1.0;
+  }
 
   if (paintFilterLabelMapImageData) {
     labelMapData = paintFilterLabelMapImageData;
@@ -54,12 +60,36 @@ export default function createLabelPipeline(
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);
 
-  // set up labelMap color and opacity mapping
-  labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
-  labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
-  labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
+  console.log('ENTERING COLORLUT');
+
   labelMap.ofun.addPoint(0, 0);
-  labelMap.ofun.addPoint(1, 0.9);
+
+  // set up labelMap color and opacity mapping
+  if (colorLUT) {
+    for (let i = 0; i < 256; i++) {
+      //for (let i = 0; i < colorLUT.length; i++) {
+      const color = colorLUT[i];
+      labelMap.cfun.addRGBPoint(
+        i,
+        color[0] / 255,
+        color[1] / 255,
+        color[2] / 255
+      );
+
+      const segmentOpacity = (color[3] / 255) * globalOpacity;
+
+      labelMap.ofun.addPoint(i, segmentOpacity);
+    }
+  } else {
+    // Some default.
+    labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
+    labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
+    labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
+    labelMap.ofun.addPoint(0, 0);
+    labelMap.ofun.addPoint(1, globalOpacity);
+    labelMap.ofun.addPoint(2, globalOpacity);
+    labelMap.ofun.addPoint(3, globalOpacity);
+  }
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);

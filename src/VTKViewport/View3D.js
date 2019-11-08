@@ -189,6 +189,7 @@ export default class View3D extends Component {
       const labelmap = createLabelPipeline(
         this.props.paintFilterBackgroundImageData,
         labelmapImageData,
+        null, // TODO -> fix up colors when I work on 3D.
         true
       );
 
