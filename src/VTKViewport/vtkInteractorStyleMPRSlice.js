@@ -426,8 +426,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       viewportData.setOrientation(normal, viewUp);
     }
 
-    setViewUpInternal(viewUp);
     setSliceNormalInternal(normal);
+    setViewUpInternal(viewUp);
   };
 
   publicAPI.setSlabThickness = slabThickness => {
@@ -459,6 +459,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
+  macro.setGet(publicAPI, model, ['onScroll']);
   macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
 
   // Object specific methods

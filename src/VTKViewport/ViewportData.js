@@ -1,4 +1,4 @@
-import { vec3, mat4 } from 'gl-matrix';
+import { vec3, mat4, quat } from 'gl-matrix';
 import { degrees2radians } from '../lib/math/angles.js';
 import EVENTS from '../events.js';
 
@@ -44,9 +44,10 @@ export default class {
     return this.eventWindow;
   };
 
-  _rotate = (viewUp, sliceNormal, dThetaX, dThetaY) => {
+  _rotate = (viewUp, sliceNormal, dThetaX, dThetaY, dThetaZ = 0) => {
     validateNumber(dThetaX);
     validateNumber(dThetaY);
+    validateNumber(dThetaZ);
 
     let xAxis = [];
     vec3.cross(xAxis, viewUp, sliceNormal);
@@ -70,6 +71,17 @@ export default class {
     vec3.transformMat4(nSliceNormal, sliceNormal, planeMat);
     vec3.transformMat4(nViewUp, viewUp, planeMat);
 
+    if (dThetaZ !== 0) {
+      // Rotate the viewUp in 90 degree increments
+      const zRotQuat = quat.create();
+      // Use negative degrees clockwise rotation since the axis should really be the direction of projection, which is the negative of the plane normal
+      quat.setAxisAngle(zRotQuat, nSliceNormal, degrees2radians(-dThetaZ));
+      quat.normalize(zRotQuat, zRotQuat);
+
+      // rotate the ViewUp with the z rotation
+      vec3.transformQuat(nViewUp, nViewUp, zRotQuat);
+    }
+
     this._state.cache.sliceNormal = nSliceNormal;
     this._state.cache.viewUp = nViewUp;
 
@@ -79,6 +91,7 @@ export default class {
         sliceViewUp: nViewUp,
         dThetaX,
         dThetaY,
+        dThetaZ,
       },
       bubbles: true,
       cancelable: true,
@@ -87,21 +100,30 @@ export default class {
     this.eventWindow.dispatchEvent(event);
   };
 
-  rotateAbsolute = (dThetaX, dThetaY) => {
-    this._rotate(this._state.viewUp, this._state.sliceNormal, dThetaX, dThetaY);
+  rotateAbsolute = (dThetaX, dThetaY, dThetaZ = 0) => {
+    this._rotate(
+      this._state.viewUp,
+      this._state.sliceNormal,
+      dThetaX,
+      dThetaY,
+      dThetaZ
+    );
   };
-  rotateRelative = (dThetaX, dThetaY) => {
+  rotateRelative = (dThetaX, dThetaY, dThetaZ = 0) => {
     this._rotate(
       this._state.cache.viewUp,
       this._state.cache.sliceNormal,
       dThetaX,
-      dThetaY
+      dThetaY,
+      dThetaZ
     );
   };
 
   setOrientation = (sliceNormal, viewUp = [0, 1, 0]) => {
     this._state.sliceNormal = [...sliceNormal];
     this._state.viewUp = [...viewUp];
+    this._state.cache.sliceNormal = [...sliceNormal];
+    this._state.cache.viewUp = [...viewUp];
   };
 
   getViewUp = () => {
