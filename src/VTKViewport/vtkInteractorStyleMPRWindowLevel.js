@@ -1,8 +1,4 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
-import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
-import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import {
@@ -23,57 +19,6 @@ const { States } = Constants;
 function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkInteractorStyleMPRWindowLevel');
-  model.wlStartPos = [0, 0];
-
-  model.trackballManipulator = vtkMouseCameraTrackballRotateManipulator.newInstance(
-    {
-      button: 1,
-    }
-  );
-  model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
-    button: 1,
-    shift: true,
-  });
-
-  // TODO: The inherited zoom manipulator does not appear to be working?
-  model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
-    button: 3,
-  });
-  model.scrollManipulator = vtkMouseRangeManipulator.newInstance({
-    scrollEnabled: true,
-    dragEnabled: false,
-  });
-
-  function updateScrollManipulator() {
-    const range = publicAPI.getSliceRange();
-    model.scrollManipulator.removeScrollListener();
-    model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
-      1,
-      publicAPI.getSlice,
-      publicAPI.setSlice
-    );
-  }
-
-  function setManipulators() {
-    publicAPI.removeAllMouseManipulators();
-    publicAPI.addMouseManipulator(model.trackballManipulator);
-    publicAPI.addMouseManipulator(model.panManipulator);
-    publicAPI.addMouseManipulator(model.zoomManipulator);
-    publicAPI.addMouseManipulator(model.scrollManipulator);
-    updateScrollManipulator();
-  }
-
-  publicAPI.setVolumeMapper = mapper => {
-    model.volumeMapper = mapper;
-
-    updateScrollManipulator();
-  };
-
-  publicAPI.getVolumeMapper = () => {
-    return model.volumeMapper;
-  };
 
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
@@ -89,26 +34,8 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     }
   };
 
-  const superSetVolumeMapper = publicAPI.setVolumeMapper;
-  publicAPI.setVolumeMapper = mapper => {
-    if (superSetVolumeMapper(mapper)) {
-      const renderer = model.interactor.getCurrentRenderer();
-      const camera = renderer.getActiveCamera();
-      if (mapper) {
-        // prevent zoom manipulator from messing with our focal point
-        camera.setFreezeFocalPoint(true);
-
-        // NOTE: Disabling this because it makes it more difficult to switch
-        // interactor styles. Need to find a better way to do this!
-        //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
-      } else {
-        camera.setFreezeFocalPoint(false);
-      }
-    }
-  };
-
   publicAPI.windowLevelFromMouse = pos => {
-    const range = model.volumeMapper
+    const range = model.volumeActor
       .getMapper()
       .getInputData()
       .getPointData()
@@ -144,7 +71,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
   };
 
   publicAPI.getWindowLevel = () => {
-    const range = model.volumeMapper
+    const range = model.volumeActor
       .getProperty()
       .getRGBTransferFunction(0)
       .getMappingRange()
@@ -158,7 +85,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     model.levels.windowWidth = windowWidth;
     model.levels.windowCenter = windowCenter;
 
-    model.volumeMapper
+    model.volumeActor
       .getProperty()
       .getRGBTransferFunction(0)
       .setMappingRange(lowHigh.lower, lowHigh.upper);
@@ -169,7 +96,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
     model.wlStartPos[0] = callData.position.x;
     model.wlStartPos[1] = callData.position.y;
     if (!callData.shiftKey && !callData.controlKey) {
-      const property = model.volumeMapper.getProperty();
+      const property = model.volumeActor.getProperty();
       if (property) {
         model.initialMRange = property
           .getRGBTransferFunction(0)
@@ -200,8 +127,6 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
         break;
     }
   };
-
-  setManipulators();
 }
 
 // ----------------------------------------------------------------------------
@@ -209,7 +134,7 @@ function vtkInteractorStyleMPRWindowLevel(publicAPI, model) {
 // ----------------------------------------------------------------------------
 
 const DEFAULT_VALUES = {
-  wlStartPos: [],
+  wlStartPos: [0, 0],
   levelScale: 1,
 };
 

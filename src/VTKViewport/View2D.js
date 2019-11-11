@@ -26,7 +26,6 @@ export default class View2D extends Component {
     onPaint: PropTypes.func,
     onPaintStart: PropTypes.func,
     onPaintEnd: PropTypes.func,
-    interactorStyleVolumeMapper: PropTypes.object,
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
@@ -179,16 +178,11 @@ export default class View2D extends Component {
       renderer.getActiveCamera().setClippingRange(...r);
     });*/
 
-    const istyleVolumeMapper =
-      this.props.interactorStyleVolumeMapper ||
-      this.props.volumes[0].getMapper();
-
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
 
-      istyle.setSliceNormal(...orientation.sliceNormal);
-      istyle.setViewUp(...orientation.viewUp);
+      istyle.setSliceOrientation(orientation.sliceNormal, orientation.viewUp);
     } else {
       istyle.setSliceNormal(0, 0, 1);
     }
@@ -198,7 +192,7 @@ export default class View2D extends Component {
     camera.setParallelProjection(true);
     this.renderer.resetCamera();
 
-    istyle.setVolumeMapper(istyleVolumeMapper);
+    istyle.setVolumeActor(this.props.volumes[0]);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
 
@@ -337,14 +331,12 @@ export default class View2D extends Component {
       istyle.setViewport(currentViewport);
     }
 
-    istyle.getVolumeMapper();
-
-    if (istyle.getVolumeMapper() !== volumes[0]) {
+    if (istyle.getVolumeActor() !== volumes[0]) {
       if (slabThickness && istyle.setSlabThickness) {
         istyle.setSlabThickness(slabThickness);
       }
 
-      istyle.setVolumeMapper(volumes[0]);
+      istyle.setVolumeActor(volumes[0]);
     }
 
     // Add appropriate callbacks
