@@ -134,7 +134,7 @@ export default class VtkMpr extends Component {
     // must be added AFTER the data volume is added so that this can be rendered in front
     this.renderer.addVolume(this.labelPipeline.actor);
 
-    istyle.setVolumeMapper(this.pipeline.mapper);
+    istyle.setVolumeActor(this.pipeline.actor);
     istyle.setSliceNormal([0, 0, 1]);
     const range = istyle.getSliceRange();
     istyle.setSlice((range[0] + range[1]) / 2);
