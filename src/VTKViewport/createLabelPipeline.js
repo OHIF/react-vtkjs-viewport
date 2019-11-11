@@ -1,6 +1,7 @@
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
+import vtkImageSlice from 'vtk.js/Sources/Rendering/Core/ImageSlice';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
@@ -12,7 +13,11 @@ export default function createLabelPipeline(
   useSampleDistance = false
 ) {
   let labelMapData;
-  let { colorLUT, globalOpacity } = options;
+  let { colorLUT, globalOpacity, visible } = options;
+
+  if (visible === undefined) {
+    visible = false;
+  }
 
   if (globalOpacity === undefined) {
     globalOpacity = 1.0;
@@ -51,7 +56,7 @@ export default function createLabelPipeline(
   }
 
   const labelMap = {
-    actor: vtkVolume.newInstance(),
+    actor: vtkImageSlice.newInstance(),
     mapper,
     cfun: vtkColorTransferFunction.newInstance(),
     ofun: vtkPiecewiseFunction.newInstance(),
@@ -59,10 +64,15 @@ export default function createLabelPipeline(
 
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);
-
-  console.log('ENTERING COLORLUT');
-
+  labelMap.actor.setVisibility(visible);
+  // All labels above 1 are fully opaque.
   labelMap.ofun.addPoint(0, 0);
+  labelMap.ofun.addPoint(1, 1);
+
+  // TODO: Set global opacity for the whole labelmap.
+
+  //labelMap.actor.getProperty().setOpacity(globalOpacity);
+  // ^This only works for the slicemapper, not the volume mapper.
 
   // set up labelMap color and opacity mapping
   if (colorLUT) {
@@ -76,23 +86,20 @@ export default function createLabelPipeline(
         color[2] / 255
       );
 
-      const segmentOpacity = (color[3] / 255) * globalOpacity;
-
-      labelMap.ofun.addPoint(i, segmentOpacity);
+      // TODO: per-segment opacity seems broken at the moment. 0.99 is barely visible and 1 is opaque.
+      //const segmentOpacity = (color[3] / 255) * globalOpacity;
+      //labelMap.ofun.addPointLong(i, segmentOpacity, 1.0, 1.0);
     }
   } else {
     // Some default.
     labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
     labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
     labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
-    labelMap.ofun.addPoint(0, 0);
-    labelMap.ofun.addPoint(1, globalOpacity);
-    labelMap.ofun.addPoint(2, globalOpacity);
-    labelMap.ofun.addPoint(3, globalOpacity);
   }
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
+
   labelMap.actor.getProperty().setInterpolationTypeToNearest();
 
   return labelMap;
