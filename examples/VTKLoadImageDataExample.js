@@ -44,6 +44,15 @@ function createActorMapper(imageData) {
   };
 }
 
+function shuffleImageNames(imageNames) {
+  for (let index = imageNames.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * index);
+    const temporaryValue = imageNames[index];
+    imageNames[index] = imageNames[randomIndex];
+    imageNames[randomIndex] = temporaryValue;
+  }
+}
+
 function getImageIds() {
   const ROOT_URL =
     'https://s3.amazonaws.com/IsomicsPublic/SampleData/QIN-H%2BN-0139/PET-sorted/';
@@ -53,6 +62,9 @@ function getImageIds() {
   for (let i = 1; i < 546; i++) {
     imageNames.push('PET_HeadNeck_0-' + i + '.dcm');
   }
+
+  // Shuffle the image names to test that src/lib/data/sortDatasetsByImagePosition.js works.
+  shuffleImageNames(imageNames);
 
   return imageNames.map(name => `dicomweb:${ROOT_URL}${name}`);
 }
@@ -129,8 +141,7 @@ class VTKLoadImageDataExample extends Component {
 
       const { slicePlaneNormal, sliceViewUp } = ORIENTATION[orientation];
 
-      istyle.setSliceNormal(...slicePlaneNormal);
-      istyle.setViewUp(...sliceViewUp);
+      istyle.setSliceOrientation(slicePlaneNormal, sliceViewUp);
 
       this.imageDataObject.insertPixelDataPromises.forEach(promise => {
         promise.then(() => renderWindow.render());

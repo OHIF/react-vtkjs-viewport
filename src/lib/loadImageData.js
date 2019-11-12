@@ -1,5 +1,4 @@
 import cornerstone from 'cornerstone-core';
-import getSliceIndex from './data/getSliceIndex.js';
 import insertSlice from './data/insertSlice.js';
 import getPatientWeightAndCorrectedDose from './data/getPatientWeightAndCorrectedDose.js';
 
@@ -11,7 +10,12 @@ export default function loadImageDataProgressively(imageDataObject) {
     return;
   }
 
-  const { imageIds, vtkImageData, metaDataMap, zAxis } = imageDataObject;
+  const {
+    imageIds,
+    vtkImageData,
+    metaDataMap,
+    sortedDatasets,
+  } = imageDataObject;
   const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
   const imageId0 = imageIds[0];
 
@@ -20,11 +24,8 @@ export default function loadImageDataProgressively(imageDataObject) {
     imageId0
   );
 
-  if (!seriesModule) {
-    throw new Error('seriesModule metadata is required');
-  }
-
-  const modality = seriesModule.modality;
+  // If no seriesModule is present will default to linear scaling function.
+  const modality = seriesModule && seriesModule.modality;
   let modalitySpecificScalingParameters;
 
   if (modality === 'PT') {
@@ -56,7 +57,10 @@ export default function loadImageDataProgressively(imageDataObject) {
   const insertPixelData = image => {
     return new Promise(resolve => {
       const { imagePositionPatient } = metaDataMap.get(image.imageId);
-      const sliceIndex = getSliceIndex(zAxis, imagePositionPatient);
+
+      const sliceIndex = sortedDatasets.findIndex(
+        dataset => dataset.imagePositionPatient === imagePositionPatient
+      );
 
       const { max, min } = insertSlice(
         vtkImageData,
@@ -105,12 +109,4 @@ export default function loadImageDataProgressively(imageDataObject) {
   });
 
   imageDataObject.insertPixelDataPromises = insertPixelDataPromises;
-
-  // TODO: Investigate progressive loading. Right now the UI gets super slow because
-  // we are rendering and decoding simultaneously. We might want to use fewer web workers
-  // for the decoding tasks.
-  //
-  // Update: Had some success with this locally. But it completely freezes up when stuck
-  // In an app like OHIF. There seems to be many small calls made to various vtk functions.
-  // Putting it aside for now, but a progressive loader still shows promise.
 }
