@@ -24,11 +24,8 @@ export default function loadImageDataProgressively(imageDataObject) {
     imageId0
   );
 
-  if (!seriesModule) {
-    throw new Error('seriesModule metadata is required');
-  }
-
-  const modality = seriesModule.modality;
+  // If no seriesModule is present will default to linear scaling function.
+  const modality = seriesModule && seriesModule.modality;
   let modalitySpecificScalingParameters;
 
   if (modality === 'PT') {
