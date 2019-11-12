@@ -1,7 +1,6 @@
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
-import vtkImageSlice from 'vtk.js/Sources/Rendering/Core/ImageSlice';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
@@ -56,7 +55,7 @@ export default function createLabelPipeline(
   }
 
   const labelMap = {
-    actor: vtkImageSlice.newInstance(),
+    actor: vtkVolume.newInstance(),
     mapper,
     cfun: vtkColorTransferFunction.newInstance(),
     ofun: vtkPiecewiseFunction.newInstance(),
@@ -71,7 +70,9 @@ export default function createLabelPipeline(
 
   // TODO: Set global opacity for the whole labelmap.
 
-  //labelMap.actor.getProperty().setOpacity(globalOpacity);
+  const property = labelMap.actor.getProperty();
+
+  console.log(property);
   // ^This only works for the slicemapper, not the volume mapper.
 
   // set up labelMap color and opacity mapping
