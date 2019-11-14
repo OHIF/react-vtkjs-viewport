@@ -68,13 +68,6 @@ module.exports = (env, argv) => {
           amd: 'cornerstone-core',
           root: 'cornerstone',
         },
-        // Vector 3 use
-        'cornerstone-math': {
-          commonjs: 'cornerstone-math',
-          commonjs2: 'cornerstone-math',
-          amd: 'cornerstone-math',
-          root: 'cornerstoneMath',
-        },
         //
         react: 'react',
       },

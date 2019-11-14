@@ -1,4 +1,4 @@
-import { Vector3 } from 'cornerstone-math';
+import { vec3 } from 'gl-matrix';
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
 
@@ -16,18 +16,9 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const { metaData0, metaDataMap, imageMetaData0 } = buildMetadata(imageIds);
 
   const { rowCosines, columnCosines } = metaData0;
-  const rowCosineVec = new Vector3(rowCosines[0], rowCosines[1], rowCosines[2]);
-  const colCosineVec = new Vector3(
-    columnCosines[0],
-    columnCosines[1],
-    columnCosines[2]
-  );
-
-  const scanAxisNormal = new Vector3(
-    rowCosines[0],
-    rowCosines[1],
-    rowCosines[2]
-  ).cross(colCosineVec);
+  const rowCosineVec = vec3.fromValues(...rowCosines);
+  const colCosineVec = vec3.fromValues(...columnCosines);
+  const scanAxisNormal = vec3.cross([], colCosineVec, rowCosineVec);
 
   const { spacing, origin, sortedDatasets } = sortDatasetsByImagePosition(
     scanAxisNormal,
@@ -75,17 +66,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
 
   const imageData = vtkImageData.newInstance();
 
-  const direction = [
-    rowCosineVec.x,
-    rowCosineVec.y,
-    rowCosineVec.z,
-    colCosineVec.x,
-    colCosineVec.y,
-    colCosineVec.z,
-    scanAxisNormal.x,
-    scanAxisNormal.y,
-    scanAxisNormal.z,
-  ];
+  const direction = [...rowCosineVec, ...colCosineVec, ...scanAxisNormal];
 
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
   imageData.setSpacing(xSpacing, ySpacing, zSpacing);

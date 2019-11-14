@@ -1,5 +1,10 @@
-import { Vector3 } from 'cornerstone-math';
+import { vec3 } from 'gl-matrix';
 
+/**
+ *
+ * @param {*} scanAxisNormal - [x, y, z] array or gl-matrix vec3
+ * @param {*} imageMetaDataMap - one of the results from BuildMetadata()
+ */
 export default function sortDatasetsByImagePosition(
   scanAxisNormal,
   imageMetaDataMap
@@ -10,12 +15,13 @@ export default function sortDatasetsByImagePosition(
   const datasets = Array.from(imageMetaDataMap.values());
   const referenceDataset = datasets[0];
 
-  const refIppVec = new Vector3(...referenceDataset.imagePositionPatient);
-
   const distanceDatasetPairs = datasets.map(function(dataset) {
-    const ippVec = new Vector3(...dataset.imagePositionPatient);
-    const positionVector = refIppVec.clone().sub(ippVec);
-    const distance = positionVector.dot(scanAxisNormal);
+    const positionVector = vec3.sub(
+      [],
+      referenceDataset.imagePositionPatient,
+      dataset.imagePositionPatient
+    );
+    const distance = vec3.dot(positionVector, scanAxisNormal);
 
     return {
       distance,
