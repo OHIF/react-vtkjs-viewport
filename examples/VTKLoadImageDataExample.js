@@ -116,7 +116,7 @@ class VTKLoadImageDataExample extends Component {
               (numberProcessed * 100) / insertPixelDataPromises.length
             );
 
-            console.log('Processing: %' + percentComplete);
+            console.log(`Processing: ${percentComplete}%`);
           });
         });
 
