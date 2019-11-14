@@ -109,6 +109,17 @@ class VTKLoadImageDataExample extends Component {
 
         loadImageData(imageDataObject);
 
+        const { insertPixelDataPromises } = imageDataObject;
+        insertPixelDataPromises.forEach(promise => {
+          promise.then(numberProcessed => {
+            const percentComplete = Math.floor(
+              (numberProcessed * 100) / insertPixelDataPromises.length
+            );
+
+            console.log('Processing: %' + percentComplete);
+          });
+        });
+
         const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
         this.imageDataObject = imageDataObject;
