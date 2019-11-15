@@ -12,6 +12,7 @@ export default function createLabelPipeline(
   useSampleDistance = false
 ) {
   let labelMapData;
+
   let { colorLUT, globalOpacity, visible } = options;
 
   if (visible === undefined) {
@@ -89,6 +90,7 @@ export default function createLabelPipeline(
     labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
     labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
     labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
+    labelMap.ofun.addPoint(1, 0.5); // All labels full opacity
   }
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
