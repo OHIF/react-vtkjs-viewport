@@ -66,14 +66,7 @@ export default function createLabelPipeline(
   labelMap.actor.setVisibility(visible);
   // All labels above 1 are fully opaque.
   labelMap.ofun.addPoint(0, 0);
-  labelMap.ofun.addPoint(1, 1);
-
-  // TODO: Set global opacity for the whole labelmap.
-
-  const property = labelMap.actor.getProperty();
-
-  console.log(property);
-  // ^This only works for the slicemapper, not the volume mapper.
+  //labelMap.ofun.addPoint(1, globalOpacity);
 
   // set up labelMap color and opacity mapping
   if (colorLUT) {
@@ -87,9 +80,8 @@ export default function createLabelPipeline(
         color[2] / 255
       );
 
-      // TODO: per-segment opacity seems broken at the moment. 0.99 is barely visible and 1 is opaque.
-      //const segmentOpacity = (color[3] / 255) * globalOpacity;
-      //labelMap.ofun.addPointLong(i, segmentOpacity, 1.0, 1.0);
+      const segmentOpacity = (color[3] / 255) * globalOpacity;
+      labelMap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
     }
   } else {
     // Some default.
@@ -102,6 +94,8 @@ export default function createLabelPipeline(
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
 
   labelMap.actor.getProperty().setInterpolationTypeToNearest();
+  labelMap.actor.getProperty().setScalarOpacityUnitDistance(0, 0.1);
+  labelMap.actor.getProperty().setUseGradientOpacity(0, false);
 
   return labelMap;
 }
