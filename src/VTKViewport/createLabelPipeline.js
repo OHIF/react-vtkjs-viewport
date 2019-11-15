@@ -64,13 +64,14 @@ export default function createLabelPipeline(
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);
   labelMap.actor.setVisibility(visible);
-  // All labels above 1 are fully opaque.
   labelMap.ofun.addPoint(0, 0);
-  //labelMap.ofun.addPoint(1, globalOpacity);
 
   // set up labelMap color and opacity mapping
   if (colorLUT) {
-    for (let i = 0; i < 256; i++) {
+    // TODO -> It seems to crash if you set it higher than 256??
+    const numColors = Math.min(256, colorLUT.length);
+
+    for (let i = 0; i < numColors; i++) {
       //for (let i = 0; i < colorLUT.length; i++) {
       const color = colorLUT[i];
       labelMap.cfun.addRGBPoint(
