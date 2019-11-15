@@ -11,7 +11,10 @@ import vtkSVGWidgetManager from './vtkSVGWidgetManager';
 import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
+import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
+
+const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
 export default class View2D extends Component {
   static propTypes = {
@@ -27,10 +30,14 @@ export default class View2D extends Component {
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
     orientation: PropTypes.object,
+    labelmapRenderingOptions: PropTypes.object,
   };
 
   static defaultProps = {
     painting: false,
+    labelmapRenderingOptions: {
+      visible: true,
+    },
   };
 
   constructor(props) {
@@ -258,8 +265,6 @@ export default class View2D extends Component {
     if (currentIStyle.getSlabThickness) {
       return currentIStyle.getSlabThickness();
     }
-
-    //return this.currentSlabThickness;
   }
 
   setSlabThickness(slabThickness) {
@@ -268,6 +273,23 @@ export default class View2D extends Component {
 
     if (istyle.setSlabThickness) {
       istyle.setSlabThickness(slabThickness);
+
+      if (this.props.paintFilterLabelMapImageData) {
+        const labelmapActor = this.labelmap.actor;
+
+        if (realsApproximatelyEqual(slabThickness, minSlabThickness)) {
+          if (
+            labelmapActor.getVisibility() !==
+            this.props.labelmapRenderingOptions.visible
+          ) {
+            labelmapActor.setVisibility(
+              this.props.labelmapRenderingOptions.visible
+            );
+          }
+        } else {
+          labelmapActor.setVisibility(false);
+        }
+      }
     }
 
     renderWindow.render();
@@ -392,7 +414,8 @@ export default class View2D extends Component {
       const labelmapImageData = this.props.paintFilterLabelMapImageData;
       const labelmap = createLabelPipeline(
         this.props.paintFilterBackgroundImageData,
-        labelmapImageData
+        labelmapImageData,
+        this.props.labelmapRenderingOptions
       );
 
       this.labelmap = labelmap;
@@ -407,6 +430,16 @@ export default class View2D extends Component {
 
           this.renderWindow.render();
         })
+      );
+    }
+
+    if (
+      prevProps.labelmapRenderingOptions &&
+      prevProps.labelmapRenderingOptions.visible !==
+        this.props.labelmapRenderingOptions.visible
+    ) {
+      this.labelmap.actor.setVisibility(
+        prevProps.labelmapRenderingOptions.visible
       );
     }
 
