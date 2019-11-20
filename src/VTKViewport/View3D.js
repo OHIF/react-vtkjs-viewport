@@ -24,11 +24,15 @@ export default class View3D extends Component {
     dataDetails: PropTypes.object,
     onCreated: PropTypes.func,
     onDestroyed: PropTypes.func,
+    labelmapRenderingOptions: PropTypes.object,
   };
 
   static defaultProps = {
     painting: false,
     sliceNormal: [0, 0, 1],
+    labelmapRenderingOptions: {
+      visible: true,
+    },
   };
 
   constructor(props) {
@@ -189,6 +193,7 @@ export default class View3D extends Component {
       const labelmap = createLabelPipeline(
         this.props.paintFilterBackgroundImageData,
         labelmapImageData,
+        this.props.labelmapRenderingOptions,
         true
       );
 
