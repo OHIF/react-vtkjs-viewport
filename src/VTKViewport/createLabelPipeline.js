@@ -8,9 +8,20 @@ import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunct
 export default function createLabelPipeline(
   backgroundImageData,
   paintFilterLabelMapImageData,
+  options,
   useSampleDistance = false
 ) {
   let labelMapData;
+
+  let { colorLUT, globalOpacity, visible } = options;
+
+  if (visible === undefined) {
+    visible = false;
+  }
+
+  if (globalOpacity === undefined) {
+    globalOpacity = 1.0;
+  }
 
   if (paintFilterLabelMapImageData) {
     labelMapData = paintFilterLabelMapImageData;
@@ -53,17 +64,41 @@ export default function createLabelPipeline(
 
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);
+  labelMap.actor.setVisibility(visible);
+  labelMap.ofun.addPoint(0, 0);
 
   // set up labelMap color and opacity mapping
-  labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
-  labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
-  labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
-  labelMap.ofun.addPoint(0, 0);
-  labelMap.ofun.addPoint(1, 0.9);
+  if (colorLUT) {
+    // TODO -> It seems to crash if you set it higher than 256??
+    const numColors = Math.min(256, colorLUT.length);
+
+    for (let i = 0; i < numColors; i++) {
+      //for (let i = 0; i < colorLUT.length; i++) {
+      const color = colorLUT[i];
+      labelMap.cfun.addRGBPoint(
+        i,
+        color[0] / 255,
+        color[1] / 255,
+        color[2] / 255
+      );
+
+      const segmentOpacity = (color[3] / 255) * globalOpacity;
+      labelMap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
+    }
+  } else {
+    // Some default.
+    labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
+    labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
+    labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
+    labelMap.ofun.addPoint(1, 0.5); // All labels full opacity
+  }
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
+
   labelMap.actor.getProperty().setInterpolationTypeToNearest();
+  labelMap.actor.getProperty().setScalarOpacityUnitDistance(0, 0.1);
+  labelMap.actor.getProperty().setUseGradientOpacity(0, false);
 
   return labelMap;
 }

@@ -5,7 +5,12 @@ export default function formatDA(date, strFormat = 'MMM D, YYYY') {
     return;
   }
 
-  const parsedDateTime = parse(date, 'YYYYMMDD');
+  try {
+    const parsedDateTime = parse(date, 'yyyyMMdd', new Date());
+    const formattedDateTime = format(parsedDateTime, strFormat);
 
-  return format(parsedDateTime, strFormat);
+    return formattedDateTime;
+  } catch (err) {
+    // swallow?
+  }
 }
