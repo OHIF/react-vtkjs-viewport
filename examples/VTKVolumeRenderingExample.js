@@ -255,23 +255,15 @@ class VTKFusionExample extends Component {
     ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2);
 
     const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
-    const promises = [...ctImageDataObject.insertPixelDataPromises];
 
-    // TODO -> We could stream this ala 2D but its not done yet, so wait.
-    // TODO -> @Erik ^ We also don't have the metadata ahead of time in
-    // These examples anyway right now.
+    const ctImageData = ctImageDataObject.vtkImageData;
+    const ctVolVR = createCT3dPipeline(
+      ctImageData,
+      this.state.ctTransferFunctionPresetId
+    );
 
-    Promise.all(promises).then(() => {
-      const ctImageData = ctImageDataObject.vtkImageData;
-
-      const ctVolVR = createCT3dPipeline(
-        ctImageData,
-        this.state.ctTransferFunctionPresetId
-      );
-
-      this.setState({
-        volumeRenderingVolumes: [ctVolVR],
-      });
+    this.setState({
+      volumeRenderingVolumes: [ctVolVR],
     });
   }
 

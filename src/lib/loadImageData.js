@@ -87,6 +87,8 @@ export default function loadImageDataProgressively(imageDataObject) {
         reRenderTarget += reRenderFraction;
 
         vtkImageData.modified();
+
+        // rerender
       }
 
       resolve(numberProcessed);
