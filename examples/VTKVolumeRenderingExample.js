@@ -342,7 +342,7 @@ class VTKFusionExample extends Component {
 
     const { percentComplete } = this.state;
 
-    const progressString = `progress: ${percentComplete}%`;
+    const progressString = `Progress: ${percentComplete}%`;
 
     return (
       <div className="row">
