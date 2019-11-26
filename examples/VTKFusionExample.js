@@ -409,6 +409,8 @@ class VTKFusionExample extends Component {
     this.setState({
       volumes: [ctVol, petVol],
       volumeRenderingVolumes: [ctVolVR, petVolVR],
+      percentCompleteCT: 0,
+      percentCompletePT: 0,
     });
   }
 
@@ -432,8 +434,6 @@ class VTKFusionExample extends Component {
 
     this.setState({
       ctTransferFunctionPresetId,
-      percentCompleteCT: 0,
-      percentCompletePT: 0,
     });
   };
 
@@ -508,69 +508,73 @@ class VTKFusionExample extends Component {
 
     const { percentCompleteCT, percentCompletePT } = this.state;
 
-    return (
-      <div className="row">
-        <div className="col-xs-12">
-          <h1>Image Fusion</h1>
-          <p>
-            This example demonstrates how to use both the 2D and 3D components
-            to display multiple volumes simultaneously. A PET volume is overlaid
-            on a CT volume and controls are provided to update the CT Volume
-            Rendering presets (manipulating scalar opacity, gradient opacity,
-            RGB transfer function, etc...) and the PET Colormap (i.e. RGB
-            Transfer Function).
-          </p>
-          <p>
-            Images are retrieved via DICOMWeb from a publicly available server
-            and constructed into <code>vtkImageData</code> volumes before they
-            are provided to the component. When each slice arrives, its pixel
-            data is dumped into the proper location in the volume array.
-          </p>
-        </div>
-        <div className="col-xs-12">
-          <div>
-            <label htmlFor="select_PET_colormap">PET Colormap: </label>
-            <select
-              id="select_PET_colormap"
-              value={this.state.petColorMapId}
-              onChange={this.handleChangePETColorMapId}
-            >
-              {petColorMapPresetOptions}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="select_CT_xfer_fn">
-              CT Transfer Function Preset (for Volume Rendering):{' '}
-            </label>
-            <select
-              id="select_CT_xfer_fn"
-              value={this.state.ctTransferFunctionPresetId}
-              onChange={this.handleChangeCTTransferFunction}
-            >
-              {ctTransferFunctionPresetOptions}
-            </select>
-          </div>
-        </div>
-        {percentCompleteCT !== 100 || percentCompletePT !== 100 ? (
-          <div className="col-xs-12 col-sm-6">
-            <h3>CT progress: {this.state.percentCompleteCT}%</h3>
-            <h3>PET progress: {this.state.percentCompletePT}%</h3>
-          </div>
-        ) : null}
+    let progressString = `progress: CT: ${this.state.percentCompleteCT}% PET: ${this.state.percentCompletePT}%`;
 
-        <hr />
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.saveComponentReference(0)}
-            orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, 1] }}
-          />
+    return (
+      <div>
+        <div className="row">
+          <div className="col-xs-12">
+            <h1>Image Fusion </h1>
+
+            <p>
+              This example demonstrates how to use both the 2D and 3D components
+              to display multiple volumes simultaneously. A PET volume is
+              overlaid on a CT volume and controls are provided to update the CT
+              Volume Rendering presets (manipulating scalar opacity, gradient
+              opacity, RGB transfer function, etc...) and the PET Colormap (i.e.
+              RGB Transfer Function).
+            </p>
+            <p>
+              Images are retrieved via DICOMWeb from a publicly available server
+              and constructed into <code>vtkImageData</code> volumes before they
+              are provided to the component. When each slice arrives, its pixel
+              data is dumped into the proper location in the volume array.
+            </p>
+          </div>
+          <div className="col-xs-12">
+            <div>
+              <label htmlFor="select_PET_colormap">PET Colormap: </label>
+              <select
+                id="select_PET_colormap"
+                value={this.state.petColorMapId}
+                onChange={this.handleChangePETColorMapId}
+              >
+                {petColorMapPresetOptions}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="select_CT_xfer_fn">
+                CT Transfer Function Preset (for Volume Rendering):{' '}
+              </label>
+              <select
+                id="select_CT_xfer_fn"
+                value={this.state.ctTransferFunctionPresetId}
+                onChange={this.handleChangeCTTransferFunction}
+              >
+                {ctTransferFunctionPresetOptions}
+              </select>
+            </div>
+          </div>
+          <div className="col-xs-12">
+            <h5>{progressString}</h5>
+          </div>
         </div>
-        <div className="col-xs-12 col-sm-6">
-          <View3D
-            volumes={this.state.volumeRenderingVolumes}
-            onCreated={this.saveComponentReference(1)}
-          />
+
+        <div className="row">
+          <hr />
+          <div className="col-xs-12 col-sm-6">
+            <View2D
+              volumes={this.state.volumes}
+              onCreated={this.saveComponentReference(0)}
+              orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, 1] }}
+            />
+          </div>
+          <div className="col-xs-12 col-sm-6">
+            <View3D
+              volumes={this.state.volumeRenderingVolumes}
+              onCreated={this.saveComponentReference(1)}
+            />
+          </div>
         </div>
       </div>
     );
