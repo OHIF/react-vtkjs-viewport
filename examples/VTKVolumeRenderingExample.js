@@ -229,13 +229,6 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
   });
 }
 
-function loadDataset(imageIds, displaySetInstanceUid) {
-  const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-
-  loadImageData(imageDataObject);
-  return imageDataObject;
-}
-
 class VTKFusionExample extends Component {
   state = {
     volumeRenderingVolumes: null,
@@ -252,9 +245,9 @@ class VTKFusionExample extends Component {
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     );
-    ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2);
+    //ctImageIds = ctImageIds.slice(0, ctImageIds.length / 2);
 
-    const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
+    const ctImageDataObject = this.loadDataset(ctImageIds, 'ctDisplaySet');
 
     const ctImageData = ctImageDataObject.vtkImageData;
     const ctVolVR = createCT3dPipeline(
@@ -264,6 +257,7 @@ class VTKFusionExample extends Component {
 
     this.setState({
       volumeRenderingVolumes: [ctVolVR],
+      percentComplete: 0,
     });
   }
 
@@ -300,6 +294,39 @@ class VTKFusionExample extends Component {
     });
   };
 
+  loadDataset(imageIds, displaySetInstanceUid) {
+    const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+
+    loadImageData(imageDataObject);
+
+    const { insertPixelDataPromises } = imageDataObject;
+
+    const numberOfFrames = insertPixelDataPromises.length;
+
+    // TODO -> Maybe the component itself should do this.
+    insertPixelDataPromises.forEach(promise => {
+      promise.then(numberProcessed => {
+        const percentComplete = Math.floor(
+          (numberProcessed * 100) / numberOfFrames
+        );
+
+        if (this.state.percentComplete !== percentComplete) {
+          this.setState({ percentComplete });
+        }
+
+        if (percentComplete % 20 === 0) {
+          this.rerenderAll();
+        }
+      });
+    });
+
+    Promise.all(insertPixelDataPromises).then(() => {
+      this.rerenderAll();
+    });
+
+    return imageDataObject;
+  }
+
   render() {
     if (!this.state.volumeRenderingVolumes) {
       return <h4>Loading...</h4>;
@@ -312,6 +339,10 @@ class VTKFusionExample extends Component {
         </option>
       );
     });
+
+    const { percentComplete } = this.state;
+
+    const progressString = `progress: ${percentComplete}%`;
 
     return (
       <div className="row">
@@ -338,6 +369,9 @@ class VTKFusionExample extends Component {
               {ctTransferFunctionPresetOptions}
             </select>
           </div>
+        </div>
+        <div className="col-xs-12">
+          <h5>{progressString}</h5>
         </div>
         <hr />
         <div className="col-xs-12 col-sm-6">

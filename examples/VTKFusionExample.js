@@ -332,7 +332,7 @@ class VTKFusionExample extends Component {
 
     loadImageData(imageDataObject);
 
-    const { isLoading, insertPixelDataPromises } = imageDataObject;
+    const { insertPixelDataPromises } = imageDataObject;
 
     const numberOfFrames = insertPixelDataPromises.length;
 
@@ -358,7 +358,6 @@ class VTKFusionExample extends Component {
     });
 
     Promise.all(insertPixelDataPromises).then(() => {
-      console.log('final: ' + modality);
       this.rerenderAll();
     });
 
@@ -508,7 +507,7 @@ class VTKFusionExample extends Component {
 
     const { percentCompleteCT, percentCompletePT } = this.state;
 
-    let progressString = `progress: CT: ${this.state.percentCompleteCT}% PET: ${this.state.percentCompletePT}%`;
+    const progressString = `progress: CT: ${percentCompleteCT}% PET: ${percentCompletePT}%`;
 
     return (
       <div>
