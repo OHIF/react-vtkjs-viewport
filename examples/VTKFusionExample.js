@@ -270,44 +270,51 @@ function createPET3dPipeline(imageData, petColorMapId) {
   return actor;
 }
 
-function createStudyImageIds(baseUrl, studySearchOptions) {
+async function createStudyImageIds(baseUrl, studySearchOptions) {
   const SOP_INSTANCE_UID = '00080018';
   const SERIES_INSTANCE_UID = '0020000E';
 
   const client = new api.DICOMwebClient({ url });
 
-  return new Promise((resolve, reject) => {
-    client.retrieveStudyMetadata(studySearchOptions).then(instances => {
-      const imageIds = instances.map(metaData => {
-        const imageId =
-          `wadors:` +
-          baseUrl +
-          '/studies/' +
-          studyInstanceUID +
-          '/series/' +
-          metaData[SERIES_INSTANCE_UID].Value[0] +
-          '/instances/' +
-          metaData[SOP_INSTANCE_UID].Value[0] +
-          '/frames/1';
+  const instances = await client.retrieveStudyMetadata(studySearchOptions);
 
-        cornerstoneWADOImageLoader.wadors.metaDataManager.add(
-          imageId,
-          metaData
-        );
+  const instancesToRetrieve = [];
 
-        return imageId;
+  const imageIds = instances.map(instanceMetaData => {
+    const seriesInstanceUID = instanceMetaData[SERIES_INSTANCE_UID].Value[0];
+    const sopInstanceUID = instanceMetaData[SOP_INSTANCE_UID].Value[0];
+
+    const imageId =
+      `wadors:` +
+      baseUrl +
+      '/studies/' +
+      studyInstanceUID +
+      '/series/' +
+      seriesInstanceUID +
+      '/instances/' +
+      sopInstanceUID +
+      '/frames/1';
+
+    cornerstoneWADOImageLoader.wadors.metaDataManager.add(
+      imageId,
+      instanceMetaData
+    );
+
+    if (
+      seriesInstanceUID === ctSeriesInstanceUID ||
+      seriesInstanceUID === petSeriesInstanceUID
+    ) {
+      instancesToRetrieve.push({
+        studyInstanceUID,
+        seriesInstanceUID,
+        sopInstanceUID,
       });
+    }
 
-      resolve(imageIds);
-    }, reject);
+    return imageId;
   });
-}
 
-function loadDataset(imageIds, displaySetInstanceUid) {
-  const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
-
-  loadImageData(imageDataObject);
-  return imageDataObject;
+  return imageIds;
 }
 
 class VTKFusionExample extends Component {
@@ -318,54 +325,91 @@ class VTKFusionExample extends Component {
     petColorMapId: 'hsv',
   };
 
+  loadDataset(imageIds, displaySetInstanceUid, modality) {
+    const imageDataObject = getImageData(imageIds, displaySetInstanceUid);
+
+    const percentageCompleteStateName = `percentComplete${modality}`;
+
+    loadImageData(imageDataObject);
+
+    const { insertPixelDataPromises } = imageDataObject;
+
+    const numberOfFrames = insertPixelDataPromises.length;
+
+    // TODO -> Maybe the component itself should do this.
+    insertPixelDataPromises.forEach(promise => {
+      promise.then(numberProcessed => {
+        const percentComplete = Math.floor(
+          (numberProcessed * 100) / numberOfFrames
+        );
+
+        if (this.state.percentComplete !== percentComplete) {
+          const stateUpdate = {};
+
+          stateUpdate[percentageCompleteStateName] = percentComplete;
+
+          this.setState(stateUpdate);
+        }
+
+        if (percentComplete % 20 === 0) {
+          this.rerenderAll();
+        }
+      });
+    });
+
+    Promise.all(insertPixelDataPromises).then(() => {
+      this.rerenderAll();
+    });
+
+    return imageDataObject;
+  }
+
   async componentDidMount() {
     const imageIdPromise = createStudyImageIds(url, searchInstanceOptions);
 
-    this.components = {};
+    this.components = [];
 
     const imageIds = await imageIdPromise;
+
     let ctImageIds = imageIds.filter(imageId =>
       imageId.includes(ctSeriesInstanceUID)
     );
-    //ctImageIds = ctImageIds.slice(0, ctImageIds.length / 4)
 
     let petImageIds = imageIds.filter(imageId =>
       imageId.includes(petSeriesInstanceUID)
     );
-    petImageIds = petImageIds.slice(0, petImageIds.length / 4);
 
-    const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
-    const petImageDataObject = loadDataset(petImageIds, 'petDisplaySet');
-    const promises = [
-      ...ctImageDataObject.insertPixelDataPromises,
-      ...petImageDataObject.insertPixelDataPromises,
-    ];
+    const ctImageDataObject = this.loadDataset(
+      ctImageIds,
+      'ctDisplaySet',
+      'CT'
+    );
+    const petImageDataObject = this.loadDataset(
+      petImageIds,
+      'petDisplaySet',
+      'PT'
+    );
 
-    // TODO -> We could stream this ala 2D but its not done yet, so wait.
+    const ctImageData = ctImageDataObject.vtkImageData;
+    const petImageData = petImageDataObject.vtkImageData;
 
-    Promise.all(promises).then(() => {
-      const ctImageData = ctImageDataObject.vtkImageData;
-      const petImageData = petImageDataObject.vtkImageData;
+    const ctVol = createCT2dPipeline(ctImageData);
+    const petVol = createPET2dPipeline(petImageData, this.state.petColorMapId);
 
-      const ctVol = createCT2dPipeline(ctImageData);
-      const petVol = createPET2dPipeline(
-        petImageData,
-        this.state.petColorMapId
-      );
+    const ctVolVR = createCT3dPipeline(
+      ctImageData,
+      this.state.ctTransferFunctionPresetId
+    );
+    const petVolVR = createPET3dPipeline(
+      petImageData,
+      this.state.petColorMapId
+    );
 
-      const ctVolVR = createCT3dPipeline(
-        ctImageData,
-        this.state.ctTransferFunctionPresetId
-      );
-      const petVolVR = createPET3dPipeline(
-        petImageData,
-        this.state.petColorMapId
-      );
-
-      this.setState({
-        volumes: [ctVol, petVol],
-        volumeRenderingVolumes: [ctVolVR, petVolVR],
-      });
+    this.setState({
+      volumes: [ctVol, petVol],
+      volumeRenderingVolumes: [ctVolVR, petVolVR],
+      percentCompleteCT: 0,
+      percentCompletePT: 0,
     });
   }
 
@@ -461,61 +505,75 @@ class VTKFusionExample extends Component {
       );
     });
 
+    const { percentCompleteCT, percentCompletePT } = this.state;
+
+    const progressString = `Progress: CT: ${percentCompleteCT}% PET: ${percentCompletePT}%`;
+
     return (
-      <div className="row">
-        <div className="col-xs-12">
-          <h1>Image Fusion</h1>
-          <p>
-            This example demonstrates how to use both the 2D and 3D components
-            to display multiple volumes simultaneously. A PET volume is overlaid
-            on a CT volume and controls are provided to update the CT Volume
-            Rendering presets (manipulating scalar opacity, gradient opacity,
-            RGB transfer function, etc...) and the PET Colormap (i.e. RGB
-            Transfer Function).
-          </p>
-          <p>
-            Images are retrieved via DICOMWeb from a publicly available server
-            and constructed into <code>vtkImageData</code> volumes before they
-            are provided to the component. When each slice arrives, its pixel
-            data is dumped into the proper location in the volume array.
-          </p>
-        </div>
-        <div className="col-xs-12">
-          <div>
-            <label htmlFor="select_PET_colormap">PET Colormap: </label>
-            <select
-              id="select_PET_colormap"
-              value={this.state.petColorMapId}
-              onChange={this.handleChangePETColorMapId}
-            >
-              {petColorMapPresetOptions}
-            </select>
+      <div>
+        <div className="row">
+          <div className="col-xs-12">
+            <h1>Image Fusion </h1>
+
+            <p>
+              This example demonstrates how to use both the 2D and 3D components
+              to display multiple volumes simultaneously. A PET volume is
+              overlaid on a CT volume and controls are provided to update the CT
+              Volume Rendering presets (manipulating scalar opacity, gradient
+              opacity, RGB transfer function, etc...) and the PET Colormap (i.e.
+              RGB Transfer Function).
+            </p>
+            <p>
+              Images are retrieved via DICOMWeb from a publicly available server
+              and constructed into <code>vtkImageData</code> volumes before they
+              are provided to the component. When each slice arrives, its pixel
+              data is dumped into the proper location in the volume array.
+            </p>
           </div>
-          <div>
-            <label htmlFor="select_CT_xfer_fn">
-              CT Transfer Function Preset (for Volume Rendering):{' '}
-            </label>
-            <select
-              id="select_CT_xfer_fn"
-              value={this.state.ctTransferFunctionPresetId}
-              onChange={this.handleChangeCTTransferFunction}
-            >
-              {ctTransferFunctionPresetOptions}
-            </select>
+          <div className="col-xs-12">
+            <div>
+              <label htmlFor="select_PET_colormap">PET Colormap: </label>
+              <select
+                id="select_PET_colormap"
+                value={this.state.petColorMapId}
+                onChange={this.handleChangePETColorMapId}
+              >
+                {petColorMapPresetOptions}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="select_CT_xfer_fn">
+                CT Transfer Function Preset (for Volume Rendering):{' '}
+              </label>
+              <select
+                id="select_CT_xfer_fn"
+                value={this.state.ctTransferFunctionPresetId}
+                onChange={this.handleChangeCTTransferFunction}
+              >
+                {ctTransferFunctionPresetOptions}
+              </select>
+            </div>
+          </div>
+          <div className="col-xs-12">
+            <h5>{progressString}</h5>
           </div>
         </div>
-        <hr />
-        <div className="col-xs-12 col-sm-6">
-          <View2D
-            volumes={this.state.volumes}
-            onCreated={this.saveComponentReference(0)}
-          />
-        </div>
-        <div className="col-xs-12 col-sm-6">
-          <View3D
-            volumes={this.state.volumeRenderingVolumes}
-            onCreated={this.saveComponentReference(1)}
-          />
+
+        <div className="row">
+          <hr />
+          <div className="col-xs-12 col-sm-6">
+            <View2D
+              volumes={this.state.volumes}
+              onCreated={this.saveComponentReference(0)}
+              orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, 1] }}
+            />
+          </div>
+          <div className="col-xs-12 col-sm-6">
+            <View3D
+              volumes={this.state.volumeRenderingVolumes}
+              onCreated={this.saveComponentReference(1)}
+            />
+          </div>
         </div>
       </div>
     );
