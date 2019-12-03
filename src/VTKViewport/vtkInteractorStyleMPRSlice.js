@@ -74,6 +74,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   const cache = {
     sliceNormal: [0, 0, 0],
     sliceRange: [0, 0],
+    sliceCenter: [],
   };
 
   function updateScrollManipulator() {
@@ -301,6 +302,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       const clampedSlice = clamp(slice, ...range);
 
+      let cameraOffset = [0, 0, 0];
+      if (cache.sliceCenter.length) {
+        const oldPos = camera.getFocalPoint();
+        vtkMath.subtract(oldPos, cache.sliceCenter, cameraOffset);
+      }
+
       const center = [
         (bounds[0] + bounds[1]) / 2.0,
         (bounds[2] + bounds[3]) / 2.0,
@@ -323,11 +330,17 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         zeroPoint[2] + dop[2] * clampedSlice,
       ];
 
+      // Cache the center for comparison to calculate the next camera offset
+      cache.sliceCenter = [...slicePoint];
+
       const cameraPos = [
         slicePoint[0] - dop[0] * distance,
         slicePoint[1] - dop[1] * distance,
         slicePoint[2] - dop[2] * distance,
       ];
+
+      vtkMath.add(slicePoint, cameraOffset, slicePoint);
+      vtkMath.add(cameraPos, cameraOffset, cameraPos);
 
       camera.setPosition(...cameraPos);
       camera.setFocalPoint(...slicePoint);
