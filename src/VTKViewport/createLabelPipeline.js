@@ -12,8 +12,7 @@ export default function createLabelPipeline(
   useSampleDistance = false
 ) {
   let labelMapData;
-
-  let { colorLUT, globalOpacity, visible } = options;
+  let { colorLUT, globalOpacity, visible, outlineThickness } = options;
 
   if (visible === undefined) {
     visible = false;
@@ -21,6 +20,10 @@ export default function createLabelPipeline(
 
   if (globalOpacity === undefined) {
     globalOpacity = 1.0;
+  }
+
+  if (outlineThickness === undefined) {
+    outlineThickness = 3;
   }
 
   if (paintFilterLabelMapImageData) {
@@ -66,8 +69,9 @@ export default function createLabelPipeline(
   labelMap.actor.setMapper(labelMap.mapper);
   labelMap.actor.setVisibility(visible);
   labelMap.ofun.addPoint(0, 0);
+  labelMap.ofun.addPoint(1, 1.0);
 
-  // set up labelMap color and opacity mapping
+  // Set up labelMap color and opacity mapping
   if (colorLUT) {
     // TODO -> It seems to crash if you set it higher than 256??
     const numColors = Math.min(256, colorLUT.length);
@@ -82,8 +86,9 @@ export default function createLabelPipeline(
         color[2] / 255
       );
 
+      // Set the opacity per label.
       const segmentOpacity = (color[3] / 255) * globalOpacity;
-      labelMap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
+      labelMap.ofun.addPoint(1, segmentOpacity, 0.5, 1.0);
     }
   } else {
     // Some default.
@@ -95,8 +100,11 @@ export default function createLabelPipeline(
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
-
   labelMap.actor.getProperty().setInterpolationTypeToNearest();
+  labelMap.actor.getProperty().setUseLabelOutline(true);
+  labelMap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
+  labelMap.ofun.setClamping(false);
+
   labelMap.actor.getProperty().setScalarOpacityUnitDistance(0, 0.1);
   labelMap.actor.getProperty().setUseGradientOpacity(0, false);
 

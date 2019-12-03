@@ -14,6 +14,8 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 const { EVENTS } = cornerstoneTools;
 window.cornerstoneTools = cornerstoneTools;
 
+const segmentationModule = cornerstoneTools.getModule('segmentation');
+
 const voi = {
   windowCenter: 35,
   windowWidth: 80,
@@ -39,8 +41,6 @@ function setupSyncedBrush(imageDataObject) {
     throw new Error('Depth should match the number of imageIds');
   }
 
-  const segmentationModule = cornerstoneTools.getModule('segmentation');
-
   segmentationModule.setters.labelmap3DByFirstImageId(
     imageIds[0],
     buffer,
@@ -51,10 +51,7 @@ function setupSyncedBrush(imageDataObject) {
     0
   );
 
-  segmentationModule.setters.colorLUT(0, [[255, 0, 0, 255]]);
-
   // Create VTK Image Data with buffer as input
-
   const labelMap = vtkImageData.newInstance();
 
   // right now only support 256 labels
@@ -162,6 +159,9 @@ class VTKCornerstonePaintingSyncExample extends Component {
           volumes: [actor],
           cornerstoneViewportData,
           labelMapInputData,
+          colorLUT: segmentationModule.getters.colorLUT(0),
+          globalOpacity: segmentationModule.configuration.fillAlpha,
+          outlineThickness: segmentationModule.configuration.outlineThickness,
         });
       });
     });
@@ -257,6 +257,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
   };
 
   render() {
+    const { globalOpacity, colorLUT, outlineThickness } = this.state;
+
     return (
       <div className="row">
         <div className="col-xs-12">
@@ -312,6 +314,12 @@ class VTKCornerstonePaintingSyncExample extends Component {
                 onPaintEnd={this.onPaintEnd}
                 orientation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
                 onCreated={this.saveApiReference}
+                labelmapRenderingOptions={{
+                  colorLUT,
+                  globalOpacity,
+                  outlineThickness,
+                  visible: true,
+                }}
               />
             )}
           </div>
