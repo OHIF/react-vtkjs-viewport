@@ -18,7 +18,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const { rowCosines, columnCosines } = metaData0;
   const rowCosineVec = vec3.fromValues(...rowCosines);
   const colCosineVec = vec3.fromValues(...columnCosines);
-  const scanAxisNormal = vec3.cross([], colCosineVec, rowCosineVec);
+  const scanAxisNormal = vec3.cross([], rowCosineVec, colCosineVec);
 
   const { spacing, origin, sortedDatasets } = sortDatasetsByImagePosition(
     scanAxisNormal,

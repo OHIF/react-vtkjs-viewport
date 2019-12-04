@@ -389,9 +389,10 @@ export default class View2D extends Component {
     ) {
       // re-render if data has updated
       this.subs.data.sub(
-        this.props.paintFilterBackgroundImageData.onModified(() =>
-          this.renderWindow.render()
-        )
+        this.props.paintFilterBackgroundImageData.onModified(() => {
+          this.genericRenderWindow.resize();
+          this.renderWindow.render();
+        })
       );
       this.paintFilter.setBackgroundImage(
         this.props.paintFilterBackgroundImageData
@@ -431,6 +432,8 @@ export default class View2D extends Component {
           this.renderWindow.render();
         })
       );
+
+      this.genericRenderWindow.resize();
     }
 
     if (
@@ -486,6 +489,8 @@ export default class View2D extends Component {
 
         this.widgetManager.grabFocus(this.paintWidget);
         this.widgetManager.enablePicking();
+
+        this.genericRenderWindow.resize();
       } else if (this.viewWidget) {
         this.widgetManager.releaseFocus();
         this.widgetManager.removeWidget(this.paintWidget);
@@ -495,6 +500,8 @@ export default class View2D extends Component {
         this.subs.paint.unsubscribe();
         this.subs.paintEnd.unsubscribe();
         this.viewWidget = null;
+
+        this.genericRenderWindow.resize();
       }
     }
   }
@@ -530,7 +537,6 @@ export default class View2D extends Component {
     }
 
     const style = { width: '100%', height: '100%', position: 'relative' };
-
     const voi = this.state.voi;
 
     return (
