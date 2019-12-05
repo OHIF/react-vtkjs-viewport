@@ -13706,8 +13706,10 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.2.tgz#78641c488b8e6ca91a75f511e7a3b32a86e5dda0"
   integrity sha512-2ham8XPWTONajOR0ohOKOHXkm3+gaBmGut3SRuu75xLd/RRaY6vqgh8NBYYk7+RW3u5AtzPQZG8F10LHkl0lAQ==
 
-"vtk.js@file:.yalc/vtk.js":
-  version "0.0.0-semantically-release-736f107a"
+vtk.js@^11.14.0:
+  version "11.14.0"
+  resolved "https://registry.yarnpkg.com/vtk.js/-/vtk.js-11.14.0.tgz#5dd673dab46497563e29b6e8f9f459a74fdaf833"
+  integrity sha512-5pK7wIi6TBL8ul0dD7fQyyMNWs73r6pc4kmzJfe+iEWiKqMbB+C7U44cZag1jaAE3uiySDyrgostRXpSFtEayw==
   dependencies:
     blueimp-md5 "2.10.0"
     commander "2.11.0"

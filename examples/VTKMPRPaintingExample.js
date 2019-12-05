@@ -64,7 +64,7 @@ function createLabelMapImageData(backgroundImageData) {
   labelMapData.setDimensions(backgroundImageData.getDimensions());
   labelMapData.computeTransforms();
 
-  const values = new Uint8Array(backgroundImageData.getNumberOfPoints());
+  const values = new Uint16Array(backgroundImageData.getNumberOfPoints());
   const dataArray = vtkDataArray.newInstance({
     numberOfComponents: 1, // labelmap with single component
     values,
@@ -167,8 +167,8 @@ class VTKMPRPaintingExample extends Component {
       numberOfComponents: 1, // labelmap with single component
       values,
     });
-    labelMapImageData.getPointData().setScalars(dataArray);
 
+    labelMapImageData.getPointData().setScalars(dataArray);
     labelMapImageData.modified();
 
     this.rerenderAllViewports();
@@ -278,19 +278,21 @@ class VTKMPRPaintingExample extends Component {
             painting={this.state.focusedWidgetId === 'PaintWidget'}
           />
         </div>
-        <div className="col-xs-12 col-sm-6">
-          <View3D
-            volumes={this.state.volumeRenderingVolumes}
-            paintFilterBackgroundImageData={
-              this.state.paintFilterBackgroundImageData
-            }
-            paintFilterLabelMapImageData={
-              this.state.paintFilterLabelMapImageData
-            }
-            onCreated={this.saveApiReference(1)}
-            painting={this.state.focusedWidgetId === 'PaintWidget'}
-          />
-        </div>
+        {
+          <div className="col-xs-12 col-sm-6">
+            <View3D
+              volumes={this.state.volumeRenderingVolumes}
+              paintFilterBackgroundImageData={
+                this.state.paintFilterBackgroundImageData
+              }
+              paintFilterLabelMapImageData={
+                this.state.paintFilterLabelMapImageData
+              }
+              onCreated={this.saveApiReference(1)}
+              painting={this.state.focusedWidgetId === 'PaintWidget'}
+            />
+          </div>
+        }
       </div>
     );
   }

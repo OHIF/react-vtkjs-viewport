@@ -37,6 +37,7 @@ export default class View2D extends Component {
     painting: false,
     labelmapRenderingOptions: {
       visible: true,
+      renderOutline: true,
     },
   };
 

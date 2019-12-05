@@ -12,7 +12,13 @@ export default function createLabelPipeline(
   useSampleDistance = false
 ) {
   let labelMapData;
-  let { colorLUT, globalOpacity, visible, outlineThickness } = options;
+  let {
+    colorLUT,
+    globalOpacity,
+    visible,
+    renderOutline,
+    outlineThickness,
+  } = options;
 
   if (visible === undefined) {
     visible = false;
@@ -101,10 +107,13 @@ export default function createLabelPipeline(
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);
   labelMap.actor.getProperty().setScalarOpacity(0, labelMap.ofun);
   labelMap.actor.getProperty().setInterpolationTypeToNearest();
-  labelMap.actor.getProperty().setUseLabelOutline(true);
-  labelMap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
-  labelMap.ofun.setClamping(false);
 
+  if (renderOutline) {
+    labelMap.actor.getProperty().setUseLabelOutline(true);
+    labelMap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
+  }
+
+  labelMap.ofun.setClamping(false);
   labelMap.actor.getProperty().setScalarOpacityUnitDistance(0, 0.1);
   labelMap.actor.getProperty().setUseGradientOpacity(0, false);
 

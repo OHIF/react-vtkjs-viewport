@@ -32,6 +32,7 @@ export default class View3D extends Component {
     sliceNormal: [0, 0, 1],
     labelmapRenderingOptions: {
       visible: true,
+      renderOutline: false,
     },
   };
 
@@ -194,7 +195,7 @@ export default class View3D extends Component {
         this.props.paintFilterBackgroundImageData,
         labelmapImageData,
         this.props.labelmapRenderingOptions,
-        true
+        false
       );
 
       this.labelmap = labelmap;

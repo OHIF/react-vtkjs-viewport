@@ -41,7 +41,7 @@ function createCT2dPipeline(imageData) {
   const { actor } = createActorMapper(imageData);
   const cfun = vtkColorTransferFunction.newInstance();
   /*
-    0: { description: 'Soft tissue', window: 400, level: 40 },
+  0: { description: 'Soft tissue', window: 400, level: 40 },
   1: { description: 'Lung', window: 1500, level: -600 },
   2: { description: 'Liver', window: 150, level: 90 },
   3: { description: 'Bone', window: 2500, level: 480 },
