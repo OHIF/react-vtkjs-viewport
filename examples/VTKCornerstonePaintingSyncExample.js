@@ -319,6 +319,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
                   globalOpacity,
                   outlineThickness,
                   visible: true,
+                  renderOutline: true,
                 }}
               />
             )}
