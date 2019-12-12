@@ -63,6 +63,7 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
 class VTKCrosshairsExample extends Component {
   state = {
     volumes: [],
+    displayCrosshairs: true,
   };
 
   async componentDidMount() {
@@ -145,6 +146,22 @@ class VTKCrosshairsExample extends Component {
     });
   }
 
+  toggleCrosshairs = () => {
+    const { displayCrosshairs } = this.state;
+    const apis = this.apis;
+
+    const shouldDisplayCrosshairs = !displayCrosshairs;
+
+    apis.forEach(api => {
+      const { svgWidgetManager, svgWidgets } = api;
+      svgWidgets.crosshairsWidget.setDisplay(shouldDisplayCrosshairs);
+
+      svgWidgetManager.render();
+    });
+
+    this.setState({ displayCrosshairs: shouldDisplayCrosshairs });
+  };
+
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
       return <h4>Loading...</h4>;
@@ -166,6 +183,14 @@ class VTKCrosshairsExample extends Component {
               max="5000"
               onChange={this.handleSlabThicknessChange.bind(this)}
             />
+          </div>
+          <div className="col-xs-4">
+            <p>Click bellow to toggle crosshairs on/off.</p>
+            <button onClick={this.toggleCrosshairs}>
+              {this.state.displayCrosshairs
+                ? 'Hide Crosshairs'
+                : 'Show Crosshairs'}
+            </button>
           </div>
         </div>
         <div className="row">

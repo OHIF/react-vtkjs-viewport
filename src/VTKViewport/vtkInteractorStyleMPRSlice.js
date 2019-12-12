@@ -6,8 +6,10 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
+import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 //import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
 import ViewportData from './ViewportData';
+import { updateCrosshairs } from './vtkSVGCrosshairsWidget';
 import EVENTS from '../events';
 
 // ----------------------------------------------------------------------------
@@ -287,9 +289,87 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   // preventing manual setSlice calls from triggering the CB.
   publicAPI.scrollToSlice = slice => {
     const slicePoint = publicAPI.setSlice(slice);
+    const { apis, apiIndex } = model;
+
+    // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+    if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
+      // Check whether crosshairs should be updated.
+
+      const api = apis[apiIndex];
+
+      if (!api.svgWidgets.crosshairsWidget) {
+        // If we aren't using the crosshairs widget, bail out early.
+        return;
+      }
+
+      const renderer = api.genericRenderWindow.getRenderer(); //model.interactor.getCurrentRenderer();
+      let cachedCrosshairWorldPosition = api.get(
+        'cachedCrosshairWorldPosition'
+      );
+
+      const temp = api.svgWidgets.crosshairsWidget.getPoint();
+
+      let displayPosition;
+
+      if (cachedCrosshairWorldPosition) {
+        const wPos = vtkCoordinate.newInstance();
+        wPos.setCoordinateSystemToWorld();
+        wPos.setValue(cachedCrosshairWorldPosition);
+
+        displayPosition = wPos.getComputedDisplayValue(renderer);
+      } else {
+        // If scrolling before crosshairs have been used, instantiate them.
+        const wPos = vtkCoordinate.newInstance();
+        wPos.setCoordinateSystemToWorld();
+        wPos.setValue(slicePoint);
+
+        displayPosition = wPos.getComputedDisplayValue(renderer);
+      }
+
+      const dPos = vtkCoordinate.newInstance();
+      dPos.setCoordinateSystemToDisplay();
+
+      dPos.setValue(displayPosition[0], displayPosition[1], 0);
+      let worldPos = dPos.getComputedWorldValue(renderer);
+
+      const camera = renderer.getActiveCamera();
+      const directionOfProjection = camera.getDirectionOfProjection();
+      const halfSlabThickness = api.getSlabThickness() / 2;
+
+      // Add half of the slab thickness to the world position, such that we select
+      // The center of the slice.
+      // for (let i = 0; i < worldPos.length; i++) {
+      //   worldPos[i] += halfSlabThickness * directionOfProjection[i];
+      // }
+
+      // if (cachedCrosshairWorldPosition) {
+      //   worldPos = cachedCrosshairWorldPosition;
+      // } else {
+      //   // If scrolling before crosshairs have been used, instantiate them.
+      //   //const wPos = vtkCoordinate.newInstance();
+      //   //wPos.setCoordinateSystemToWorld();
+      //   //wPos.setValue(slicePoint);
+
+      //   worldPos = slicePoint;
+
+      //   //displayPosition = wPos.getComputedDisplayValue(renderer);
+      // }
+
+      // const moveCrosshairsCallData = {
+      //   position: { x: displayPosition[0], y: displayPosition[1] },
+      //   renderer,
+      // };
+
+      updateCrosshairs(worldPos, apis, apiIndex);
+    }
+
     // run Callback
     const onScroll = publicAPI.getOnScroll();
-    if (onScroll) onScroll(slicePoint);
+    if (onScroll) {
+      onScroll({
+        slicePoint,
+      });
+    }
   };
 
   publicAPI.setSlice = slice => {
@@ -472,7 +552,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['onScroll']);
+  macro.setGet(publicAPI, model, ['onScroll, apis, apiIndex', 'onScroll']);
   macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
 
   // Object specific methods
