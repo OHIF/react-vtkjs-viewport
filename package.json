@@ -1,10 +1,10 @@
 {
-  "name": "react-vtkjs-viewport-custom",
-  "version": "0.7.0-beta.1",
-  "description": "VTK.js image viewport component for React. Custom impl of origin source",
+  "name": "react-vtkjs-viewport",
+  "version": "0.0.12",
+  "description": "VTK.js image viewport component for React",
   "author": "OHIF Contributors",
   "license": "MIT",
-  "repository": "ladeirarodolfo/react-vtkjs-viewport-custom",
+  "repository": "OHIF/react-vtkjs-viewport",
   "main": "dist/index.umd.js",
   "module": "src/index.js",
   "engines": {
