@@ -7,12 +7,14 @@
 
 ## Install
 
+This project consumes `vtk.js` as an ES6 dependency. [If you're unsure of how to consume `vtk.js` as an ES6 dependency, please check out Kitware's guide.](https://kitware.github.io/vtk-js/docs/intro_vtk_as_es6_dependency.html#Webpack-config)
+
 ```bash
 # With NPM
-npm install --save react-vtkjs-viewport
+npm install --save react-vtkjs-viewport vtk.js
 
 # With Yarn
-yarn add react-vtkjs-viewport
+yarn add react-vtkjs-viewport vtk.js
 ```
 
 ## Development
