@@ -203,6 +203,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   let cameraSub = null;
   let interactorSub = null;
   const superSetInteractor = publicAPI.setInteractor;
+
   publicAPI.setInteractor = interactor => {
     superSetInteractor(interactor);
 
@@ -286,10 +287,18 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   // Only run the onScroll callback if called from scrolling,
   // preventing manual setSlice calls from triggering the CB.
   publicAPI.scrollToSlice = slice => {
+    // Dispatch custom event
+    const vtkScrollEvent = new CustomEvent('vtkscrollevent', {
+      detail: { uid: publicAPI.getUid() },
+    });
+    window.dispatchEvent(vtkScrollEvent);
+
     const slicePoint = publicAPI.setSlice(slice);
     // run Callback
     const onScroll = publicAPI.getOnScroll();
-    if (onScroll) onScroll(slicePoint);
+    if (onScroll) {
+      onScroll(slicePoint);
+    }
   };
 
   publicAPI.setSlice = slice => {
@@ -453,6 +462,14 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     camera.setThicknessFromFocalPoint(slabThickness);
   };
 
+  publicAPI.setUid = uid => {
+    model.uid = uid;
+  };
+
+  publicAPI.getUid = () => {
+    return model.uid;
+  };
+
   setManipulators();
 }
 
@@ -462,6 +479,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
 const DEFAULT_VALUES = {
   slabThickness: 0.1,
+  uid: '',
 };
 
 // ----------------------------------------------------------------------------
@@ -481,6 +499,7 @@ export function extend(publicAPI, model, initialValues = {}) {
 
 // ----------------------------------------------------------------------------
 
+// Returns new instance factory, takes initial values object
 export const newInstance = macro.newInstance(
   extend,
   'vtkInteractorStyleMPRSlice'
