@@ -13,6 +13,7 @@ import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
+import { uuidv4 } from './../helpers';
 
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
@@ -72,6 +73,9 @@ export default class View2D extends Component {
   }
 
   componentDidMount() {
+    // Tracking ID to tie emitted events to this component
+    const uid = uuidv4();
+
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
       background: [0, 0, 0],
     });
@@ -101,7 +105,7 @@ export default class View2D extends Component {
     // the vtkOpenGLRenderer instance.
     oglrw.buildPass(true);
 
-    const istyle = vtkInteractorStyleMPRSlice.newInstance();
+    const istyle = vtkInteractorStyleMPRSlice.newInstance({ uid });
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
     const inter = this.renderWindow.getInteractor();
@@ -228,6 +232,7 @@ export default class View2D extends Component {
        * we make with consumers of this component.
        */
       const api = {
+        uid, // Tracking id available on `api`
         genericRenderWindow: this.genericRenderWindow,
         widgetManager: this.widgetManager,
         svgWidgetManager: this.svgWidgetManager,
@@ -248,6 +253,19 @@ export default class View2D extends Component {
 
       this.props.onCreated(api);
     }
+
+    // Set tracking id on interactorStyle model
+    // If we set it immediately, this value is blown out by model's default
+    setTimeout(() => {
+      this.setUid(uid);
+    }, 1000);
+  }
+
+  setUid(uid) {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const istyle = renderWindow.getInteractor().getInteractorStyle();
+
+    istyle.setUid(uid);
   }
 
   addSVGWidget(widget, name) {
