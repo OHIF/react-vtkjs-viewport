@@ -5,6 +5,7 @@ const autoprefixer = require('autoprefixer');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
   .BundleAnalyzerPlugin;
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const externalConfig = require('./webpack.external.config').default;
 
 const ENTRY_VTK_EXT = path.join(__dirname, './../src/index.js');
 const SRC_PATH = path.join(__dirname, './../src');
@@ -33,6 +34,7 @@ module.exports = (env, argv) => {
     },
     module: {
       rules: [
+        ...externalConfig.moduleRules,
         {
           test: /\.(js|jsx)$/,
           exclude: /node_modules/,
@@ -59,7 +61,6 @@ module.exports = (env, argv) => {
     },
     externals: [
       // :wave:
-      /\b(vtk.js)/,
       // Used to build/load metadata
       {
         'cornerstone-core': {
