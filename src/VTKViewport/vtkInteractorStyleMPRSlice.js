@@ -67,11 +67,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     dragEnabled: false,
   });
 
-  // model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
-  //   scrollEnabled: true,
-  //   dragEnabled: false,
-  // });
-
   // cache for sliceRange
   const cache = {
     sliceNormal: [0, 0, 0],
@@ -307,29 +302,30 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         'cachedCrosshairWorldPosition'
       );
 
-      const temp = api.svgWidgets.crosshairsWidget.getPoint();
-
-      let displayPosition;
+      let doubleDisplayPosition;
 
       if (cachedCrosshairWorldPosition) {
         const wPos = vtkCoordinate.newInstance();
         wPos.setCoordinateSystemToWorld();
         wPos.setValue(cachedCrosshairWorldPosition);
 
-        displayPosition = wPos.getComputedDisplayValue(renderer);
+        doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
       } else {
         // If scrolling before crosshairs have been used, instantiate them.
         const wPos = vtkCoordinate.newInstance();
         wPos.setCoordinateSystemToWorld();
         wPos.setValue(slicePoint);
 
-        displayPosition = wPos.getComputedDisplayValue(renderer);
+        doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
       }
+
+      console.log('//// recalculated displayPosition');
+      console.log(doubleDisplayPosition);
 
       const dPos = vtkCoordinate.newInstance();
       dPos.setCoordinateSystemToDisplay();
 
-      dPos.setValue(displayPosition[0], displayPosition[1], 0);
+      dPos.setValue(doubleDisplayPosition[0], doubleDisplayPosition[1], 0);
       let worldPos = dPos.getComputedWorldValue(renderer);
 
       const camera = renderer.getActiveCamera();
@@ -337,10 +333,14 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const halfSlabThickness = api.getSlabThickness() / 2;
 
       // Add half of the slab thickness to the world position, such that we select
-      // The center of the slice.
-      // for (let i = 0; i < worldPos.length; i++) {
-      //   worldPos[i] += halfSlabThickness * directionOfProjection[i];
-      // }
+      //The center of the slice.
+
+      for (let i = 0; i < worldPos.length; i++) {
+        worldPos[i] += halfSlabThickness * directionOfProjection[i];
+      }
+
+      console.log('//// recalculated worldPos');
+      console.log(worldPos);
 
       // if (cachedCrosshairWorldPosition) {
       //   worldPos = cachedCrosshairWorldPosition;
@@ -364,12 +364,14 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
 
     // run Callback
+    /*
     const onScroll = publicAPI.getOnScroll();
     if (onScroll) {
       onScroll({
         slicePoint,
       });
     }
+    */
   };
 
   publicAPI.setSlice = slice => {

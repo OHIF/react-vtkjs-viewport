@@ -38,6 +38,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
 
     // Add half of the slab thickness to the world position, such that we select
     // The center of the slice.
+
     for (let i = 0; i < worldPos.length; i++) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
