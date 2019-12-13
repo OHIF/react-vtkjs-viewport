@@ -234,34 +234,38 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   };
 
+  // TODO -> When we want a modular framework we'll have to rethink all this.
+  // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+  // TODO -> We certainly need to be able to register widget types on instantiation.
+  function handleButtonPress() {
+    const { apis, apiIndex } = model;
+
+    if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
+      publicAPI.startPan();
+
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+  }
+
   publicAPI.handleMiddleButtonPress = macro.chain(
     publicAPI.handleMiddleButtonPress,
-    callData => {
-      // TODO -> When we want a modular framework we'll have to rethink all this.
+    handleButtonPress
+  );
 
-      const { apis, apiIndex } = model;
-
-      // TODO -> need to do this from within the mouse move when the state is IS_WINDOW_LEVEL
-
-      // TODO -> We need to think of a more generic way to do this for all widget types eventually.
-      // TODO -> We certainly need to be able to register stuff like this.
-      if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
-        publicAPI.startPan();
-        console.log('start pan');
-        const api = apis[apiIndex];
-
-        api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
-      }
-    }
+  publicAPI.handleRightButtonPress = macro.chain(
+    publicAPI.handleRightButtonPress,
+    handleButtonPress
   );
 
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
-    if (model.state === States.IS_PAN) {
-      if (superHandleMouseMove) {
-        superHandleMouseMove(callData);
-      }
+    if (superHandleMouseMove) {
+      superHandleMouseMove(callData);
+    }
 
+    if (model.state === States.IS_PAN) {
       const { apis, apiIndex } = model;
       const api = apis[apiIndex];
 
@@ -269,9 +273,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   };
 
-  publicAPI.superHandleMiddleButtonRelease =
-    publicAPI.handleMiddleButtonRelease;
-  publicAPI.handleMiddleButtonRelease = () => {
+  function handleButtonRelease(superButtonRelease) {
     if (model.state === States.IS_PAN) {
       publicAPI.endPan();
       const { apis, apiIndex } = model;
@@ -280,7 +282,18 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
     }
 
-    publicAPI.superHandleMiddleButtonRelease();
+    superButtonRelease();
+  }
+
+  publicAPI.superHandleMiddleButtonRelease =
+    publicAPI.handleMiddleButtonRelease;
+  publicAPI.handleMiddleButtonRelease = () => {
+    handleButtonRelease(publicAPI.superHandleMiddleButtonRelease);
+  };
+
+  publicAPI.superHandleRightButtonRelease = publicAPI.handleRightButtonRelease;
+  publicAPI.handleRightButtonRelease = () => {
+    handleButtonRelease(publicAPI.superHandleRightButtonRelease);
   };
 
   publicAPI.setVolumeActor = actor => {
@@ -548,22 +561,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   };
 
   setManipulators();
-
-  publicAPI.setApis = apis => {
-    model.apis = apis;
-  };
-
-  publicAPI.getApis = () => {
-    return model.apis;
-  };
-
-  publicAPI.setApiIndex = apiIndex => {
-    model.apiIndex = apiIndex;
-  };
-
-  publicAPI.getApiIndex = () => {
-    return model.apiIndex;
-  };
 }
 
 // ----------------------------------------------------------------------------
@@ -583,7 +580,12 @@ export function extend(publicAPI, model, initialValues = {}) {
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
   macro.setGet(publicAPI, model, ['onScroll']);
-  macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
+  macro.get(publicAPI, model, [
+    'slabThickness',
+    'volumeActor',
+    'apis',
+    'apiIndex',
+  ]);
 
   // Object specific methods
   vtkInteractorStyleMPRSlice(publicAPI, model);

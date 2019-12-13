@@ -82,23 +82,6 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
         break;
     }
   };
-
-  publicAPI.setApis = apis => {
-    model.apis = apis;
-    // TODO -> If we bundle api and APIIndex into one setter it'll be a lot cleaner.
-  };
-
-  publicAPI.getApis = () => {
-    return model.apis;
-  };
-
-  publicAPI.setApiIndex = apiIndex => {
-    model.apiIndex = apiIndex;
-  };
-
-  publicAPI.getApiIndex = () => {
-    return model.apiIndex;
-  };
 }
 
 // ----------------------------------------------------------------------------
