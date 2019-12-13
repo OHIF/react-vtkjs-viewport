@@ -327,15 +327,6 @@ export default class View2D extends Component {
     }
 
     const slabThickness = this.getSlabThickness();
-
-    /*
-    let currentSlabThickness;
-    if (currentIStyle.getSlabThickness && istyle.getSlabThickness) {
-      currentSlabThickness = currentIStyle.getSlabThickness();
-      this.currentSlabThickness = currentSlabThickness;
-    }
-    */
-
     const interactor = renderWindow.getInteractor();
 
     interactor.setInteractorStyle(istyle);

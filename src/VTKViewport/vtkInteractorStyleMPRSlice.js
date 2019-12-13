@@ -7,10 +7,11 @@ import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Ma
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
-//import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
+import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import ViewportData from './ViewportData';
-import { updateCrosshairs } from './vtkSVGCrosshairsWidget';
 import EVENTS from '../events';
+
+const { States } = Constants;
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -55,8 +56,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   );
   model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
-    button: 1,
-    shift: true,
+    button: 2,
   });
   model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
     button: 3,
@@ -234,11 +234,54 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   };
 
-  publicAPI.handleMouseMove = macro.chain(publicAPI.handleMouseMove, () => {
-    const renderer = model.interactor.getCurrentRenderer();
-    const camera = renderer.getActiveCamera();
-    camera.setThicknessFromFocalPoint(model.slabThickness);
-  });
+  publicAPI.handleMiddleButtonPress = macro.chain(
+    publicAPI.handleMiddleButtonPress,
+    callData => {
+      // TODO -> When we want a modular framework we'll have to rethink all this.
+
+      const { apis, apiIndex } = model;
+
+      // TODO -> need to do this from within the mouse move when the state is IS_WINDOW_LEVEL
+
+      // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+      // TODO -> We certainly need to be able to register stuff like this.
+      if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
+        publicAPI.startPan();
+        console.log('start pan');
+        const api = apis[apiIndex];
+
+        api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      }
+    }
+  );
+
+  const superHandleMouseMove = publicAPI.handleMouseMove;
+  publicAPI.handleMouseMove = callData => {
+    if (model.state === States.IS_PAN) {
+      if (superHandleMouseMove) {
+        superHandleMouseMove(callData);
+      }
+
+      const { apis, apiIndex } = model;
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+  };
+
+  publicAPI.superHandleMiddleButtonRelease =
+    publicAPI.handleMiddleButtonRelease;
+  publicAPI.handleMiddleButtonRelease = () => {
+    if (model.state === States.IS_PAN) {
+      publicAPI.endPan();
+      const { apis, apiIndex } = model;
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+
+    publicAPI.superHandleMiddleButtonRelease();
+  };
 
   publicAPI.setVolumeActor = actor => {
     model.volumeActor = actor;
@@ -284,9 +327,21 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   // preventing manual setSlice calls from triggering the CB.
   publicAPI.scrollToSlice = slice => {
     const slicePoint = publicAPI.setSlice(slice);
+
+    // run Callback
+    const onScroll = publicAPI.getOnScroll();
+    if (onScroll) {
+      onScroll({
+        slicePoint,
+      });
+    }
+  };
+
+  model.onScroll = () => {
     const { apis, apiIndex } = model;
 
     // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+    // TODO -> We certainly need to be able to register stuff like this.
     if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
       // Check whether crosshairs should be updated.
 
@@ -297,30 +352,18 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         return;
       }
 
-      const renderer = api.genericRenderWindow.getRenderer(); //model.interactor.getCurrentRenderer();
+      const renderer = api.genericRenderWindow.getRenderer();
       let cachedCrosshairWorldPosition = api.get(
         'cachedCrosshairWorldPosition'
       );
 
-      let doubleDisplayPosition;
+      const wPos = vtkCoordinate.newInstance();
+      wPos.setCoordinateSystemToWorld();
+      wPos.setValue(cachedCrosshairWorldPosition);
 
-      if (cachedCrosshairWorldPosition) {
-        const wPos = vtkCoordinate.newInstance();
-        wPos.setCoordinateSystemToWorld();
-        wPos.setValue(cachedCrosshairWorldPosition);
-
-        doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
-      } else {
-        // If scrolling before crosshairs have been used, instantiate them.
-        const wPos = vtkCoordinate.newInstance();
-        wPos.setCoordinateSystemToWorld();
-        wPos.setValue(slicePoint);
-
-        doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
-      }
-
-      console.log('//// recalculated displayPosition');
-      console.log(doubleDisplayPosition);
+      const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
+        renderer
+      );
 
       const dPos = vtkCoordinate.newInstance();
       dPos.setCoordinateSystemToDisplay();
@@ -339,39 +382,8 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         worldPos[i] += halfSlabThickness * directionOfProjection[i];
       }
 
-      console.log('//// recalculated worldPos');
-      console.log(worldPos);
-
-      // if (cachedCrosshairWorldPosition) {
-      //   worldPos = cachedCrosshairWorldPosition;
-      // } else {
-      //   // If scrolling before crosshairs have been used, instantiate them.
-      //   //const wPos = vtkCoordinate.newInstance();
-      //   //wPos.setCoordinateSystemToWorld();
-      //   //wPos.setValue(slicePoint);
-
-      //   worldPos = slicePoint;
-
-      //   //displayPosition = wPos.getComputedDisplayValue(renderer);
-      // }
-
-      // const moveCrosshairsCallData = {
-      //   position: { x: displayPosition[0], y: displayPosition[1] },
-      //   renderer,
-      // };
-
-      updateCrosshairs(worldPos, apis, apiIndex);
+      api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
     }
-
-    // run Callback
-    /*
-    const onScroll = publicAPI.getOnScroll();
-    if (onScroll) {
-      onScroll({
-        slicePoint,
-      });
-    }
-    */
   };
 
   publicAPI.setSlice = slice => {
@@ -536,6 +548,22 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   };
 
   setManipulators();
+
+  publicAPI.setApis = apis => {
+    model.apis = apis;
+  };
+
+  publicAPI.getApis = () => {
+    return model.apis;
+  };
+
+  publicAPI.setApiIndex = apiIndex => {
+    model.apiIndex = apiIndex;
+  };
+
+  publicAPI.getApiIndex = () => {
+    return model.apiIndex;
+  };
 }
 
 // ----------------------------------------------------------------------------
@@ -554,7 +582,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['onScroll, apis, apiIndex', 'onScroll']);
+  macro.setGet(publicAPI, model, ['onScroll']);
   macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
 
   // Object specific methods

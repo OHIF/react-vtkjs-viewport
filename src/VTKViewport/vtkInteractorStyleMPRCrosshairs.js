@@ -2,7 +2,6 @@ import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
-import { updateCrosshairs } from './vtkSVGCrosshairsWidget';
 
 const { States } = Constants;
 
@@ -20,6 +19,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
 
   function moveCrosshairs(callData) {
     const { apis, apiIndex } = model;
+    const api = apis[apiIndex];
 
     const pos = callData.position;
     const renderer = callData.pokedRenderer;
@@ -33,7 +33,6 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
     const camera = renderer.getActiveCamera();
     const directionOfProjection = camera.getDirectionOfProjection();
 
-    const api = apis[apiIndex];
     const halfSlabThickness = api.getSlabThickness() / 2;
 
     // Add half of the slab thickness to the world position, such that we select
@@ -43,7 +42,7 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
 
-    updateCrosshairs(worldPos, apis, apiIndex);
+    api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
 
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
   }
@@ -82,6 +81,23 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
         publicAPI.superHandleLeftButtonRelease();
         break;
     }
+  };
+
+  publicAPI.setApis = apis => {
+    model.apis = apis;
+    // TODO -> If we bundle api and APIIndex into one setter it'll be a lot cleaner.
+  };
+
+  publicAPI.getApis = () => {
+    return model.apis;
+  };
+
+  publicAPI.setApiIndex = apiIndex => {
+    model.apiIndex = apiIndex;
+  };
+
+  publicAPI.getApiIndex = () => {
+    return model.apiIndex;
   };
 }
 
