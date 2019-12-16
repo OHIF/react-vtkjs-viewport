@@ -121,7 +121,8 @@ export default class View3D extends Component {
         filters,
         actors,
         volumes,
-        _component: this,
+        type: 'VIEW3D',
+        _component: this, // Backdoor still open for now whilst the API isn't as mature as View2D.
       };
 
       this.props.onCreated(api);

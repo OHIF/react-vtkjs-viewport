@@ -63,6 +63,7 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
 class VTKCrosshairsExample extends Component {
   state = {
     volumes: [],
+    displayCrosshairs: true,
   };
 
   async componentDidMount() {
@@ -129,6 +130,15 @@ class VTKCrosshairsExample extends Component {
       api.setSlabThickness(0.1);
 
       renderWindow.render();
+
+      // Its up to the layout manager of an app to know how many viewports are being created.
+      if (apis[0] && apis[1] && apis[2]) {
+        //const api = apis[0];
+
+        const api = apis[0];
+
+        api.svgWidgets.crosshairsWidget.resetCrosshairs(apis, 0);
+      }
     };
   };
 
@@ -144,6 +154,22 @@ class VTKCrosshairsExample extends Component {
       renderWindow.render();
     });
   }
+
+  toggleCrosshairs = () => {
+    const { displayCrosshairs } = this.state;
+    const apis = this.apis;
+
+    const shouldDisplayCrosshairs = !displayCrosshairs;
+
+    apis.forEach(api => {
+      const { svgWidgetManager, svgWidgets } = api;
+      svgWidgets.crosshairsWidget.setDisplay(shouldDisplayCrosshairs);
+
+      svgWidgetManager.render();
+    });
+
+    this.setState({ displayCrosshairs: shouldDisplayCrosshairs });
+  };
 
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
@@ -166,6 +192,14 @@ class VTKCrosshairsExample extends Component {
               max="5000"
               onChange={this.handleSlabThicknessChange.bind(this)}
             />
+          </div>
+          <div className="col-xs-4">
+            <p>Click bellow to toggle crosshairs on/off.</p>
+            <button onClick={this.toggleCrosshairs}>
+              {this.state.displayCrosshairs
+                ? 'Hide Crosshairs'
+                : 'Show Crosshairs'}
+            </button>
           </div>
         </div>
         <div className="row">

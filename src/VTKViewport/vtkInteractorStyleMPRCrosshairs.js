@@ -1,5 +1,4 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
@@ -20,72 +19,30 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
 
   function moveCrosshairs(callData) {
     const { apis, apiIndex } = model;
-    const pos = [callData.position.x, callData.position.y];
+    const api = apis[apiIndex];
+
+    const pos = callData.position;
     const renderer = callData.pokedRenderer;
 
     const dPos = vtkCoordinate.newInstance();
     dPos.setCoordinateSystemToDisplay();
 
-    dPos.setValue(pos[0], pos[1], 0);
+    dPos.setValue(pos.x, pos.y, 0);
     let worldPos = dPos.getComputedWorldValue(renderer);
 
     const camera = renderer.getActiveCamera();
     const directionOfProjection = camera.getDirectionOfProjection();
 
-    const api = apis[apiIndex];
     const halfSlabThickness = api.getSlabThickness() / 2;
+
+    // Add half of the slab thickness to the world position, such that we select
+    // The center of the slice.
 
     for (let i = 0; i < worldPos.length; i++) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
 
-    // Add half of the slab thickness to the world position, such that we select
-    // The center of the slice.
-
-    if (apis === undefined || apiIndex === undefined) {
-      console.error(
-        'apis and apiIndex must be set on the vtkInteractorStyleMPRCrosshairs.'
-      );
-    }
-
-    // Set camera focal point to world coordinate for linked views
-    apis.forEach((api, viewportIndex) => {
-      if (viewportIndex !== apiIndex) {
-        // We are basically doing the same as getSlice but with the world coordinate
-        // that we want to jump to instead of the camera focal point.
-        // I would rather do the camera adjustment directly but I keep
-        // doing it wrong and so this is good enough for now.
-        const renderWindow = api.genericRenderWindow.getRenderWindow();
-
-        const istyle = renderWindow.getInteractor().getInteractorStyle();
-        const sliceNormal = istyle.getSliceNormal();
-        const transform = vtkMatrixBuilder
-          .buildFromDegree()
-          .identity()
-          .rotateFromDirections(sliceNormal, [1, 0, 0]);
-
-        const mutatedWorldPos = worldPos.slice();
-        transform.apply(mutatedWorldPos);
-        const slice = mutatedWorldPos[0];
-
-        istyle.setSlice(slice);
-
-        renderWindow.render();
-      }
-
-      const renderer = api.genericRenderWindow.getRenderer();
-      const wPos = vtkCoordinate.newInstance();
-      wPos.setCoordinateSystemToWorld();
-      wPos.setValue(worldPos);
-
-      const displayPosition = wPos.getComputedDisplayValue(renderer);
-      const { svgWidgetManager } = api;
-      api.svgWidgets.crosshairsWidget.setPoint(
-        displayPosition[0],
-        displayPosition[1]
-      );
-      svgWidgetManager.render();
-    });
+    api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
 
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
   }
@@ -125,13 +82,6 @@ function vtkInteractorStyleMPRCrosshairs(publicAPI, model) {
         break;
     }
   };
-
-  publicAPI.setApis = apis => {
-    model.apis = apis;
-  };
-  publicAPI.setApiIndex = apiIndex => {
-    model.apiIndex = apiIndex;
-  };
 }
 
 // ----------------------------------------------------------------------------
@@ -148,7 +98,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['callback']);
+  macro.setGet(publicAPI, model, ['callback', 'apis', 'apiIndex', 'onScroll']);
 
   // Object specific methods
   vtkInteractorStyleMPRCrosshairs(publicAPI, model);

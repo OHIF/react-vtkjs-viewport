@@ -6,9 +6,12 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
-//import vtkMouseRangeRotateManipulator from './Manipulators/vtkMouseRangeRotateManipulator';
+import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
+import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import ViewportData from './ViewportData';
 import EVENTS from '../events';
+
+const { States } = Constants;
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -53,8 +56,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   );
   model.panManipulator = vtkMouseCameraTrackballPanManipulator.newInstance({
-    button: 1,
-    shift: true,
+    button: 2,
   });
   model.zoomManipulator = vtkMouseCameraTrackballZoomManipulator.newInstance({
     button: 3,
@@ -64,11 +66,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     scrollEnabled: true,
     dragEnabled: false,
   });
-
-  // model.scrollManipulator = vtkMouseRangeRotateManipulator.newInstance({
-  //   scrollEnabled: true,
-  //   dragEnabled: false,
-  // });
 
   // cache for sliceRange
   const cache = {
@@ -237,11 +234,67 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   };
 
-  publicAPI.handleMouseMove = macro.chain(publicAPI.handleMouseMove, () => {
-    const renderer = model.interactor.getCurrentRenderer();
-    const camera = renderer.getActiveCamera();
-    camera.setThicknessFromFocalPoint(model.slabThickness);
-  });
+  // TODO -> When we want a modular framework we'll have to rethink all this.
+  // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+  // TODO -> We certainly need to be able to register widget types on instantiation.
+  function handleButtonPress() {
+    const { apis, apiIndex } = model;
+
+    if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
+      publicAPI.startPan();
+
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+  }
+
+  publicAPI.handleMiddleButtonPress = macro.chain(
+    publicAPI.handleMiddleButtonPress,
+    handleButtonPress
+  );
+
+  publicAPI.handleRightButtonPress = macro.chain(
+    publicAPI.handleRightButtonPress,
+    handleButtonPress
+  );
+
+  const superHandleMouseMove = publicAPI.handleMouseMove;
+  publicAPI.handleMouseMove = callData => {
+    if (superHandleMouseMove) {
+      superHandleMouseMove(callData);
+    }
+
+    if (model.state === States.IS_PAN) {
+      const { apis, apiIndex } = model;
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+  };
+
+  function handleButtonRelease(superButtonRelease) {
+    if (model.state === States.IS_PAN) {
+      publicAPI.endPan();
+      const { apis, apiIndex } = model;
+      const api = apis[apiIndex];
+
+      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+    }
+
+    superButtonRelease();
+  }
+
+  publicAPI.superHandleMiddleButtonRelease =
+    publicAPI.handleMiddleButtonRelease;
+  publicAPI.handleMiddleButtonRelease = () => {
+    handleButtonRelease(publicAPI.superHandleMiddleButtonRelease);
+  };
+
+  publicAPI.superHandleRightButtonRelease = publicAPI.handleRightButtonRelease;
+  publicAPI.handleRightButtonRelease = () => {
+    handleButtonRelease(publicAPI.superHandleRightButtonRelease);
+  };
 
   publicAPI.setVolumeActor = actor => {
     model.volumeActor = actor;
@@ -287,9 +340,63 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
   // preventing manual setSlice calls from triggering the CB.
   publicAPI.scrollToSlice = slice => {
     const slicePoint = publicAPI.setSlice(slice);
+
     // run Callback
     const onScroll = publicAPI.getOnScroll();
-    if (onScroll) onScroll(slicePoint);
+    if (onScroll) {
+      onScroll({
+        slicePoint,
+      });
+    }
+  };
+
+  model.onScroll = () => {
+    const { apis, apiIndex } = model;
+
+    // TODO -> We need to think of a more generic way to do this for all widget types eventually.
+    // TODO -> We certainly need to be able to register stuff like this.
+    if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
+      // Check whether crosshairs should be updated.
+
+      const api = apis[apiIndex];
+
+      if (!api.svgWidgets.crosshairsWidget) {
+        // If we aren't using the crosshairs widget, bail out early.
+        return;
+      }
+
+      const renderer = api.genericRenderWindow.getRenderer();
+      let cachedCrosshairWorldPosition = api.get(
+        'cachedCrosshairWorldPosition'
+      );
+
+      const wPos = vtkCoordinate.newInstance();
+      wPos.setCoordinateSystemToWorld();
+      wPos.setValue(cachedCrosshairWorldPosition);
+
+      const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
+        renderer
+      );
+
+      const dPos = vtkCoordinate.newInstance();
+      dPos.setCoordinateSystemToDisplay();
+
+      dPos.setValue(doubleDisplayPosition[0], doubleDisplayPosition[1], 0);
+      let worldPos = dPos.getComputedWorldValue(renderer);
+
+      const camera = renderer.getActiveCamera();
+      const directionOfProjection = camera.getDirectionOfProjection();
+      const halfSlabThickness = api.getSlabThickness() / 2;
+
+      // Add half of the slab thickness to the world position, such that we select
+      //The center of the slice.
+
+      for (let i = 0; i < worldPos.length; i++) {
+        worldPos[i] += halfSlabThickness * directionOfProjection[i];
+      }
+
+      api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
+    }
   };
 
   publicAPI.setSlice = slice => {
@@ -473,7 +580,12 @@ export function extend(publicAPI, model, initialValues = {}) {
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
 
   macro.setGet(publicAPI, model, ['onScroll']);
-  macro.get(publicAPI, model, ['slabThickness', 'volumeActor']);
+  macro.get(publicAPI, model, [
+    'slabThickness',
+    'volumeActor',
+    'apis',
+    'apiIndex',
+  ]);
 
   // Object specific methods
   vtkInteractorStyleMPRSlice(publicAPI, model);
