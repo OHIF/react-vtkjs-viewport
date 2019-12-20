@@ -60,6 +60,8 @@ export default class View2D extends Component {
     this.state = {
       voi: this.getVOI(props.volumes[0]),
     };
+
+    this.apiProperties = {};
   }
 
   updatePaintbrush() {
@@ -222,6 +224,8 @@ export default class View2D extends Component {
     const boundGetSlabThickness = this.getSlabThickness.bind(this);
     const boundSetSlabThickness = this.setSlabThickness.bind(this);
     const boundAddSVGWidget = this.addSVGWidget.bind(this);
+    const boundGetApiProperty = this.getApiProperty.bind(this);
+    const boundSetApiProperty = this.setApiProperty.bind(this);
 
     this.svgWidgets = {};
 
@@ -249,10 +253,21 @@ export default class View2D extends Component {
         setInteractorStyle: boundSetInteractorStyle,
         getSlabThickness: boundGetSlabThickness,
         setSlabThickness: boundSetSlabThickness,
+        get: boundGetApiProperty,
+        set: boundSetApiProperty,
+        type: 'VIEW2D',
       };
 
       this.props.onCreated(api);
     }
+  }
+
+  getApiProperty(propertyName) {
+    return this.apiProperties[propertyName];
+  }
+
+  setApiProperty(propertyName, value) {
+    this.apiProperties[propertyName] = value;
   }
 
   addSVGWidget(widget, name) {
@@ -317,15 +332,6 @@ export default class View2D extends Component {
     }
 
     const slabThickness = this.getSlabThickness();
-
-    /*
-    let currentSlabThickness;
-    if (currentIStyle.getSlabThickness && istyle.getSlabThickness) {
-      currentSlabThickness = currentIStyle.getSlabThickness();
-      this.currentSlabThickness = currentSlabThickness;
-    }
-    */
-
     const interactor = renderWindow.getInteractor();
 
     interactor.setInteractorStyle(istyle);
