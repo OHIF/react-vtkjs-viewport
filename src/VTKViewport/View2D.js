@@ -105,7 +105,7 @@ export default class View2D extends Component {
     // the vtkOpenGLRenderer instance.
     oglrw.buildPass(true);
 
-    const istyle = vtkInteractorStyleMPRSlice.newInstance({ uid });
+    const istyle = vtkInteractorStyleMPRSlice.newInstance();
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
     const inter = this.renderWindow.getInteractor();
@@ -253,19 +253,6 @@ export default class View2D extends Component {
 
       this.props.onCreated(api);
     }
-
-    // Set tracking id on interactorStyle model
-    // If we set it immediately, this value is blown out by model's default
-    setTimeout(() => {
-      this.setUid(uid);
-    }, 1000);
-  }
-
-  setUid(uid) {
-    const renderWindow = this.genericRenderWindow.getRenderWindow();
-    const istyle = renderWindow.getInteractor().getInteractorStyle();
-
-    istyle.setUid(uid);
   }
 
   addSVGWidget(widget, name) {
