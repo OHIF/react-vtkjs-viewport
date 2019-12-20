@@ -160,12 +160,12 @@ class VTKBasicExample extends Component {
             onCreated={this.saveRenderWindow(0)}
           />
         </div>
-        <div className="col-xs-12 col-sm-6">
+        {/*<div className="col-xs-12 col-sm-6">
           <View2D
             volumes={this.state.volumes}
             onCreated={this.saveRenderWindow(1)}
           />
-        </div>
+        </div>*/}
       </div>
     );
   }

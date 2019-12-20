@@ -4,6 +4,16 @@ import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderW
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
+import vtkjsToolsInteractorStyleManipulator from './vtkjsToolsInteractorStyleManipulator';
+
+// TEMP
+import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
+import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
+import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
+import { vtkMPRScrollManipulatorMixin } from './ManipulatorMixins';
+
+// TEMP
+
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkSVGWidgetManager from './vtkSVGWidgetManager';
@@ -13,8 +23,44 @@ import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
+import { INTERACTION_TYPES } from './constants';
 
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
+
+const defaultIStyleManipulators = [
+  {
+    vtkManipulatorMixin: {
+      manipulator: vtkMouseCameraTrackballPanManipulator,
+      manipulatorName: 'vtkMouseCameraTrackballPanManipulator',
+    },
+    type: INTERACTION_TYPES.MOUSE,
+    configuration: { button: 1 },
+  },
+  {
+    vtkManipulatorMixin: {
+      manipulator: vtkMouseCameraTrackballZoomManipulator,
+      manipulatorName: 'vtkMouseCameraTrackballZoomManipulator',
+    },
+    type: INTERACTION_TYPES.MOUSE,
+    configuration: { button: 2 },
+  },
+  {
+    vtkManipulatorMixin: {
+      manipulator: vtkMouseCameraTrackballRotateManipulator,
+      manipulatorName: 'vtkMouseCameraTrackballRotateManipulator',
+    },
+    type: INTERACTION_TYPES.MOUSE,
+    configuration: { button: 3 },
+  },
+  {
+    vtkManipulatorMixin: vtkMPRScrollManipulatorMixin,
+    type: INTERACTION_TYPES.MOUSE,
+    configuration: {
+      scrollEnabled: true,
+      dragEnabled: false,
+    },
+  },
+];
 
 export default class View2D extends Component {
   static propTypes = {
@@ -103,7 +149,13 @@ export default class View2D extends Component {
     // the vtkOpenGLRenderer instance.
     oglrw.buildPass(true);
 
-    const istyle = vtkInteractorStyleMPRSlice.newInstance();
+    // TEMP
+    // const istyle = vtkInteractorStyleMPRSlice.newInstance();
+
+    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+      manipulators: defaultIStyleManipulators,
+    });
+
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
     const inter = this.renderWindow.getInteractor();
@@ -158,29 +210,6 @@ export default class View2D extends Component {
     filters = [this.paintFilter];
     widgets = [this.paintWidget];
 
-    /*
-    TODO: Enable normal orthogonal slicing / window level as default instead of
-    rotation tool
-
-    const istyle = CustomSliceInteractorStyle.newInstance();
-    this.istyle = istyle
-    this.renderWindow.getInteractor().setInteractorStyle(istyle)
-    istyle.setCurrentVolumeNumber(0); // background volume
-    istyle.setSlicingMode(1, true); // force set slice mode
-
-    interactor.setInteractorStyle(istyle);
-    */
-
-    /*
-    TODO: Use for maintaining clipping range for MIP
-
-    const interactor = this.renderWindow.getInteractor();
-    //const clippingRange = renderer.getActiveCamera().getClippingRange();
-
-    interactor.onAnimation(() => {
-      renderer.getActiveCamera().setClippingRange(...r);
-    });*/
-
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
@@ -195,13 +224,19 @@ export default class View2D extends Component {
     camera.setParallelProjection(true);
     this.renderer.resetCamera();
 
-    istyle.setVolumeActor(this.props.volumes[0]);
+    // TEMP
+    // istyle.setVolumeActor(this.props.volumes[0]);
+    istyle.init(this.props.volumes[0]);
+
     const range = istyle.getSliceRange();
+
+    console.log('RANGE:' + range);
     istyle.setSlice((range[0] + range[1]) / 2);
 
     istyle.onModified(() => {
       this.updatePaintbrush();
     });
+
     this.updatePaintbrush();
 
     const svgWidgetManager = vtkSVGWidgetManager.newInstance();

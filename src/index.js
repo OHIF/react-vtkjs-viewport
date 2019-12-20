@@ -4,6 +4,7 @@ import vtkInteractorStyleMPRSlice from './VTKViewport/vtkInteractorStyleMPRSlice
 import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMPRWindowLevel.js';
 import vtkInteractorStyleMPRCrosshairs from './VTKViewport/vtkInteractorStyleMPRCrosshairs.js';
 import vtkInteractorStyleMPRRotate from './VTKViewport/vtkInteractorStyleMPRRotate.js';
+import vtkjsToolsInteractorStyleManipulator from './VTKViewport/vtkjsToolsInteractorStyleManipulator.js';
 import vtkSVGWidgetManager from './VTKViewport/vtkSVGWidgetManager.js';
 import vtkSVGCrosshairsWidget from './VTKViewport/vtkSVGCrosshairsWidget.js';
 import ViewportData from './VTKViewport/ViewportData';
@@ -24,6 +25,7 @@ export {
   vtkInteractorStyleMPRCrosshairs,
   vtkInteractorStyleMPRRotate,
   vtkInteractorStyleMPRSlice,
+  vtkjsToolsInteractorStyleManipulator,
   vtkSVGWidgetManager,
   vtkSVGCrosshairsWidget,
   invertVolume,
