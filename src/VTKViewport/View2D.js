@@ -158,29 +158,6 @@ export default class View2D extends Component {
     filters = [this.paintFilter];
     widgets = [this.paintWidget];
 
-    /*
-    TODO: Enable normal orthogonal slicing / window level as default instead of
-    rotation tool
-
-    const istyle = CustomSliceInteractorStyle.newInstance();
-    this.istyle = istyle
-    this.renderWindow.getInteractor().setInteractorStyle(istyle)
-    istyle.setCurrentVolumeNumber(0); // background volume
-    istyle.setSlicingMode(1, true); // force set slice mode
-
-    interactor.setInteractorStyle(istyle);
-    */
-
-    /*
-    TODO: Use for maintaining clipping range for MIP
-
-    const interactor = this.renderWindow.getInteractor();
-    //const clippingRange = renderer.getActiveCamera().getClippingRange();
-
-    interactor.onAnimation(() => {
-      renderer.getActiveCamera().setClippingRange(...r);
-    });*/
-
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
@@ -222,6 +199,10 @@ export default class View2D extends Component {
     const boundAddSVGWidget = this.addSVGWidget.bind(this);
     const boundGetApiProperty = this.getApiProperty.bind(this);
     const boundSetApiProperty = this.setApiProperty.bind(this);
+    const boundSetSegmentRGB = this.setSegmentRGB.bind(this);
+    const boundSetSegmentRGBA = this.setSegmentRGBA.bind(this);
+    const boundSetSegmentAlpha = this.setSegmentAlpha.bind(this);
+    const boundUpdateImage = this.updateImage.bind(this);
 
     this.svgWidgets = {};
 
@@ -243,11 +224,15 @@ export default class View2D extends Component {
         actors,
         volumes,
         _component: this,
+        updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
         getOrientation: boundGetOrienation,
         setInteractorStyle: boundSetInteractorStyle,
         getSlabThickness: boundGetSlabThickness,
         setSlabThickness: boundSetSlabThickness,
+        setSegmentRGB: boundSetSegmentRGB,
+        setSegmentRGBA: boundSetSegmentRGBA,
+        setSegmentAlpha: boundSetSegmentAlpha,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -307,6 +292,12 @@ export default class View2D extends Component {
         }
       }
     }
+
+    renderWindow.render();
+  }
+
+  updateImage() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
 
     renderWindow.render();
   }
@@ -371,6 +362,30 @@ export default class View2D extends Component {
 
   getOrientation() {
     return this.props.orientation;
+  }
+
+  setSegmentRGBA(segmentIndex, [red, green, blue, alpha]) {
+    this.setSegmentRGB(segmentIndex, [red, green, blue]);
+    this.setSegmentAlpha(segmentIndex, alpha);
+  }
+
+  setSegmentRGB(segmentIndex, [red, green, blue]) {
+    const { labelmap } = this;
+
+    labelmap.cfun.addRGBPoint(segmentIndex, red / 255, green / 255, blue / 255);
+  }
+
+  setSegmentAlpha(segmentIndex, alpha) {
+    const { labelmap } = this;
+    let { globalOpacity } = this.props.labelmapRenderingOptions;
+
+    if (globalOpacity === undefined) {
+      globalOpacity = 1.0;
+    }
+
+    const segmentOpacity = (alpha / 255) * globalOpacity;
+
+    labelmap.ofun.addPoint(segmentIndex, segmentOpacity, 0.5, 1.0);
   }
 
   componentDidUpdate(prevProps) {

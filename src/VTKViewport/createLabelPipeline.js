@@ -94,7 +94,7 @@ export default function createLabelPipeline(
 
       // Set the opacity per label.
       const segmentOpacity = (color[3] / 255) * globalOpacity;
-      labelMap.ofun.addPoint(1, segmentOpacity, 0.5, 1.0);
+      labelMap.ofun.addPoint(i, segmentOpacity, 0.5, 1.0);
     }
   } else {
     // Some default.
