@@ -238,8 +238,6 @@ export default class View2D extends Component {
         type: 'VIEW2D',
       };
 
-      console.log(api);
-
       this.props.onCreated(api);
     }
   }
