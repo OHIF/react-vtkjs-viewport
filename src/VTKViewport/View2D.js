@@ -390,7 +390,7 @@ export default class View2D extends Component {
 
     const segmentOpacity = (alpha / 255) * globalOpacity;
 
-    labelmap.ofun.addPoint(segmentIndex, segmentOpacity, 0.5, 1.0);
+    labelmap.ofun.addPointLong(segmentIndex, segmentOpacity, 0.5, 1.0);
   }
 
   componentDidUpdate(prevProps) {
