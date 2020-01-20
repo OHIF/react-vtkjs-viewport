@@ -32,6 +32,14 @@ function vtkjsBaseTool(publicAPI, model) {
   // Core react-vtkjs-viewport API. //
   /*================================*/
 
+  publicAPI.setUid = uid => {
+    model.uid = uid;
+  };
+
+  publicAPI.getUid = () => {
+    return model.uid;
+  };
+
   let cameraSub = null;
   let interactorSub = null;
   const superSetInteractor = publicAPI.setInteractor;
@@ -54,7 +62,6 @@ function vtkjsBaseTool(publicAPI, model) {
 
       cameraSub = camera.onModified(() => {
         publicAPI.updateScrollManipulator();
-        //updateScrollManipulator();
         publicAPI.modified();
       });
 
@@ -79,14 +86,12 @@ function vtkjsBaseTool(publicAPI, model) {
 
     model.viewportData = viewportData;
 
-    console.log('setviewportdata');
-
     Object.keys(model.manipulatorInstances).forEach(key => {
       const manipulator = model.manipulatorInstances[key];
 
-      console.log(manipulator.setViewportData);
-
-      manipulator.setViewportData(viewportData);
+      if (typeof manipulator.setViewportData === 'function') {
+        manipulator.setViewportData(viewportData);
+      }
     });
 
     // if (model.scrollManipulator.setViewportData) {
@@ -142,11 +147,7 @@ function vtkjsBaseTool(publicAPI, model) {
         setViewUpInternal(viewportData.getCurrentViewUp());
       }
 
-      // TODO -> Cleanly deal with this.
-      //updateScrollManipulator();
-      // NOTE: Disabling this because it makes it more difficult to switch
-      // interactor styles. Need to find a better way to do this!
-      //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());
+      publicAPI.updateScrollManipulator();
     } else {
       camera.setFreezeFocalPoint(false);
     }
@@ -259,6 +260,7 @@ function vtkjsBaseTool(publicAPI, model) {
 
       camera.setPosition(...cameraPos);
       camera.setFocalPoint(...slicePoint);
+
       return slicePoint;
     }
   };
@@ -333,6 +335,16 @@ function vtkjsBaseTool(publicAPI, model) {
     }
   }
 
+  publicAPI.setSlabThickness = slabThickness => {
+    model.slabThickness = slabThickness;
+
+    // Update the camera clipping range if the slab
+    // thickness property is changed
+    const renderer = model.interactor.getCurrentRenderer();
+    const camera = renderer.getActiveCamera();
+    camera.setThicknessFromFocalPoint(slabThickness);
+  };
+
   function isCameraViewInitialized(camera) {
     const dist = camera.getDistance();
 
@@ -357,6 +369,13 @@ export function extend(publicAPI, model, initialValues = {}) {
 
   // Inheritance
   vtkInteractorStyleManipulator.extend(publicAPI, model, initialValues);
+
+  macro.get(publicAPI, model, [
+    'volumeActor',
+    'slabThickness',
+    'apis',
+    'apiIndex',
+  ]);
 
   // Object specific methods
   vtkjsBaseTool(publicAPI, model);

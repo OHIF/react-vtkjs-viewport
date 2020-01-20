@@ -10,7 +10,7 @@ import vtkjsToolsInteractorStyleManipulator from './vtkjsToolsInteractorStyleMan
 import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
-import { vtkMPRScrollManipulatorMixin } from './ManipulatorMixins';
+import manipulatorMixins from './manipulatorMixins';
 
 // TEMP
 
@@ -23,8 +23,11 @@ import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
-import { INTERACTION_TYPES } from './constants';
+import CONSTANTS from './constants';
+import { uuidv4 } from './../helpers';
 
+const { INTERACTION_TYPES } = CONSTANTS;
+const { vtkMPRScrollManipulatorMixin } = manipulatorMixins;
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
 const defaultIStyleManipulators = [
@@ -120,6 +123,9 @@ export default class View2D extends Component {
   }
 
   componentDidMount() {
+    // Tracking ID to tie emitted events to this component
+    const uid = uuidv4();
+
     this.genericRenderWindow = vtkGenericRenderWindow.newInstance({
       background: [0, 0, 0],
     });
@@ -150,11 +156,11 @@ export default class View2D extends Component {
     oglrw.buildPass(true);
 
     // TEMP
-    // const istyle = vtkInteractorStyleMPRSlice.newInstance();
+    const istyle = vtkInteractorStyleMPRSlice.newInstance();
 
-    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
-      manipulators: defaultIStyleManipulators,
-    });
+    // const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+    //   manipulators: defaultIStyleManipulators,
+    // });
 
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
@@ -225,8 +231,8 @@ export default class View2D extends Component {
     this.renderer.resetCamera();
 
     // TEMP
-    // istyle.setVolumeActor(this.props.volumes[0]);
-    istyle.init(this.props.volumes[0]);
+    // istyle.init(this.props.volumes[0]);
+    istyle.setVolumeActor(this.props.volumes[0]);
 
     const range = istyle.getSliceRange();
 
@@ -257,6 +263,10 @@ export default class View2D extends Component {
     const boundAddSVGWidget = this.addSVGWidget.bind(this);
     const boundGetApiProperty = this.getApiProperty.bind(this);
     const boundSetApiProperty = this.setApiProperty.bind(this);
+    const boundSetSegmentRGB = this.setSegmentRGB.bind(this);
+    const boundSetSegmentRGBA = this.setSegmentRGBA.bind(this);
+    const boundSetSegmentAlpha = this.setSegmentAlpha.bind(this);
+    const boundUpdateImage = this.updateImage.bind(this);
 
     this.svgWidgets = {};
 
@@ -267,6 +277,7 @@ export default class View2D extends Component {
        * we make with consumers of this component.
        */
       const api = {
+        uid, // Tracking id available on `api`
         genericRenderWindow: this.genericRenderWindow,
         widgetManager: this.widgetManager,
         svgWidgetManager: this.svgWidgetManager,
@@ -278,11 +289,15 @@ export default class View2D extends Component {
         actors,
         volumes,
         _component: this,
+        updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
         getOrientation: boundGetOrienation,
         setInteractorStyle: boundSetInteractorStyle,
         getSlabThickness: boundGetSlabThickness,
         setSlabThickness: boundSetSlabThickness,
+        setSegmentRGB: boundSetSegmentRGB,
+        setSegmentRGBA: boundSetSegmentRGBA,
+        setSegmentAlpha: boundSetSegmentAlpha,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -346,6 +361,12 @@ export default class View2D extends Component {
     renderWindow.render();
   }
 
+  updateImage() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+
+    renderWindow.render();
+  }
+
   setInteractorStyle({ istyle, callbacks = {}, configuration = {} }) {
     const { volumes } = this.props;
     const renderWindow = this.genericRenderWindow.getRenderWindow();
@@ -373,7 +394,13 @@ export default class View2D extends Component {
       istyle.setViewport(currentViewport);
     }
 
-    if (istyle.getVolumeActor() !== volumes[0]) {
+    if (typeof istyle.init === 'function') {
+      if (slabThickness && istyle.setSlabThickness) {
+        istyle.setSlabThickness(slabThickness);
+      }
+
+      istyle.init(volumes[0]);
+    } else if (istyle.getVolumeActor() !== volumes[0]) {
       if (slabThickness && istyle.setSlabThickness) {
         istyle.setSlabThickness(slabThickness);
       }
@@ -406,6 +433,30 @@ export default class View2D extends Component {
 
   getOrientation() {
     return this.props.orientation;
+  }
+
+  setSegmentRGBA(segmentIndex, [red, green, blue, alpha]) {
+    this.setSegmentRGB(segmentIndex, [red, green, blue]);
+    this.setSegmentAlpha(segmentIndex, alpha);
+  }
+
+  setSegmentRGB(segmentIndex, [red, green, blue]) {
+    const { labelmap } = this;
+
+    labelmap.cfun.addRGBPoint(segmentIndex, red / 255, green / 255, blue / 255);
+  }
+
+  setSegmentAlpha(segmentIndex, alpha) {
+    const { labelmap } = this;
+    let { globalOpacity } = this.props.labelmapRenderingOptions;
+
+    if (globalOpacity === undefined) {
+      globalOpacity = 1.0;
+    }
+
+    const segmentOpacity = (alpha / 255) * globalOpacity;
+
+    labelmap.ofun.addPointLong(segmentIndex, segmentOpacity, 0.5, 1.0);
   }
 
   componentDidUpdate(prevProps) {

@@ -45,6 +45,11 @@ const vtkMPRScrollManipulatorMixin = {
     // Only run the onScroll callback if called from scrolling,
     // preventing manual setSlice calls from triggering the CB.
     publicAPI.scrollToSlice = slice => {
+      const vtkScrollEvent = new CustomEvent('vtkscrollevent', {
+        detail: { uid: publicAPI.getUid() },
+      });
+      window.dispatchEvent(vtkScrollEvent);
+
       const slicePoint = publicAPI.setSlice(slice);
 
       // run Callback
@@ -64,6 +69,7 @@ const vtkMPRScrollManipulatorMixin = {
 
       if (apis && apis[apiIndex] && apis[apiIndex].type === 'VIEW2D') {
         // Check whether crosshairs should be updated.
+        // TODO -> Nuke this, emit an event that crosshairs should listen to.
 
         const api = apis[apiIndex];
 

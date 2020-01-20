@@ -74,8 +74,8 @@ export default function createLabelPipeline(
   // labelmap pipeline
   labelMap.actor.setMapper(labelMap.mapper);
   labelMap.actor.setVisibility(visible);
-  labelMap.ofun.addPoint(0, 0);
-  labelMap.ofun.addPoint(1, 1.0);
+  labelMap.ofun.addPointLong(0, 0, 0.5, 1.0);
+  labelMap.ofun.addPointLong(1, 1.0, 0.5, 1.0);
 
   // Set up labelMap color and opacity mapping
   if (colorLUT) {
@@ -94,14 +94,14 @@ export default function createLabelPipeline(
 
       // Set the opacity per label.
       const segmentOpacity = (color[3] / 255) * globalOpacity;
-      labelMap.ofun.addPoint(1, segmentOpacity, 0.5, 1.0);
+      labelMap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
     }
   } else {
     // Some default.
     labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
     labelMap.cfun.addRGBPoint(2, 0, 1, 0); // label '2' will be green
     labelMap.cfun.addRGBPoint(3, 0, 1, 1); // label '3' will be blue
-    labelMap.ofun.addPoint(1, 0.5); // All labels full opacity
+    labelMap.ofun.addPointLong(1, 0.5, 0.5, 1.0); // All labels half opacity
   }
 
   labelMap.actor.getProperty().setRGBTransferFunction(0, labelMap.cfun);

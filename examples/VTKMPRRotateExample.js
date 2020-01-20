@@ -1,6 +1,12 @@
 import React from 'react';
 import { Component } from 'react';
-import { View2D, vtkInteractorStyleMPRRotate } from '@vtk-viewport';
+import {
+  View2D,
+  vtkInteractorStyleMPRRotate,
+  manipulatorMixins,
+  vtkjsToolsInteractorStyleManipulator,
+  INTERACTION_TYPES,
+} from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
@@ -155,10 +161,23 @@ class VTKMPRRotateExample extends Component {
   }
 
   storeApi = api => {
-    const istyle = vtkInteractorStyleMPRRotate.newInstance();
-
     this.apis = [api];
     this.addCubeWidget(api);
+
+    // const istyle = vtkInteractorStyleMPRRotate.newInstance();
+    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+      manipulators: [
+        {
+          vtkManipulatorMixin: manipulatorMixins.vtkMPRScrollManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: {
+            scrollEnabled: true,
+            dragEnabled: false,
+          },
+        },
+      ],
+    });
+
     api.setInteractorStyle({ istyle });
 
     const volume = api.volumes[0];

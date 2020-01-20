@@ -3,6 +3,7 @@ import formatDA from './formatDA';
 import formatTM from './formatTM';
 import formatNumberPrecision from './formatNumberPrecision';
 import isValidNumber from './isValidNumber';
+import uuidv4 from './uuidv4.js';
 
 const helpers = {
   formatPN,
@@ -12,4 +13,4 @@ const helpers = {
   isValidNumber,
 };
 
-export { helpers };
+export { helpers, uuidv4 };

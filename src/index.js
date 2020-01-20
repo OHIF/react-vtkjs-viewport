@@ -5,6 +5,8 @@ import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMP
 import vtkInteractorStyleMPRCrosshairs from './VTKViewport/vtkInteractorStyleMPRCrosshairs.js';
 import vtkInteractorStyleMPRRotate from './VTKViewport/vtkInteractorStyleMPRRotate.js';
 import vtkjsToolsInteractorStyleManipulator from './VTKViewport/vtkjsToolsInteractorStyleManipulator.js';
+import manipulatorMixins from './VTKViewport/manipulatorMixins';
+import CONSTANTS from './VTKViewport/constants';
 import vtkSVGWidgetManager from './VTKViewport/vtkSVGWidgetManager.js';
 import vtkSVGCrosshairsWidget from './VTKViewport/vtkSVGCrosshairsWidget.js';
 import ViewportData from './VTKViewport/ViewportData';
@@ -13,6 +15,10 @@ import getImageData from './lib/getImageData.js';
 import loadImageData from './lib/loadImageData.js';
 import invertVolume from './lib/invertVolume.js';
 import EVENTS from './events.js';
+
+const { INTERACTION_TYPES } = CONSTANTS;
+
+console.log(CONSTANTS);
 
 export {
   View2D,
@@ -26,9 +32,11 @@ export {
   vtkInteractorStyleMPRRotate,
   vtkInteractorStyleMPRSlice,
   vtkjsToolsInteractorStyleManipulator,
+  manipulatorMixins,
   vtkSVGWidgetManager,
   vtkSVGCrosshairsWidget,
   invertVolume,
+  INTERACTION_TYPES,
   EVENTS,
 };
 

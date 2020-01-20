@@ -6,10 +6,12 @@ import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction
 import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
 import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 
-import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
-import { INTERACTION_TYPES } from './constants';
+//import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
+import CONSTANTS from './constants';
 
-const { States } = Constants;
+const { INTERACTION_TYPES } = CONSTANTS;
+
+//const { States } = Constants;
 
 // NOTE:
 // Basic idea:
@@ -168,7 +170,6 @@ export function extend(publicAPI, model, initialValues = {}) {
   vtkjsBaseTool.extend(publicAPI, model, initialValues);
 
   macro.setGet(publicAPI, model, ['onInteractiveRotateChanged', 'onScroll']);
-
   // Object specific methods
   vtkjsToolsInteractorStyleManipulator(publicAPI, model);
 }

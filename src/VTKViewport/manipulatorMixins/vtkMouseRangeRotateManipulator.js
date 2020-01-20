@@ -11,7 +11,7 @@ function vtkMouseRangeRotateManipulator(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkMouseRangeRotateManipulator');
 
-  function updateScollListener() {
+  function onUpdateScollListener() {
     publicAPI.setScrollListener(
       -MAX_SAFE_INTEGER,
       MAX_SAFE_INTEGER,
