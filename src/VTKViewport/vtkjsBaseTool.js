@@ -2,12 +2,15 @@ import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleManipulator from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkMath from 'vtk.js/Sources/Common/Core/Math';
+import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import ViewportData from './ViewportData';
 import EVENTS from '../events';
 
 // Examples -> We would probably wrap these with vtkjs tools functionality.
 
 import { math } from '../lib/math';
+
+const { States } = Constants;
 
 const { boundsToCorners, clamp } = math;
 
@@ -31,6 +34,19 @@ function vtkjsBaseTool(publicAPI, model) {
   /*================================*/
   // Core react-vtkjs-viewport API. //
   /*================================*/
+
+  // const superHandleMouseMove = publicAPI.handleMouseMove;
+  // publicAPI.handleMouseMove = callData => {
+  //   superHandleMouseMove(callData);
+
+  //   if (model.state === States.IS_PAN) {
+  //     const eventWindow = model.viewportData.getEventWindow();
+
+  //     debugger;
+
+  //     dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
+  //   }
+  // };
 
   publicAPI.setUid = uid => {
     model.uid = uid;
@@ -90,6 +106,7 @@ function vtkjsBaseTool(publicAPI, model) {
       const manipulator = model.manipulatorInstances[key];
 
       if (typeof manipulator.setViewportData === 'function') {
+        debugger;
         manipulator.setViewportData(viewportData);
       }
     });

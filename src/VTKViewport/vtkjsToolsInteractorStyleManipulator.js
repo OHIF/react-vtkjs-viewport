@@ -83,8 +83,18 @@ function vtkjsToolsInteractorStyleManipulator(publicAPI, model) {
     );
 
     if (typeof registerAPI === 'function') {
-      registerAPI(manipulatorInstance, publicAPI, model);
+      registerAPI(manipulatorInstance, publicAPI, model, configuration);
     }
+  });
+
+  publicAPI.onInteractionEvent(e => {
+    // NOTE: InteractorStyleManipulator emits:
+    // onInteractionEventStart,
+    // onInteractionEvent (drag)
+    // onInteractionEventEnd
+    //
+    // These are useful but they don't contain any information other than the event name.
+    //debugger;
   });
 
   publicAPI.init = volumeActor => {

@@ -20,6 +20,7 @@
   },
   "rules": {
     "no-console": "warn",
+    "no-debugger": "warn",
     "no-undef": "warn",
     "no-unused-vars": "warn"
   }

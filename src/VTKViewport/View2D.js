@@ -27,34 +27,42 @@ import CONSTANTS from './constants';
 import { uuidv4 } from './../helpers';
 
 const { INTERACTION_TYPES } = CONSTANTS;
-const { vtkMPRScrollManipulatorMixin } = manipulatorMixins;
+const {
+  vtkMPRScrollManipulatorMixin,
+  vtkMPRPanManipulatorMixin,
+} = manipulatorMixins;
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
 const defaultIStyleManipulators = [
   {
-    vtkManipulatorMixin: {
-      manipulator: vtkMouseCameraTrackballPanManipulator,
-      manipulatorName: 'vtkMouseCameraTrackballPanManipulator',
-    },
+    vtkManipulatorMixin: vtkMPRPanManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
     configuration: { button: 1 },
   },
-  {
-    vtkManipulatorMixin: {
-      manipulator: vtkMouseCameraTrackballZoomManipulator,
-      manipulatorName: 'vtkMouseCameraTrackballZoomManipulator',
-    },
-    type: INTERACTION_TYPES.MOUSE,
-    configuration: { button: 2 },
-  },
-  {
-    vtkManipulatorMixin: {
-      manipulator: vtkMouseCameraTrackballRotateManipulator,
-      manipulatorName: 'vtkMouseCameraTrackballRotateManipulator',
-    },
-    type: INTERACTION_TYPES.MOUSE,
-    configuration: { button: 3 },
-  },
+  // {
+  //   vtkManipulatorMixin: {
+  //     manipulator: vtkMouseCameraTrackballZoomManipulator,
+  //     manipulatorName: 'vtkMouseCameraTrackballZoomManipulator',
+  //   },
+  //   type: INTERACTION_TYPES.MOUSE,
+  //   configuration: { button: 2 },
+  // },
+  // {
+  //   vtkManipulatorMixin: vtkMPRRotateManipulatorMixin,
+  //   type: INTERACTION_TYPES.MOUSE,
+  //   configuration: { button: 3 },
+  // },
+
+  //OLD
+  // {
+  //   vtkManipulatorMixin: {
+  //     manipulator: vtkMouseCameraTrackballRotateManipulator,
+  //     manipulatorName: 'vtkMouseCameraTrackballRotateManipulator',
+  //   },
+  //   type: INTERACTION_TYPES.MOUSE,
+  //   configuration: { button: 3 },
+  // },
+
   {
     vtkManipulatorMixin: vtkMPRScrollManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
@@ -156,11 +164,11 @@ export default class View2D extends Component {
     oglrw.buildPass(true);
 
     // TEMP
-    const istyle = vtkInteractorStyleMPRSlice.newInstance();
+    // const istyle = vtkInteractorStyleMPRSlice.newInstance();
 
-    // const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
-    //   manipulators: defaultIStyleManipulators,
-    // });
+    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+      manipulators: defaultIStyleManipulators,
+    });
 
     this.renderWindow.getInteractor().setInteractorStyle(istyle);
 
@@ -231,8 +239,10 @@ export default class View2D extends Component {
     this.renderer.resetCamera();
 
     // TEMP
-    // istyle.init(this.props.volumes[0]);
-    istyle.setVolumeActor(this.props.volumes[0]);
+    istyle.init(this.props.volumes[0]);
+    // istyle.setVolumeActor(this.props.volumes[0]);
+
+    istyle.setSlabThickness(minSlabThickness);
 
     const range = istyle.getSliceRange();
 

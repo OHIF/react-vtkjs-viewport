@@ -268,6 +268,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       superHandleMouseMove(callData);
     }
 
+    // TODO -> Need to emit events.
     if (model.state === States.IS_PAN) {
       const { apis, apiIndex } = model;
       const api = apis[apiIndex];
