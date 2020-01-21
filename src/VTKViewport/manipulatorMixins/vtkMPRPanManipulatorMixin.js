@@ -13,8 +13,7 @@ const vtkMPRPanManipulatorMixin = {
     // TODO
     // Pass in configuration Configuration
     //
-
-    debugger;
+    //debugger;
   },
 };
 

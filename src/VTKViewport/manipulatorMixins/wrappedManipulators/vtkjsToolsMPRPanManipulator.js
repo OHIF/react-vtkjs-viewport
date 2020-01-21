@@ -32,7 +32,7 @@ function vtkjsToolsMPRPanManipulator(publicAPI, model) {
     if (model.state === States.IS_PAN) {
       const eventWindow = model.viewportData.getEventWindow();
 
-      debugger;
+      //debugger;
 
       dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
     }

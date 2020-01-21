@@ -106,7 +106,7 @@ function vtkjsBaseTool(publicAPI, model) {
       const manipulator = model.manipulatorInstances[key];
 
       if (typeof manipulator.setViewportData === 'function') {
-        debugger;
+        //debugger;
         manipulator.setViewportData(viewportData);
       }
     });
