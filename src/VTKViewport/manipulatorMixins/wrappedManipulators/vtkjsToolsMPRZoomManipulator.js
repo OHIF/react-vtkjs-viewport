@@ -1,11 +1,11 @@
 import macro from 'vtk.js/Sources/macro';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
+import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import dispatchEvent from '../../../helpers/dispatchEvent.js';
 import EVENTS from '../../../events';
 
-function vtkjsToolsMPRPanManipulator(publicAPI, model) {
+function vtkjsToolsMPRZoomManipulator(publicAPI, model) {
   // Set our className
-  model.classHierarchy.push('vtkjsToolsMPRPanManipulator');
+  model.classHierarchy.push('vtkjsToolsMPRZoomManipulator');
 
   const superOnButtonDown = publicAPI.onButtonDown;
   publicAPI.onButtonDown = (interactor, renderer, position) => {
@@ -17,21 +17,21 @@ function vtkjsToolsMPRPanManipulator(publicAPI, model) {
 
     const eventWindow = model.viewportData.getEventWindow();
 
-    console.log('PAN MOUSE DOWN');
+    console.log('ZOOM MOUSE DOWN');
 
-    dispatchEvent(eventWindow, EVENTS.MOUSE_DOWN, { position });
+    //dispatchEvent(eventWindow, EVENTS.MOUSE_DOWN, { position });
   };
 
   const superOnMouseMove = publicAPI.onMouseMove;
   publicAPI.onMouseMove = (interactor, renderer, position) => {
     superOnMouseMove(interactor, renderer, position);
 
-    console.log('PAN DRAG');
+    console.log('ZOOM DRAG');
 
     // TODO -> How do we deal with other states that may do pan? Should that ever happen?
     const eventWindow = model.viewportData.getEventWindow();
 
-    dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
+    //dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
   };
 }
 
@@ -48,19 +48,23 @@ export function extend(publicAPI, model, initialValues = {}) {
 
   // Inheritance
   macro.obj(publicAPI, model);
-  vtkMouseCameraTrackballPanManipulator.extend(publicAPI, model, initialValues);
+  vtkMouseCameraTrackballZoomManipulator.extend(
+    publicAPI,
+    model,
+    initialValues
+  );
 
   macro.setGet(publicAPI, model, ['viewportData']);
 
   // Object specific methods
-  vtkjsToolsMPRPanManipulator(publicAPI, model);
+  vtkjsToolsMPRZoomManipulator(publicAPI, model);
 }
 
 // ----------------------------------------------------------------------------
 
 export const newInstance = macro.newInstance(
   extend,
-  'vtkjsToolsMPRPanManipulator'
+  'vtkjsToolsMPRZoomManipulator'
 );
 
 export default Object.assign({ newInstance, extend });

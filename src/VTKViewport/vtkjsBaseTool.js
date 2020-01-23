@@ -39,6 +39,8 @@ function vtkjsBaseTool(publicAPI, model) {
   // publicAPI.handleMouseMove = callData => {
   //   superHandleMouseMove(callData);
 
+  //   console.log(model.state);
+
   //   if (model.state === States.IS_PAN) {
   //     const eventWindow = model.viewportData.getEventWindow();
 

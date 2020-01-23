@@ -1,3 +1,8 @@
 import vtkMPRScrollManipulatorMixin from './vtkMPRScrollManipulatorMixin';
 import vtkMPRPanManipulatorMixin from './vtkMPRPanManipulatorMixin';
-export default { vtkMPRScrollManipulatorMixin, vtkMPRPanManipulatorMixin };
+import vtkMPRZoomManipulatorMixin from './vtkMPRZoomManipulatorMixin';
+export default {
+  vtkMPRScrollManipulatorMixin,
+  vtkMPRPanManipulatorMixin,
+  vtkMPRZoomManipulatorMixin,
+};

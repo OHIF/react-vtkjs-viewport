@@ -8,8 +8,6 @@ import vtkjsToolsInteractorStyleManipulator from './vtkjsToolsInteractorStyleMan
 
 // TEMP
 import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
-import vtkMouseCameraTrackballPanManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballPanManipulator';
-import vtkMouseCameraTrackballZoomManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 import manipulatorMixins from './manipulatorMixins';
 
 // TEMP
@@ -30,6 +28,7 @@ const { INTERACTION_TYPES } = CONSTANTS;
 const {
   vtkMPRScrollManipulatorMixin,
   vtkMPRPanManipulatorMixin,
+  vtkMPRZoomManipulatorMixin,
 } = manipulatorMixins;
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
@@ -39,26 +38,13 @@ const defaultIStyleManipulators = [
     type: INTERACTION_TYPES.MOUSE,
     configuration: { button: 1 },
   },
-  // {
-  //   vtkManipulatorMixin: {
-  //     manipulator: vtkMouseCameraTrackballZoomManipulator,
-  //     manipulatorName: 'vtkMouseCameraTrackballZoomManipulator',
-  //   },
-  //   type: INTERACTION_TYPES.MOUSE,
-  //   configuration: { button: 2 },
-  // },
+  {
+    vtkManipulatorMixin: vtkMPRZoomManipulatorMixin,
+    type: INTERACTION_TYPES.MOUSE,
+    configuration: { button: 3 },
+  },
   // {
   //   vtkManipulatorMixin: vtkMPRRotateManipulatorMixin,
-  //   type: INTERACTION_TYPES.MOUSE,
-  //   configuration: { button: 3 },
-  // },
-
-  //OLD
-  // {
-  //   vtkManipulatorMixin: {
-  //     manipulator: vtkMouseCameraTrackballRotateManipulator,
-  //     manipulatorName: 'vtkMouseCameraTrackballRotateManipulator',
-  //   },
   //   type: INTERACTION_TYPES.MOUSE,
   //   configuration: { button: 3 },
   // },

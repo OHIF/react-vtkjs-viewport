@@ -164,22 +164,6 @@ class VTKMPRRotateExample extends Component {
     this.apis = [api];
     this.addCubeWidget(api);
 
-    // // const istyle = vtkInteractorStyleMPRRotate.newInstance();
-    // const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
-    //   manipulators: [
-    //     {
-    //       vtkManipulatorMixin: manipulatorMixins.vtkMPRScrollManipulatorMixin,
-    //       type: INTERACTION_TYPES.MOUSE,
-    //       configuration: {
-    //         scrollEnabled: true,
-    //         dragEnabled: false,
-    //       },
-    //     },
-    //   ],
-    // });
-
-    // api.setInteractorStyle({ istyle });
-
     const volume = api.volumes[0];
     const rgbTransferFunction = volume.getProperty().getRGBTransferFunction(0);
     const low = voi.windowCenter - voi.windowWidth / 2;
