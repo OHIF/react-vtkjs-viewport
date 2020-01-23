@@ -516,6 +516,7 @@ export default class View2D extends Component {
       this.subs.labelmap.unsubscribe();
 
       const labelmapImageData = this.props.paintFilterLabelMapImageData;
+
       const labelmap = createLabelPipeline(
         this.props.paintFilterBackgroundImageData,
         labelmapImageData,
