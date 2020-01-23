@@ -104,8 +104,6 @@ function vtkjsBaseTool(publicAPI, model) {
 
     model.viewportData = viewportData;
 
-    debugger;
-
     Object.keys(model.manipulatorInstances).forEach(key => {
       const manipulator = model.manipulatorInstances[key];
 
@@ -165,8 +163,6 @@ function vtkjsBaseTool(publicAPI, model) {
 
       Object.keys(model.manipulatorInstances).forEach(key => {
         const manipulator = model.manipulatorInstances[key];
-
-        debugger;
 
         if (typeof manipulator.setVolumeActor === 'function') {
           //debugger;

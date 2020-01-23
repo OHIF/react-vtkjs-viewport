@@ -41,6 +41,7 @@ function vtkjsToolsMPRWindowLevelManipulator(publicAPI, model) {
     if (!model.viewportData) {
       return;
     }
+
     debugger;
 
     const range = model.volumeActor
@@ -73,23 +74,16 @@ function vtkjsToolsMPRWindowLevelManipulator(publicAPI, model) {
     model.wlStartPos[1] = Math.round(position.y);
 
     // TODO -> Deal with synchronisation and callbacks in general.
-    const onLevelsChanged = publicAPI.getOnLevelsChanged();
-    if (onLevelsChanged) {
-      onLevelsChanged({ windowCenter, windowWidth });
-    }
+    // TODO
+    // const onLevelsChanged = publicAPI.getOnLevelsChanged();
+    // if (onLevelsChanged) {
+    //   onLevelsChanged({ windowCenter, windowWidth });
+    // }
 
     const eventWindow = model.viewportData.getEventWindow();
-
-    dispatchEvent(eventWindow, EVENTS.IMAGE_RENDERED, {
-      interactor,
-      renderer,
-      mosuePosition: { x: position.x, y: position.y },
-      manipulatorClassName,
-    });
   };
 
   publicAPI.setVolumeActor = volumeActor => {
-    debugger;
     model.volumeActor = volumeActor;
   };
 

@@ -6,6 +6,7 @@ import {
   manipulatorMixins,
   vtkjsToolsInteractorStyleManipulator,
   INTERACTION_TYPES,
+  EVENTS,
 } from '@vtk-viewport';
 import vtkHttpDataSetReader from 'vtk.js/Sources/IO/Core/HttpDataSetReader';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
@@ -49,6 +50,8 @@ const voi = {
 class VTKMPRRotateExample extends Component {
   state = {
     volumes: [],
+    eventInfo:
+      'Events will be captured here... and do something interesting in the future.',
   };
 
   async componentDidMount() {
@@ -181,6 +184,23 @@ class VTKMPRRotateExample extends Component {
 
     const renderWindow = api.genericRenderWindow.getRenderWindow();
 
+    const eventWindow = api.getEventWindow();
+
+    eventWindow.addEventListener(EVENTS.VIEWPORT_ROTATED, evt => {
+      debugger;
+      this.setState({ eventInfo: `${performance.now()}: VIEWPORT_ROTATED` });
+    });
+
+    eventWindow.addEventListener(EVENTS.ON_SCROLL, evt => {
+      debugger;
+      this.setState({ eventInfo: `${performance.now()}: ON_SCROLL` });
+    });
+
+    eventWindow.addEventListener(EVENTS.IMAGE_RENDERED, evt => {
+      debugger;
+      this.setState({ eventInfo: `${performance.now()}: IMAGE_RENDERED` });
+    });
+
     renderWindow.render();
   };
 
@@ -271,6 +291,9 @@ class VTKMPRRotateExample extends Component {
               onCreated={this.storeApi}
               orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, -1] }}
             />
+          </div>
+          <div className="col-xs-12 col-sm-6">
+            <p>{this.state.eventInfo}</p>
           </div>
         </div>
       </>

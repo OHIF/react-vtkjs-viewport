@@ -259,6 +259,7 @@ export default class View2D extends Component {
     const boundSetSegmentRGBA = this.setSegmentRGBA.bind(this);
     const boundSetSegmentAlpha = this.setSegmentAlpha.bind(this);
     const boundUpdateImage = this.updateImage.bind(this);
+    const boundGetEventWindow = this.getEventWindow.bind(this);
 
     this.svgWidgets = {};
 
@@ -290,6 +291,7 @@ export default class View2D extends Component {
         setSegmentRGB: boundSetSegmentRGB,
         setSegmentRGBA: boundSetSegmentRGBA,
         setSegmentAlpha: boundSetSegmentAlpha,
+        getEventWindow: boundGetEventWindow,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -323,6 +325,14 @@ export default class View2D extends Component {
     if (currentIStyle.getSlabThickness) {
       return currentIStyle.getSlabThickness();
     }
+  }
+
+  getEventWindow() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const istyle = renderWindow.getInteractor().getInteractorStyle();
+    const viewportData = istyle.getViewport();
+
+    return viewportData.getEventWindow();
   }
 
   setSlabThickness(slabThickness) {
