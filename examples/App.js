@@ -51,8 +51,7 @@ function Index() {
     {
       title: 'Volume Rendering',
       url: '/volume-rendering',
-      text:
-        'Demonstrates how to perform volume rendering for a CT volume.',
+      text: 'Demonstrates how to perform volume rendering for a CT volume.',
     },
     {
       title: 'Image Segmentation via Paint Widget',
@@ -144,7 +143,8 @@ function AppRouter() {
     Example({ children: <VTKCornerstonePaintingSyncExample /> });
   const crosshairs = () => Example({ children: <VTKCrosshairsExample /> });
   const rotateMPR = () => Example({ children: <VTKMPRRotateExample /> });
-  const volumeRendering = () => Example({ children: <VTKVolumeRenderingExample /> });
+  const volumeRendering = () =>
+    Example({ children: <VTKVolumeRenderingExample /> });
 
   return (
     <Router>

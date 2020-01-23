@@ -1,4 +1,4 @@
-import vtkjsToolsMPRRotateManipulator from './customManipulators/vtkjsToolSMPRRotateManipulator';
+import vtkjsToolsMPRRotateManipulator from './customManipulators/vtkjsToolsMPRRotateManipulator';
 
 // ----------------------------------------------------------------------------
 // vtkMPRScrollManipulator methods

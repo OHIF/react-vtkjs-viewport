@@ -1,5 +1,7 @@
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
+import EVENTS from '../../events';
+import dispatchEvent from '../../helpers/dispatchEvent.js';
 
 // ----------------------------------------------------------------------------
 // vtkMPRScrollManipulator methods
@@ -45,10 +47,11 @@ const vtkMPRScrollManipulatorMixin = {
     // Only run the onScroll callback if called from scrolling,
     // preventing manual setSlice calls from triggering the CB.
     publicAPI.scrollToSlice = slice => {
-      const vtkScrollEvent = new CustomEvent('vtkscrollevent', {
-        detail: { uid: publicAPI.getUid() },
+      const eventWindow = model.viewportData.getEventWindow();
+
+      dispatchEvent(eventWindow, EVENTS.ON_SCROLL, {
+        // TODO -> Fix event dispatch uid thing Danny needs globally.
       });
-      window.dispatchEvent(vtkScrollEvent);
 
       const slicePoint = publicAPI.setSlice(slice);
 

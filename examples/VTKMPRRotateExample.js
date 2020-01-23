@@ -18,6 +18,14 @@ import './initCornerstone.js';
 
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
+const {
+  vtkMPRScrollManipulatorMixin,
+  vtkMPRPanManipulatorMixin,
+  vtkMPRZoomManipulatorMixin,
+  vtkMPRRotateManipulatorMixin,
+  vtkMPRWindowLevelManipulatorMixin,
+} = manipulatorMixins;
+
 //const url = 'http://localhost:44301/wadors'
 //const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
 //const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
@@ -176,6 +184,64 @@ class VTKMPRRotateExample extends Component {
     renderWindow.render();
   };
 
+  switchToLayout1 = () => {
+    const api = this.apis[0];
+
+    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+      manipulators: [
+        {
+          vtkManipulatorMixin: vtkMPRWindowLevelManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: { button: 1 },
+        },
+        {
+          vtkManipulatorMixin: vtkMPRPanManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: { button: 2 },
+        },
+        {
+          vtkManipulatorMixin: vtkMPRZoomManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: { button: 3 },
+        },
+        {
+          vtkManipulatorMixin: vtkMPRScrollManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: {
+            scrollEnabled: true,
+            dragEnabled: false,
+          },
+        },
+      ],
+    });
+
+    api.setInteractorStyle({ istyle });
+  };
+
+  switchToLayout2 = () => {
+    const api = this.apis[0];
+
+    const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
+      manipulators: [
+        {
+          vtkManipulatorMixin: vtkMPRRotateManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: { button: 1 },
+        },
+        {
+          vtkManipulatorMixin: vtkMPRScrollManipulatorMixin,
+          type: INTERACTION_TYPES.MOUSE,
+          configuration: {
+            scrollEnabled: true,
+            dragEnabled: false,
+          },
+        },
+      ],
+    });
+
+    api.setInteractorStyle({ istyle });
+  };
+
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
       return <h4>Loading...</h4>;
@@ -186,9 +252,17 @@ class VTKMPRRotateExample extends Component {
         <div className="row">
           <div className="col-xs-12">
             <p>
-              This example demonstrates how to use the MPR Rotate manipulator.
+              This example demonstrates using configurable manipulators to
+              trigger events.
             </p>
           </div>
+
+          <button className="btn" onClick={this.switchToLayout1}>
+            Layout 1
+          </button>
+          <button className="btn" onClick={this.switchToLayout2}>
+            Layout 2
+          </button>
         </div>
         <div className="row">
           <div className="col-xs-12 col-sm-6">

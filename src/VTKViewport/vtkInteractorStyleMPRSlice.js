@@ -76,7 +76,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
   function updateScrollManipulator() {
     const range = publicAPI.getSliceRange();
-
     model.scrollManipulator.removeScrollListener();
     // The Scroll listener has min, max, step, and getValue setValue as params.
     // Internally, it checks that the result of the GET has changed, and only calls SET if it is new.
@@ -183,7 +182,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
     if (model.scrollManipulator.setViewportData) {
       // scroll manipulator is the custom MouseRangeRotate manipulator
-
       model.scrollManipulator.setViewportData(viewportData);
     }
 
@@ -268,7 +266,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       superHandleMouseMove(callData);
     }
 
-    // TODO -> Need to emit events.
     if (model.state === States.IS_PAN) {
       const { apis, apiIndex } = model;
       const api = apis[apiIndex];
@@ -461,7 +458,6 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       camera.setPosition(...cameraPos);
       camera.setFocalPoint(...slicePoint);
-
       return slicePoint;
     }
   };
@@ -622,3 +618,16 @@ export const newInstance = macro.newInstance(
 // ----------------------------------------------------------------------------
 
 export default Object.assign({ newInstance, extend });
+
+// TODO: work with VTK to change the internal formatting of arrays.
+function vec9toMat3(vec9) {
+  if (vec9.length !== 9) {
+    throw Error('Array not length 9');
+  }
+  //prettier-ignore
+  return [
+    [vec9[0], vec9[1], vec9[2]],
+    [vec9[3], vec9[4], vec9[5]],
+    [vec9[6], vec9[7], vec9[8]],
+  ];
+}

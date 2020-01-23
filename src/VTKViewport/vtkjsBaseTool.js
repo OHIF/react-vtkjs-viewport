@@ -104,6 +104,8 @@ function vtkjsBaseTool(publicAPI, model) {
 
     model.viewportData = viewportData;
 
+    debugger;
+
     Object.keys(model.manipulatorInstances).forEach(key => {
       const manipulator = model.manipulatorInstances[key];
 
@@ -112,11 +114,6 @@ function vtkjsBaseTool(publicAPI, model) {
         manipulator.setViewportData(viewportData);
       }
     });
-
-    // if (model.scrollManipulator.setViewportData) {
-    //   // scroll manipulator is the custom MouseRangeRotate manipulator
-    //   model.scrollManipulator.setViewportData(viewportData);
-    // }
 
     if (viewportData) {
       setSliceNormalInternal(viewportData.getCurrentSliceNormal());
@@ -165,6 +162,17 @@ function vtkjsBaseTool(publicAPI, model) {
         setSliceNormalInternal(viewportData.getCurrentSliceNormal());
         setViewUpInternal(viewportData.getCurrentViewUp());
       }
+
+      Object.keys(model.manipulatorInstances).forEach(key => {
+        const manipulator = model.manipulatorInstances[key];
+
+        debugger;
+
+        if (typeof manipulator.setVolumeActor === 'function') {
+          //debugger;
+          manipulator.setVolumeActor(actor);
+        }
+      });
 
       publicAPI.updateScrollManipulator();
     } else {

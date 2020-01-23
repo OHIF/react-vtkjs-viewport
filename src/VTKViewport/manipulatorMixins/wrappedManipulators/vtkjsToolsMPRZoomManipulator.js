@@ -5,22 +5,9 @@ import EVENTS from '../../../events';
 
 function vtkjsToolsMPRZoomManipulator(publicAPI, model) {
   // Set our className
-  model.classHierarchy.push('vtkjsToolsMPRZoomManipulator');
+  const manipulatorClassName = 'vtkjsToolsMPRZoomManipulator';
 
-  const superOnButtonDown = publicAPI.onButtonDown;
-  publicAPI.onButtonDown = (interactor, renderer, position) => {
-    superOnButtonDown(interactor, renderer, position);
-
-    if (!model.viewportData) {
-      return;
-    }
-
-    const eventWindow = model.viewportData.getEventWindow();
-
-    console.log('ZOOM MOUSE DOWN');
-
-    //dispatchEvent(eventWindow, EVENTS.MOUSE_DOWN, { position });
-  };
+  model.classHierarchy.push(manipulatorClassName);
 
   const superOnMouseMove = publicAPI.onMouseMove;
   publicAPI.onMouseMove = (interactor, renderer, position) => {
@@ -31,7 +18,12 @@ function vtkjsToolsMPRZoomManipulator(publicAPI, model) {
     // TODO -> How do we deal with other states that may do pan? Should that ever happen?
     const eventWindow = model.viewportData.getEventWindow();
 
-    //dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
+    dispatchEvent(eventWindow, EVENTS.IMAGE_RENDERED, {
+      interactor,
+      renderer,
+      mosuePosition: { x: position.x, y: position.y },
+      manipulatorClassName,
+    });
   };
 }
 

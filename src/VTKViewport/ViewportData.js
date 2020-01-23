@@ -89,9 +89,6 @@ export default class {
       detail: {
         sliceNormal: nSliceNormal,
         sliceViewUp: nViewUp,
-        dThetaX,
-        dThetaY,
-        dThetaZ,
       },
       bubbles: true,
       cancelable: true,

@@ -3,14 +3,9 @@ import PropTypes from 'prop-types';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
-import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkjsToolsInteractorStyleManipulator from './vtkjsToolsInteractorStyleManipulator';
 
-// TEMP
-import vtkMouseCameraTrackballRotateManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseCameraTrackballRotateManipulator';
 import manipulatorMixins from './manipulatorMixins';
-
-// TEMP
 
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
@@ -30,15 +25,21 @@ const {
   vtkMPRPanManipulatorMixin,
   vtkMPRZoomManipulatorMixin,
   vtkMPRRotateManipulatorMixin,
+  vtkMPRWindowLevelManipulatorMixin,
 } = manipulatorMixins;
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
 const defaultIStyleManipulators = [
   {
-    vtkManipulatorMixin: vtkMPRPanManipulatorMixin,
+    vtkManipulatorMixin: vtkMPRWindowLevelManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
     configuration: { button: 1 },
   },
+  // {
+  //   vtkManipulatorMixin: vtkMPRPanManipulatorMixin,
+  //   type: INTERACTION_TYPES.MOUSE,
+  //   configuration: { button: 1 },
+  // },
   {
     vtkManipulatorMixin: vtkMPRZoomManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
@@ -149,9 +150,6 @@ export default class View2D extends Component {
     // the vtkOpenGLRenderer instance.
     oglrw.buildPass(true);
 
-    // TEMP
-    // const istyle = vtkInteractorStyleMPRSlice.newInstance();
-
     const istyle = vtkjsToolsInteractorStyleManipulator.newInstance({
       manipulators: defaultIStyleManipulators,
     });
@@ -224,9 +222,7 @@ export default class View2D extends Component {
     camera.setParallelProjection(true);
     this.renderer.resetCamera();
 
-    // TEMP
     istyle.init(this.props.volumes[0]);
-    // istyle.setVolumeActor(this.props.volumes[0]);
 
     istyle.setSlabThickness(minSlabThickness);
 

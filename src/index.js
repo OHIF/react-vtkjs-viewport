@@ -18,8 +18,6 @@ import EVENTS from './events.js';
 
 const { INTERACTION_TYPES } = CONSTANTS;
 
-console.log(CONSTANTS);
-
 export {
   View2D,
   View3D,

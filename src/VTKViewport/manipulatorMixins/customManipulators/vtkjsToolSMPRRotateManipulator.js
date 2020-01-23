@@ -6,7 +6,9 @@ import EVENTS from '../../../events';
 
 function vtkjsToolsMPRRotateManipulator(publicAPI, model) {
   // Set our className
-  model.classHierarchy.push('vtkjsToolsMPRRotateManipulator');
+  const manipulatorClassName = 'vtkjsToolsMPRRotateManipulator';
+
+  model.classHierarchy.push(manipulatorClassName);
   model.rotateStartPos = [0, 0];
 
   publicAPI.onButtonDown = (interactor, renderer, position) => {
@@ -16,10 +18,6 @@ function vtkjsToolsMPRRotateManipulator(publicAPI, model) {
 
     model.rotateStartPos[0] = Math.round(position.x);
     model.rotateStartPos[1] = Math.round(position.y);
-
-    const eventWindow = model.viewportData.getEventWindow();
-
-    dispatchEvent(eventWindow, EVENTS.MOUSE_DOWN, { position });
   };
 
   publicAPI.onMouseMove = (interactor, renderer, position) => {
@@ -28,7 +26,6 @@ function vtkjsToolsMPRRotateManipulator(publicAPI, model) {
     }
 
     const pos = [Math.round(position.x), Math.round(position.y)];
-
     const size = interactor.getView().getViewportSize(renderer);
     const xSensitivity = 100.0 / size[0];
     const ySensitivity = 100.0 / size[1];
@@ -43,7 +40,12 @@ function vtkjsToolsMPRRotateManipulator(publicAPI, model) {
     // TODO -> How do we deal with other states that may do pan? Should that ever happen?
     const eventWindow = model.viewportData.getEventWindow();
 
-    dispatchEvent(eventWindow, EVENTS.PAN_DRAG, { position });
+    dispatchEvent(eventWindow, EVENTS.IMAGE_RENDERED, {
+      interactor,
+      renderer,
+      mosuePosition: { x: position.x, y: position.y },
+      manipulatorClassName,
+    });
   };
 }
 
