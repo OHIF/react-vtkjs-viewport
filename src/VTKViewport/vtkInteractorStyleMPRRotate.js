@@ -15,8 +15,8 @@ const { States } = Constants;
 function vtkInteractorStyleMPRRotate(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkInteractorStyleMPRRotate');
-  model.wlStartPos = [0, 0];
 
+  // DONE
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     const pos = [
@@ -35,6 +35,7 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
     }
   };
 
+  // DONE
   publicAPI.rotateFromMouse = (pos, renderer) => {
     const rwi = model.interactor;
     const size = rwi.getView().getViewportSize(renderer);

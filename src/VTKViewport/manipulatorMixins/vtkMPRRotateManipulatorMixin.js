@@ -1,17 +1,14 @@
-import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/MouseRangeManipulator';
+import vtkjsToolsMPRRotateManipulator from './customManipulators/vtkjsToolSMPRRotateManipulator';
 
 // ----------------------------------------------------------------------------
 // vtkMPRScrollManipulator methods
 // ----------------------------------------------------------------------------
 
-const manipulatorName = 'vtkMPRScrollManipulator';
+const manipulatorName = 'vtkMPRRotateManipulator';
 
-const vtkMPRScrollManipulatorMixin = {
+const vtkMPRRotateManipulatorMixin = {
   manipulatorName,
-  manipulator: vtkMouseRangeManipulator,
-  registerAPI: (manipulatorInstance, publicAPI, model) => {
-    // TODO
-  },
+  manipulator: vtkjsToolsMPRRotateManipulator,
 };
 
-export default vtkMPRScrollManipulatorMixin;
+export default vtkMPRRotateManipulatorMixin;

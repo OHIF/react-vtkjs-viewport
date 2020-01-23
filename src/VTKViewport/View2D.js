@@ -29,6 +29,7 @@ const {
   vtkMPRScrollManipulatorMixin,
   vtkMPRPanManipulatorMixin,
   vtkMPRZoomManipulatorMixin,
+  vtkMPRRotateManipulatorMixin,
 } = manipulatorMixins;
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
@@ -41,14 +42,13 @@ const defaultIStyleManipulators = [
   {
     vtkManipulatorMixin: vtkMPRZoomManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
+    configuration: { button: 2 },
+  },
+  {
+    vtkManipulatorMixin: vtkMPRRotateManipulatorMixin,
+    type: INTERACTION_TYPES.MOUSE,
     configuration: { button: 3 },
   },
-  // {
-  //   vtkManipulatorMixin: vtkMPRRotateManipulatorMixin,
-  //   type: INTERACTION_TYPES.MOUSE,
-  //   configuration: { button: 3 },
-  // },
-
   {
     vtkManipulatorMixin: vtkMPRScrollManipulatorMixin,
     type: INTERACTION_TYPES.MOUSE,
