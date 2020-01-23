@@ -64,7 +64,7 @@ function createLabelMapImageData(backgroundImageData) {
   labelMapData.setDimensions(backgroundImageData.getDimensions());
   labelMapData.computeTransforms();
 
-  const values = new Uint16Array(backgroundImageData.getNumberOfPoints());
+  const values = new Float32Array(backgroundImageData.getNumberOfPoints());
   const dataArray = vtkDataArray.newInstance({
     numberOfComponents: 1, // labelmap with single component
     values,
@@ -162,7 +162,7 @@ class VTKMPRPaintingExample extends Component {
   clearLabelMap = () => {
     const labelMapImageData = this.state.paintFilterLabelMapImageData;
     const numberOfPoints = labelMapImageData.getNumberOfPoints();
-    const values = new Uint8Array(numberOfPoints);
+    const values = new Float32Array(numberOfPoints);
     const dataArray = vtkDataArray.newInstance({
       numberOfComponents: 1, // labelmap with single component
       values,

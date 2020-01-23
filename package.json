@@ -47,7 +47,7 @@
     "copy-webpack-plugin": "^5.0.4",
     "cornerstone-core": "^2.3.0",
     "cornerstone-math": "^0.1.8",
-    "cornerstone-tools": "^4.5.2",
+    "cornerstone-tools": "^4.11.0",
     "cornerstone-wado-image-loader": "^3.0.5",
     "cross-env": "^5.2.0",
     "css-loader": "^3.0.0",
