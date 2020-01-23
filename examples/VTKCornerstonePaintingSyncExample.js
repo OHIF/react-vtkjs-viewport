@@ -31,7 +31,7 @@ function setupSyncedBrush(imageDataObject) {
 
   // If you want to load a segmentation labelmap, you would want to load
   // it into this array at this point.
-  const threeDimensionalPixelData = new Uint16Array(numVolumePixels);
+  const threeDimensionalPixelData = new Float32Array(numVolumePixels);
 
   const buffer = threeDimensionalPixelData.buffer;
   const imageIds = imageDataObject.imageIds;
@@ -40,6 +40,9 @@ function setupSyncedBrush(imageDataObject) {
   if (numberOfFrames !== depth) {
     throw new Error('Depth should match the number of imageIds');
   }
+
+  // Use Float32Arrays in cornerstoneTools for interoperability.
+  segmentationModule.configuration.arrayType = 1;
 
   segmentationModule.setters.labelmap3DByFirstImageId(
     imageIds[0],
@@ -324,6 +327,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
               />
             )}
           </div>
+
           <div className="col-xs-12 col-sm-6" style={{ height: '512px' }}>
             {this.state.cornerstoneViewportData && (
               <CornerstoneViewport
