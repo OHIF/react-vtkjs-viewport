@@ -377,6 +377,11 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         'cachedCrosshairWorldPosition'
       );
 
+      if (cachedCrosshairWorldPosition === undefined) {
+        // Crosshairs not initilised.
+        return;
+      }
+
       const wPos = vtkCoordinate.newInstance();
       wPos.setCoordinateSystemToWorld();
       wPos.setValue(cachedCrosshairWorldPosition);
