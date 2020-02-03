@@ -439,6 +439,23 @@ export default class View2D extends Component {
     ) {
       this.subs.labelmap.unsubscribe();
 
+      // Remove actors.
+      if (this.labelmap && this.labelmap.actor) {
+        this.renderer.removeVolume(this.labelmap.actor);
+
+        if (this.api) {
+          const { actors } = this.api;
+
+          const index = actors.findIndex(
+            actor => actor === this.labelmap.actor
+          );
+
+          if (index !== -1) {
+            actors.splice(index, 1);
+          }
+        }
+      }
+
       const labelmapImageData = this.props.paintFilterLabelMapImageData;
 
       const labelmap = createLabelPipeline(
@@ -448,6 +465,15 @@ export default class View2D extends Component {
       );
 
       this.labelmap = labelmap;
+
+      // Add actors.
+      if (this.labelmap && this.labelmap.actor) {
+        this.renderer.addVolume(this.labelmap.actor);
+
+        if (this.api) {
+          this.api.actors = this.api.actors.concat(this.labelmap.actor);
+        }
+      }
 
       labelmap.mapper.setInputConnection(this.paintFilter.getOutputPort());
 
