@@ -58,7 +58,7 @@ export default class View2D extends Component {
     };
     this.interactorStyleSubs = [];
     this.state = {
-      voi: this.getVOI(props.volumes[0]),
+      voi: this.getVOI(props.volumes[0])
     };
 
     this.apiProperties = {};
@@ -207,6 +207,11 @@ export default class View2D extends Component {
     const boundSetSegmentRGBA = this.setSegmentRGBA.bind(this);
     const boundSetSegmentAlpha = this.setSegmentAlpha.bind(this);
     const boundUpdateImage = this.updateImage.bind(this);
+    const boundSetSegmentVisibility = this.setSegmentVisibility.bind(this);
+    const boundSetGlobalOpacity = this.setGlobalOpacity.bind(this);
+    const boundSetVisibility = this.setVisibility.bind(this);
+    const boundSetOutlineThickness = this.setOutlineThickness.bind(this);
+    const boundOutlineRendering = this.setOutlineRendering.bind(this);
 
     this.svgWidgets = {};
 
@@ -238,6 +243,11 @@ export default class View2D extends Component {
         setSegmentRGB: boundSetSegmentRGB,
         setSegmentRGBA: boundSetSegmentRGBA,
         setSegmentAlpha: boundSetSegmentAlpha,
+        setSegmentVisibility: boundSetSegmentVisibility,
+        setGlobalOpacity: boundSetGlobalOpacity,
+        setVisibility: boundSetVisibility,
+        setOutlineThickness: boundSetOutlineThickness,
+        setOutlineRendering: boundOutlineRendering,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -374,10 +384,53 @@ export default class View2D extends Component {
     this.setSegmentAlpha(segmentIndex, alpha);
   }
 
+  setGlobalOpacity(globalOpacity) {
+    const { labelmap } = this;
+    const colorLUT = this.props.labelmapRenderingOptions.colorLUT;
+    if (colorLUT) {
+      // TODO -> It seems to crash if you set it higher than 256??
+      const numColors = Math.min(256, colorLUT.length);
+
+      for (let i = 0; i < numColors; i++) {
+        //for (let i = 0; i < colorLUT.length; i++) {
+        const color = colorLUT[i];
+        labelmap.cfun.addRGBPoint(
+          i,
+          color[0] / 255,
+          color[1] / 255,
+          color[2] / 255
+        );
+
+        // Set the opacity per label.
+        const segmentOpacity = (color[3] / 255) * globalOpacity;
+        labelmap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
+      }
+    }
+  };
+
+  setVisibility(visible) {
+    const { labelmap } = this;
+    labelmap.actor.setVisibility(visible);
+  };
+
+  setOutlineThickness(outlineThickness) {
+    const { labelmap } = this;
+    labelmap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
+  };
+
+  setOutlineRendering(renderOutline) {
+    const { labelmap } = this;
+    labelmap.actor.getProperty().setUseLabelOutline(renderOutline);
+  };
+
   setSegmentRGB(segmentIndex, [red, green, blue]) {
     const { labelmap } = this;
 
     labelmap.cfun.addRGBPoint(segmentIndex, red / 255, green / 255, blue / 255);
+  }
+
+  setSegmentVisibility(segmentIndex, isVisible) {
+    this.setSegmentAlpha(segmentIndex, isVisible ? 255 : 0);
   }
 
   setSegmentAlpha(segmentIndex, alpha) {
@@ -434,7 +487,7 @@ export default class View2D extends Component {
 
     if (
       prevProps.paintFilterLabelMapImageData !==
-        this.props.paintFilterLabelMapImageData &&
+      this.props.paintFilterLabelMapImageData &&
       this.props.paintFilterLabelMapImageData
     ) {
       this.subs.labelmap.unsubscribe();
@@ -493,7 +546,7 @@ export default class View2D extends Component {
     if (
       prevProps.labelmapRenderingOptions &&
       prevProps.labelmapRenderingOptions.visible !==
-        this.props.labelmapRenderingOptions.visible
+      this.props.labelmapRenderingOptions.visible
     ) {
       this.labelmap.actor.setVisibility(
         prevProps.labelmapRenderingOptions.visible
