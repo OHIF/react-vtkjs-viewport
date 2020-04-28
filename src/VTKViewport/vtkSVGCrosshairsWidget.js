@@ -180,7 +180,7 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
       const renderer = api.genericRenderWindow.getRenderer();
       const wPos = vtkCoordinate.newInstance();
       wPos.setCoordinateSystemToWorld();
-      wPos.setValue(worldPos);
+      wPos.setValue(...worldPos);
 
       const displayPosition = wPos.getComputedDisplayValue(renderer);
 
@@ -205,7 +205,7 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
 
     const wPos = vtkCoordinate.newInstance();
     wPos.setCoordinateSystemToWorld();
-    wPos.setValue(cachedCrosshairWorldPosition);
+    wPos.setValue(...cachedCrosshairWorldPosition);
 
     const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
 
