@@ -214,6 +214,7 @@ export default class View2D extends Component {
     const boundSetVisibility = this.setVisibility.bind(this);
     const boundSetOutlineThickness = this.setOutlineThickness.bind(this);
     const boundOutlineRendering = this.setOutlineRendering.bind(this);
+    const boundRequestNewSegmentation = this.requestNewSegmentation.bind(this);
 
     this.svgWidgets = {};
 
@@ -250,6 +251,7 @@ export default class View2D extends Component {
         setVisibility: boundSetVisibility,
         setOutlineThickness: boundSetOutlineThickness,
         setOutlineRendering: boundOutlineRendering,
+        requestNewSegmentation: boundRequestNewSegmentation,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -390,22 +392,26 @@ export default class View2D extends Component {
     const { labelmap } = this;
     const colorLUT = this.props.labelmapRenderingOptions.colorLUT;
     setGlobalOpacity(labelmap, colorLUT, globalOpacity);
-  };
+  }
 
   setVisibility(visible) {
     const { labelmap } = this;
     labelmap.actor.setVisibility(visible);
-  };
+  }
 
   setOutlineThickness(outlineThickness) {
     const { labelmap } = this;
     labelmap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
-  };
+  }
 
   setOutlineRendering(renderOutline) {
     const { labelmap } = this;
     labelmap.actor.getProperty().setUseLabelOutline(renderOutline);
-  };
+  }
+
+  requestNewSegmentation() {
+    this.props.labelmapRenderingOptions.onNewSegmentationRequested();
+  }
 
   setSegmentRGB(segmentIndex, [red, green, blue]) {
     const { labelmap } = this;
