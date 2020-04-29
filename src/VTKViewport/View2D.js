@@ -14,6 +14,7 @@ import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
 import { uuidv4 } from './../helpers';
+import setGlobalOpacity from './setGlobalOpacity';
 
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
@@ -39,6 +40,7 @@ export default class View2D extends Component {
     labelmapRenderingOptions: {
       visible: true,
       renderOutline: true,
+      segmentsDefaultProperties: []
     },
   };
 
@@ -387,25 +389,7 @@ export default class View2D extends Component {
   setGlobalOpacity(globalOpacity) {
     const { labelmap } = this;
     const colorLUT = this.props.labelmapRenderingOptions.colorLUT;
-    if (colorLUT) {
-      // TODO -> It seems to crash if you set it higher than 256??
-      const numColors = Math.min(256, colorLUT.length);
-
-      for (let i = 0; i < numColors; i++) {
-        //for (let i = 0; i < colorLUT.length; i++) {
-        const color = colorLUT[i];
-        labelmap.cfun.addRGBPoint(
-          i,
-          color[0] / 255,
-          color[1] / 255,
-          color[2] / 255
-        );
-
-        // Set the opacity per label.
-        const segmentOpacity = (color[3] / 255) * globalOpacity;
-        labelmap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
-      }
-    }
+    setGlobalOpacity(labelmap, colorLUT, globalOpacity);
   };
 
   setVisibility(visible) {
@@ -518,6 +502,13 @@ export default class View2D extends Component {
       );
 
       this.labelmap = labelmap;
+
+      this.props.labelmapRenderingOptions.segmentsDefaultProperties
+        .forEach((properties, segmentNumber) => {
+          if (properties) {
+            this.setSegmentVisibility(segmentNumber, properties.visible);
+          }
+        });
 
       // Add actors.
       if (this.labelmap && this.labelmap.actor) {
