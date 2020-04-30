@@ -40,7 +40,8 @@ export default class View2D extends Component {
     labelmapRenderingOptions: {
       visible: true,
       renderOutline: true,
-      segmentsDefaultProperties: []
+      segmentsDefaultProperties: [],
+      onNewSegmentationRequested: () => { }
     },
   };
 

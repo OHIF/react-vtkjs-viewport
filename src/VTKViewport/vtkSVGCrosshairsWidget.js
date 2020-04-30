@@ -136,10 +136,10 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
 
-    publicAPI.moveCrosshairs(worldPos, apis, apiIndex);
+    publicAPI.moveCrosshairs(worldPos, apis);
   };
 
-  publicAPI.moveCrosshairs = (worldPos, apis, apiIndex) => {
+  publicAPI.moveCrosshairs = (worldPos, apis) => {
     if (
       worldPos === undefined ||
       apis === undefined
@@ -153,28 +153,26 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
     apis.forEach((api, viewportIndex) => {
       api.set('cachedCrosshairWorldPosition', worldPos);
 
-      if (!apiIndex || viewportIndex !== apiIndex) {
-        // We are basically doing the same as getSlice but with the world coordinate
-        // that we want to jump to instead of the camera focal point.
-        // I would rather do the camera adjustment directly but I keep
-        // doing it wrong and so this is good enough for now.
-        const renderWindow = api.genericRenderWindow.getRenderWindow();
+      // We are basically doing the same as getSlice but with the world coordinate
+      // that we want to jump to instead of the camera focal point.
+      // I would rather do the camera adjustment directly but I keep
+      // doing it wrong and so this is good enough for now.
+      const renderWindow = api.genericRenderWindow.getRenderWindow();
 
-        const istyle = renderWindow.getInteractor().getInteractorStyle();
-        const sliceNormal = istyle.getSliceNormal();
-        const transform = vtkMatrixBuilder
-          .buildFromDegree()
-          .identity()
-          .rotateFromDirections(sliceNormal, [1, 0, 0]);
+      const istyle = renderWindow.getInteractor().getInteractorStyle();
+      const sliceNormal = istyle.getSliceNormal();
+      const transform = vtkMatrixBuilder
+        .buildFromDegree()
+        .identity()
+        .rotateFromDirections(sliceNormal, [1, 0, 0]);
 
-        const mutatedWorldPos = worldPos.slice();
-        transform.apply(mutatedWorldPos);
-        const slice = mutatedWorldPos[0];
+      const mutatedWorldPos = worldPos.slice();
+      transform.apply(mutatedWorldPos);
+      const slice = mutatedWorldPos[0];
 
-        istyle.setSlice(slice);
+      istyle.setSlice(slice);
 
-        renderWindow.render();
-      }
+      renderWindow.render();
 
       const renderer = api.genericRenderWindow.getRenderer();
       const wPos = vtkCoordinate.newInstance();
@@ -225,7 +223,7 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
 
-    publicAPI.moveCrosshairs(worldPos, [api], 0);
+    publicAPI.moveCrosshairs(worldPos, [api]);
   };
 }
 
