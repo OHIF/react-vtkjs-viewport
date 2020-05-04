@@ -384,7 +384,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       const wPos = vtkCoordinate.newInstance();
       wPos.setCoordinateSystemToWorld();
-      wPos.setValue(cachedCrosshairWorldPosition);
+      wPos.setValue(...cachedCrosshairWorldPosition);
 
       const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
         renderer

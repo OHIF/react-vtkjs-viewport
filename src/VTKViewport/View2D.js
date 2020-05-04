@@ -14,6 +14,7 @@ import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
 import createLabelPipeline from './createLabelPipeline';
 import { uuidv4 } from './../helpers';
+import setGlobalOpacity from './setGlobalOpacity';
 
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
 
@@ -39,6 +40,8 @@ export default class View2D extends Component {
     labelmapRenderingOptions: {
       visible: true,
       renderOutline: true,
+      segmentsDefaultProperties: [],
+      onNewSegmentationRequested: () => { }
     },
   };
 
@@ -58,7 +61,7 @@ export default class View2D extends Component {
     };
     this.interactorStyleSubs = [];
     this.state = {
-      voi: this.getVOI(props.volumes[0]),
+      voi: this.getVOI(props.volumes[0])
     };
 
     this.apiProperties = {};
@@ -207,6 +210,12 @@ export default class View2D extends Component {
     const boundSetSegmentRGBA = this.setSegmentRGBA.bind(this);
     const boundSetSegmentAlpha = this.setSegmentAlpha.bind(this);
     const boundUpdateImage = this.updateImage.bind(this);
+    const boundSetSegmentVisibility = this.setSegmentVisibility.bind(this);
+    const boundSetGlobalOpacity = this.setGlobalOpacity.bind(this);
+    const boundSetVisibility = this.setVisibility.bind(this);
+    const boundSetOutlineThickness = this.setOutlineThickness.bind(this);
+    const boundOutlineRendering = this.setOutlineRendering.bind(this);
+    const boundRequestNewSegmentation = this.requestNewSegmentation.bind(this);
 
     this.svgWidgets = {};
 
@@ -238,6 +247,12 @@ export default class View2D extends Component {
         setSegmentRGB: boundSetSegmentRGB,
         setSegmentRGBA: boundSetSegmentRGBA,
         setSegmentAlpha: boundSetSegmentAlpha,
+        setSegmentVisibility: boundSetSegmentVisibility,
+        setGlobalOpacity: boundSetGlobalOpacity,
+        setVisibility: boundSetVisibility,
+        setOutlineThickness: boundSetOutlineThickness,
+        setOutlineRendering: boundOutlineRendering,
+        requestNewSegmentation: boundRequestNewSegmentation,
         get: boundGetApiProperty,
         set: boundSetApiProperty,
         type: 'VIEW2D',
@@ -374,10 +389,39 @@ export default class View2D extends Component {
     this.setSegmentAlpha(segmentIndex, alpha);
   }
 
+  setGlobalOpacity(globalOpacity) {
+    const { labelmap } = this;
+    const colorLUT = this.props.labelmapRenderingOptions.colorLUT;
+    setGlobalOpacity(labelmap, colorLUT, globalOpacity);
+  }
+
+  setVisibility(visible) {
+    const { labelmap } = this;
+    labelmap.actor.setVisibility(visible);
+  }
+
+  setOutlineThickness(outlineThickness) {
+    const { labelmap } = this;
+    labelmap.actor.getProperty().setLabelOutlineThickness(outlineThickness);
+  }
+
+  setOutlineRendering(renderOutline) {
+    const { labelmap } = this;
+    labelmap.actor.getProperty().setUseLabelOutline(renderOutline);
+  }
+
+  requestNewSegmentation() {
+    this.props.labelmapRenderingOptions.onNewSegmentationRequested();
+  }
+
   setSegmentRGB(segmentIndex, [red, green, blue]) {
     const { labelmap } = this;
 
     labelmap.cfun.addRGBPoint(segmentIndex, red / 255, green / 255, blue / 255);
+  }
+
+  setSegmentVisibility(segmentIndex, isVisible) {
+    this.setSegmentAlpha(segmentIndex, isVisible ? 255 : 0);
   }
 
   setSegmentAlpha(segmentIndex, alpha) {
@@ -434,7 +478,7 @@ export default class View2D extends Component {
 
     if (
       prevProps.paintFilterLabelMapImageData !==
-        this.props.paintFilterLabelMapImageData &&
+      this.props.paintFilterLabelMapImageData &&
       this.props.paintFilterLabelMapImageData
     ) {
       this.subs.labelmap.unsubscribe();
@@ -466,6 +510,13 @@ export default class View2D extends Component {
 
       this.labelmap = labelmap;
 
+      this.props.labelmapRenderingOptions.segmentsDefaultProperties
+        .forEach((properties, segmentNumber) => {
+          if (properties) {
+            this.setSegmentVisibility(segmentNumber, properties.visible);
+          }
+        });
+
       // Add actors.
       if (this.labelmap && this.labelmap.actor) {
         this.renderer.addVolume(this.labelmap.actor);
@@ -493,7 +544,7 @@ export default class View2D extends Component {
     if (
       prevProps.labelmapRenderingOptions &&
       prevProps.labelmapRenderingOptions.visible !==
-        this.props.labelmapRenderingOptions.visible
+      this.props.labelmapRenderingOptions.visible
     ) {
       this.labelmap.actor.setVisibility(
         prevProps.labelmapRenderingOptions.visible

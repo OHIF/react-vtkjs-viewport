@@ -4,6 +4,7 @@ import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
 import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from 'vtk.js/Sources/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from 'vtk.js/Sources/Common/DataModel/PiecewiseFunction';
+import setGlobalOpacity from './setGlobalOpacity';
 
 export default function createLabelPipeline(
   backgroundImageData,
@@ -79,23 +80,7 @@ export default function createLabelPipeline(
 
   // Set up labelMap color and opacity mapping
   if (colorLUT) {
-    // TODO -> It seems to crash if you set it higher than 256??
-    const numColors = Math.min(256, colorLUT.length);
-
-    for (let i = 0; i < numColors; i++) {
-      //for (let i = 0; i < colorLUT.length; i++) {
-      const color = colorLUT[i];
-      labelMap.cfun.addRGBPoint(
-        i,
-        color[0] / 255,
-        color[1] / 255,
-        color[2] / 255
-      );
-
-      // Set the opacity per label.
-      const segmentOpacity = (color[3] / 255) * globalOpacity;
-      labelMap.ofun.addPointLong(i, segmentOpacity, 0.5, 1.0);
-    }
+    setGlobalOpacity(labelMap, colorLUT, globalOpacity);
   } else {
     // Some default.
     labelMap.cfun.addRGBPoint(1, 1, 0, 0); // label '1' will be red
