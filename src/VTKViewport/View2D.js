@@ -619,6 +619,8 @@ export default class View2D extends Component {
     if (this.props.onDestroyed) {
       this.props.onDestroyed();
     }
+
+    this.genericRenderWindow.delete();
   }
 
   getVOI = actor => {
