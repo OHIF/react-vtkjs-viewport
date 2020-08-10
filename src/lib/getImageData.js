@@ -75,6 +75,27 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
+  const _publishPixelDataInserted = count => {
+    imageDataObject.subscriptions.onPixelDataInserted.forEach(callback => {
+      callback(count);
+    });
+  };
+
+  const _publishAllPixelDataInseted = () => {
+    imageDataObject.subscriptions.onAllPixelDataInserted.forEach(callback => {
+      callback();
+    });
+    imageDataObject.isLoading = false;
+    imageDataObject.loaded = true;
+    imageDataObject.vtkImageData.modified();
+
+    // Remove all subscriptions on completion.
+    imageDataObject.subscriptions = {
+      onPixelDataInserted: [],
+      onAllPixelDataInserted: [],
+    };
+  };
+
   const imageDataObject = {
     imageIds,
     metaData0,
@@ -87,6 +108,18 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     metaDataMap,
     sortedDatasets,
     loaded: false,
+    subscriptions: {
+      onPixelDataInserted: [],
+      onAllPixelDataInserted: [],
+    },
+    onPixelDataInserted: callback => {
+      imageDataObject.subscriptions.onPixelDataInserted.push(callback);
+    },
+    onAllPixelDataInserted: callback => {
+      imageDataObject.subscriptions.onAllPixelDataInserted.push(callback);
+    },
+    _publishPixelDataInserted,
+    _publishAllPixelDataInseted,
   };
 
   imageDataCache.set(displaySetInstanceUid, imageDataObject);

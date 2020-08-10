@@ -145,7 +145,8 @@ class VTKCornerstonePaintingSyncExample extends Component {
       };
 
       loadImageData(imageDataObject);
-      Promise.all(imageDataObject.insertPixelDataPromises).then(() => {
+
+      const onAllPixelDataInsertedCallback = () => {
         const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
         const rgbTransferFunction = actor
@@ -166,7 +167,9 @@ class VTKCornerstonePaintingSyncExample extends Component {
           globalOpacity: segmentationModule.configuration.fillAlpha,
           outlineThickness: segmentationModule.configuration.outlineThickness,
         });
-      });
+      };
+
+      imageDataObject.onAllPixelDataInserted(onAllPixelDataInsertedCallback);
     });
   }
 
@@ -321,6 +324,7 @@ class VTKCornerstonePaintingSyncExample extends Component {
                   colorLUT,
                   globalOpacity,
                   outlineThickness,
+                  segmentsDefaultProperties: [],
                   visible: true,
                   renderOutline: true,
                 }}

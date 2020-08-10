@@ -77,7 +77,7 @@ class VTKCrosshairsExample extends Component {
 
     const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');
 
-    Promise.all(ctImageDataObject.insertPixelDataPromises).then(() => {
+    const onAllPixelDataInsertedCallback = () => {
       const ctImageData = ctImageDataObject.vtkImageData;
 
       const range = ctImageData
@@ -97,7 +97,9 @@ class VTKCrosshairsExample extends Component {
       this.setState({
         volumes: [ctVol],
       });
-    });
+    };
+
+    ctImageDataObject.onAllPixelDataInserted(onAllPixelDataInsertedCallback);
   }
 
   storeApi = viewportIndex => {
