@@ -109,6 +109,9 @@
     "not op_mini all"
   ],
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "package.json",
+    "README.md"
   ]
 }
