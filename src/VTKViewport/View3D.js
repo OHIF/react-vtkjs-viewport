@@ -284,6 +284,8 @@ export default class View3D extends Component {
     if (this.props.onDestroyed) {
       this.props.onDestroyed();
     }
+
+    this.genericRenderWindow.delete();
   }
 
   render() {
