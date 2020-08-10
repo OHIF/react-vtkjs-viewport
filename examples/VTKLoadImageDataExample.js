@@ -109,16 +109,15 @@ class VTKLoadImageDataExample extends Component {
 
         loadImageData(imageDataObject);
 
-        const { insertPixelDataPromises } = imageDataObject;
-        insertPixelDataPromises.forEach(promise => {
-          promise.then(numberProcessed => {
-            const percentComplete = Math.floor(
-              (numberProcessed * 100) / insertPixelDataPromises.length
-            );
+        const onPixelDataInsertedCallback = numberProcessed => {
+          const percentComplete = Math.floor(
+            (numberProcessed * 100) / imageIds.length
+          );
 
-            console.log(`Processing: ${percentComplete}%`);
-          });
-        });
+          console.log(`Processing: ${percentComplete}%`);
+        };
+
+        imageDataObject.onPixelDataInserted(onPixelDataInsertedCallback);
 
         const { actor } = createActorMapper(imageDataObject.vtkImageData);
 
@@ -154,9 +153,11 @@ class VTKLoadImageDataExample extends Component {
 
       istyle.setSliceOrientation(slicePlaneNormal, sliceViewUp);
 
-      this.imageDataObject.insertPixelDataPromises.forEach(promise => {
-        promise.then(() => renderWindow.render());
-      });
+      const onPixelDataInsertedCallback = () => {
+        renderWindow.render();
+      };
+
+      this.imageDataObject.onPixelDataInserted(onPixelDataInsertedCallback);
 
       renderWindow.render();
     };

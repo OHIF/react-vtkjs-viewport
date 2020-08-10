@@ -299,30 +299,28 @@ class VTKFusionExample extends Component {
 
     loadImageData(imageDataObject);
 
-    const { insertPixelDataPromises } = imageDataObject;
+    const numberOfFrames = imageIds.length;
 
-    const numberOfFrames = insertPixelDataPromises.length;
+    const onPixelDataInsertedCallback = numberProcessed => {
+      const percentComplete = Math.floor(
+        (numberProcessed * 100) / numberOfFrames
+      );
 
-    // TODO -> Maybe the component itself should do this.
-    insertPixelDataPromises.forEach(promise => {
-      promise.then(numberProcessed => {
-        const percentComplete = Math.floor(
-          (numberProcessed * 100) / numberOfFrames
-        );
+      if (this.state.percentComplete !== percentComplete) {
+        this.setState({ percentComplete });
+      }
 
-        if (this.state.percentComplete !== percentComplete) {
-          this.setState({ percentComplete });
-        }
+      if (percentComplete % 20 === 0) {
+        this.rerenderAll();
+      }
+    };
 
-        if (percentComplete % 20 === 0) {
-          this.rerenderAll();
-        }
-      });
-    });
-
-    Promise.all(insertPixelDataPromises).then(() => {
+    const onAllPixelDataInsertedCallback = () => {
       this.rerenderAll();
-    });
+    };
+
+    imageDataObject.onPixelDataInserted(onPixelDataInsertedCallback);
+    imageDataObject.onAllPixelDataInserted(onAllPixelDataInsertedCallback);
 
     return imageDataObject;
   }

@@ -24,7 +24,8 @@
   "peerDependencies": {
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "vtk.js": "^11.14.0"
+    "vtk.js": "^11.14.0",
+    "cornerstone-tools": "^4.11.0"
   },
   "dependencies": {
     "date-fns": "^2.2.1",

@@ -1,4 +1,5 @@
 import cornerstone from 'cornerstone-core';
+import { requestPoolManager } from 'cornerstone-tools';
 import insertSlice from './data/insertSlice.js';
 import getPatientWeightAndCorrectedDose from './data/getPatientWeightAndCorrectedDose.js';
 
@@ -16,7 +17,7 @@ export default function loadImageDataProgressively(imageDataObject) {
     metaDataMap,
     sortedDatasets,
   } = imageDataObject;
-  const loadImagePromises = imageIds.map(cornerstone.loadAndCacheImage);
+
   const imageId0 = imageIds[0];
 
   const seriesModule = cornerstone.metaData.get(
@@ -55,60 +56,66 @@ export default function loadImageDataProgressively(imageDataObject) {
   let reRenderTarget = reRenderFraction;
 
   const insertPixelData = image => {
-    return new Promise(resolve => {
-      const { imagePositionPatient } = metaDataMap.get(image.imageId);
+    const { imagePositionPatient } = metaDataMap.get(image.imageId);
 
-      const sliceIndex = sortedDatasets.findIndex(
-        dataset => dataset.imagePositionPatient === imagePositionPatient
-      );
+    const sliceIndex = sortedDatasets.findIndex(
+      dataset => dataset.imagePositionPatient === imagePositionPatient
+    );
 
-      const { max, min } = insertSlice(
-        vtkImageData,
-        sliceIndex,
-        image,
-        modality,
-        modalitySpecificScalingParameters
-      );
+    const { max, min } = insertSlice(
+      vtkImageData,
+      sliceIndex,
+      image,
+      modality,
+      modalitySpecificScalingParameters
+    );
 
-      if (max > range.max) {
-        range.max = max;
-      }
+    if (max > range.max) {
+      range.max = max;
+    }
 
-      if (min < range.min) {
-        range.min = min;
-      }
+    if (min < range.min) {
+      range.min = min;
+    }
 
-      const dataArray = vtkImageData.getPointData().getScalars();
+    const dataArray = vtkImageData.getPointData().getScalars();
 
-      dataArray.setRange(range, 1);
-      numberProcessed++;
+    dataArray.setRange(range, 1);
+    numberProcessed++;
 
-      if (numberProcessed > reRenderTarget) {
-        reRenderTarget += reRenderFraction;
+    if (numberProcessed > reRenderTarget) {
+      reRenderTarget += reRenderFraction;
 
-        vtkImageData.modified();
+      vtkImageData.modified();
+    }
 
-        // rerender
-      }
+    imageDataObject._publishPixelDataInserted(numberProcessed);
 
-      resolve(numberProcessed);
-    });
+    if (numberProcessed === numberOfFrames) {
+      // Done loading, publish complete and remove all subscriptions.
+      imageDataObject._publishAllPixelDataInseted();
+    }
   };
 
-  const insertPixelDataPromises = [];
+  prefetchImageIds(imageIds, imageDataObject, insertPixelData);
+}
 
-  loadImagePromises.forEach(promise => {
-    const insertPixelDataPromise = promise.then(insertPixelData);
+const requestType = 'prefetch';
+const preventCache = false;
 
-    insertPixelDataPromises.push(insertPixelDataPromise);
+function prefetchImageIds(imageIds, imageDataObject, insertPixelData) {
+  const noop = () => {};
+
+  imageIds.forEach(imageId => {
+    requestPoolManager.addRequest(
+      {},
+      imageId,
+      requestType,
+      preventCache,
+      insertPixelData,
+      noop
+    );
   });
 
-  Promise.all(insertPixelDataPromises).then(() => {
-    imageDataObject.isLoading = false;
-    imageDataObject.loaded = true;
-
-    vtkImageData.modified();
-  });
-
-  imageDataObject.insertPixelDataPromises = insertPixelDataPromises;
+  requestPoolManager.startGrabbing();
 }
