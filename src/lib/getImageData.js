@@ -69,9 +69,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
 
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
   imageData.setSpacing(xSpacing, ySpacing, zSpacing);
-
   imageData.setDirection(direction);
-
   imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
