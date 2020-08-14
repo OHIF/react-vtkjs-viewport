@@ -79,7 +79,13 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     });
   };
 
-  const _publishAllPixelDataInseted = () => {
+  const _publishPixelDataInsertedError = error => {
+    imageDataObject.subscriptions.onPixelDataInsertedError.forEach(callback => {
+      callback(error);
+    });
+  };
+
+  const _publishAllPixelDataInserted = () => {
     imageDataObject.subscriptions.onAllPixelDataInserted.forEach(callback => {
       callback();
     });
@@ -90,6 +96,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     // Remove all subscriptions on completion.
     imageDataObject.subscriptions = {
       onPixelDataInserted: [],
+      onPixelDataInsertedError: [],
       onAllPixelDataInserted: [],
     };
   };
@@ -108,16 +115,21 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
     loaded: false,
     subscriptions: {
       onPixelDataInserted: [],
+      onPixelDataInsertedError: [],
       onAllPixelDataInserted: [],
     },
     onPixelDataInserted: callback => {
       imageDataObject.subscriptions.onPixelDataInserted.push(callback);
     },
+    onPixelDataInsertedError: callback => {
+      imageDataObject.subscriptions.onPixelDataInsertedError.push(callback);
+    },
     onAllPixelDataInserted: callback => {
       imageDataObject.subscriptions.onAllPixelDataInserted.push(callback);
     },
     _publishPixelDataInserted,
-    _publishAllPixelDataInseted,
+    _publishAllPixelDataInserted,
+    _publishPixelDataInsertedError,
   };
 
   imageDataCache.set(displaySetInstanceUid, imageDataObject);

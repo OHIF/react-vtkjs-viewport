@@ -55,6 +55,16 @@ export default function loadImageDataProgressively(imageDataObject) {
   const reRenderFraction = numberOfFrames / 5;
   let reRenderTarget = reRenderFraction;
 
+  const insertPixelDataErrorHandler = error => {
+    numberProcessed++;
+    imageDataObject._publishPixelDataInsertedError(error);
+
+    if (numberProcessed === numberOfFrames) {
+      // Done loading, publish complete and remove all subscriptions.
+      imageDataObject._publishAllPixelDataInserted();
+    }
+  };
+
   const insertPixelData = image => {
     const { imagePositionPatient } = metaDataMap.get(image.imageId);
 
@@ -93,19 +103,21 @@ export default function loadImageDataProgressively(imageDataObject) {
 
     if (numberProcessed === numberOfFrames) {
       // Done loading, publish complete and remove all subscriptions.
-      imageDataObject._publishAllPixelDataInseted();
+      imageDataObject._publishAllPixelDataInserted();
     }
   };
 
-  prefetchImageIds(imageIds, imageDataObject, insertPixelData);
+  prefetchImageIds(imageIds, insertPixelData, insertPixelDataErrorHandler);
 }
 
 const requestType = 'prefetch';
 const preventCache = false;
 
-function prefetchImageIds(imageIds, imageDataObject, insertPixelData) {
-  const noop = () => {};
-
+function prefetchImageIds(
+  imageIds,
+  insertPixelData,
+  insertPixelDataErrorHandler
+) {
   imageIds.forEach(imageId => {
     requestPoolManager.addRequest(
       {},
@@ -113,7 +125,7 @@ function prefetchImageIds(imageIds, imageDataObject, insertPixelData) {
       requestType,
       preventCache,
       insertPixelData,
-      noop
+      insertPixelDataErrorHandler
     );
   });
 
