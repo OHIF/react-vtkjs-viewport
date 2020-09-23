@@ -1,6 +1,7 @@
 import macro from 'vtk.js/Sources/macro';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
+import { vec2, vec3 } from 'gl-matrix';
 
 let instanceId = 1;
 
@@ -34,8 +35,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       return;
     }
 
-    debugger;
-
     const width = parseInt(svgContainer.getAttribute('width'), 10);
     const height = parseInt(svgContainer.getAttribute('height'), 10);
     // Unused
@@ -43,6 +42,8 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     // const heightScale = svgContainer.getBoundingClientRect().height / height;
     // const widthClient = svgContainer.getBoundingClientRect().width;
     // const heightClient = svgContainer.getBoundingClientRect().height;
+
+    debugger;
 
     const p = point.slice();
     p[0] = point[0] * scale;
@@ -54,40 +55,112 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     const bottom = height / scale;
 
     const lines = [
-      {
-        points: [
-          { x: p[0], y: top },
-          { x: p[0], y: bottom },
-        ],
-        color: null,
-      },
-      {
-        points: [
-          { x: left, y: p[1] },
-          { x: right, y: p[1] },
-        ],
-        color: null,
-      },
+      // {
+      //   points: [
+      //     { x: p[0], y: top },
+      //     { x: p[0], y: bottom },
+      //   ],
+      //   color: null,
+      //   apiIndex: null,
+      // },
+      // {
+      //   points: [
+      //     { x: left, y: p[1] },
+      //     { x: right, y: p[1] },
+      //   ],
+      //   color: null,
+      //   apiIndex: null,
+      // },
     ];
 
     const thisApi = apis[apiIndex];
 
-    let lineIndex = 0;
+    //let lineIndex = 0;
 
-    console.log(`this: ${apiIndex}`);
+    const crosshairWorldPosition = apis[apiIndex].get(
+      'cachedCrosshairWorldPosition'
+    );
+
+    // TEMP
+    const viewUpThisApi = thisApi.getViewUp();
+    const sliceNormalThisApi = thisApi.getSliceNormal();
+
+    let xAxisThisApi = [];
+
+    vec3.cross(xAxisThisApi, viewUpThisApi, sliceNormalThisApi);
+    vec3.normalize(xAxisThisApi, xAxisThisApi);
+
+    console.log(`==== THIS API (${apiIndex})=====`);
+
+    console.log(`Center: [${p[0]},${p[1]},${p[2]}]`);
+    console.log(
+      `viewUp: [${viewUpThisApi[0]},${viewUpThisApi[1]},${viewUpThisApi[2]}]`
+    );
+    console.log(
+      `xAxis: [${xAxisThisApi[0]},${xAxisThisApi[1]},${xAxisThisApi[2]}]`
+    );
+
+    // TEMP
+
+    debugger;
 
     for (let i = 0; i < apis.length; i++) {
       if (i !== apiIndex) {
         const api = apis[i];
 
-        lines[lineIndex].color = strokeColors[i];
-        lineIndex++; // Temp to test.
+        console.log(`API ${i}`);
 
-        console.log(`line: ${i}`);
+        const viewUp = api.getViewUp();
+        const sliceNormal = api.getSliceNormal();
+
+        let xAxis = [];
+
+        vec3.cross(xAxis, viewUp, sliceNormal);
+        vec3.normalize(xAxis, xAxis);
+
+        console.log('==== THIS API =====');
+        console.log(`viewUp: [${viewUp[0]},${viewUp[1]},${viewUp[2]}]`);
+        console.log(`xAxis: [${xAxis[0]},${xAxis[1]},${xAxis[2]}]`);
+
+        // get a point in the plane.
+        const referenceworldPointInPlane = [
+          crosshairWorldPosition[0] + (viewUp[0] + xAxis[0]) * 100,
+          crosshairWorldPosition[1] + (viewUp[1] + xAxis[1]) * 100,
+          crosshairWorldPosition[2] + (viewUp[2] + xAxis[2]) * 100,
+        ];
+
+        // thisApi as we want to map it to the displayPosition of THIS api.
+        const renderer = thisApi.genericRenderWindow.getRenderer();
+        const wPos = vtkCoordinate.newInstance();
+        wPos.setCoordinateSystemToWorld();
+        wPos.setValue(...referenceworldPointInPlane);
+
+        const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
+          renderer
+        );
+
+        debugger;
+
+        let directionFromCenter = [];
+        vec2.subtract(directionFromCenter, p, doubleDisplayPosition);
+
+        debugger;
+        const line = {
+          points: [
+            { x: p[0], y: p[1] },
+            { x: doubleDisplayPosition[0], y: doubleDisplayPosition[1] },
+          ],
+          color: strokeColors[i],
+          apiIndex: i,
+        };
+
+        lines.push(line);
+
+        // lines[lineIndex].color = ;
+        // lines[lineIndex].apiIndex = i;
+        //lineIndex++; // Temp to test.
       }
     }
-
-    debugger;
 
     if (model.display) {
       node.innerHTML = `

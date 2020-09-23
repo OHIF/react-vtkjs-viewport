@@ -41,7 +41,7 @@ export default class View2D extends Component {
       visible: true,
       renderOutline: true,
       segmentsDefaultProperties: [],
-      onNewSegmentationRequested: () => { }
+      onNewSegmentationRequested: () => {},
     },
   };
 
@@ -61,7 +61,7 @@ export default class View2D extends Component {
     };
     this.interactorStyleSubs = [];
     this.state = {
-      voi: this.getVOI(props.volumes[0])
+      voi: this.getVOI(props.volumes[0]),
     };
 
     this.apiProperties = {};
@@ -200,6 +200,8 @@ export default class View2D extends Component {
 
     const boundUpdateVOI = this.updateVOI.bind(this);
     const boundGetOrienation = this.getOrientation.bind(this);
+    const boundGetViewUp = this.getViewUp.bind(this);
+    const boundGetSliceNormal = this.getSliceNormal.bind(this);
     const boundSetInteractorStyle = this.setInteractorStyle.bind(this);
     const boundGetSlabThickness = this.getSlabThickness.bind(this);
     const boundSetSlabThickness = this.setSlabThickness.bind(this);
@@ -241,6 +243,8 @@ export default class View2D extends Component {
         updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
         getOrientation: boundGetOrienation,
+        getViewUp: boundGetViewUp,
+        getSliceNormal: boundGetSliceNormal,
         setInteractorStyle: boundSetInteractorStyle,
         getSlabThickness: boundGetSlabThickness,
         setSlabThickness: boundSetSlabThickness,
@@ -260,6 +264,20 @@ export default class View2D extends Component {
 
       this.props.onCreated(api);
     }
+  }
+
+  getViewUp() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    return currentIStyle.getViewUp();
+  }
+
+  getSliceNormal() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    return currentIStyle.getSliceNormal();
   }
 
   getApiProperty(propertyName) {
@@ -478,7 +496,7 @@ export default class View2D extends Component {
 
     if (
       prevProps.paintFilterLabelMapImageData !==
-      this.props.paintFilterLabelMapImageData &&
+        this.props.paintFilterLabelMapImageData &&
       this.props.paintFilterLabelMapImageData
     ) {
       this.subs.labelmap.unsubscribe();
@@ -510,12 +528,13 @@ export default class View2D extends Component {
 
       this.labelmap = labelmap;
 
-      this.props.labelmapRenderingOptions.segmentsDefaultProperties
-        .forEach((properties, segmentNumber) => {
+      this.props.labelmapRenderingOptions.segmentsDefaultProperties.forEach(
+        (properties, segmentNumber) => {
           if (properties) {
             this.setSegmentVisibility(segmentNumber, properties.visible);
           }
-        });
+        }
+      );
 
       // Add actors.
       if (this.labelmap && this.labelmap.actor) {
@@ -544,7 +563,7 @@ export default class View2D extends Component {
     if (
       prevProps.labelmapRenderingOptions &&
       prevProps.labelmapRenderingOptions.visible !==
-      this.props.labelmapRenderingOptions.visible
+        this.props.labelmapRenderingOptions.visible
     ) {
       this.labelmap.actor.setVisibility(
         prevProps.labelmapRenderingOptions.visible
