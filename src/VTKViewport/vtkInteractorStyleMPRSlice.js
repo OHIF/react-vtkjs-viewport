@@ -246,7 +246,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       const api = apis[apiIndex];
 
-      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      if (api.svgWidgets.crosshairsWidget) {
+        api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      }
+      if (api.svgWidgets.rotatableCrosshairsWidget) {
+        api.svgWidgets.rotatableCrosshairsWidget.updateCrosshairForApi(api);
+      }
     }
   }
 
@@ -270,7 +275,13 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const { apis, apiIndex } = model;
       const api = apis[apiIndex];
 
-      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      // TODO -> This is kinda bad but the only way with the current setup.
+      if (api.svgWidgets.crosshairsWidget) {
+        api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      }
+      if (api.svgWidgets.rotatableCrosshairsWidget) {
+        api.svgWidgets.rotatableCrosshairsWidget.updateCrosshairForApi(api);
+      }
     }
   };
 
@@ -280,7 +291,12 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const { apis, apiIndex } = model;
       const api = apis[apiIndex];
 
-      api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      if (api.svgWidgets.crosshairsWidget) {
+        api.svgWidgets.crosshairsWidget.updateCrosshairForApi(api);
+      }
+      if (api.svgWidgets.rotatableCrosshairsWidget) {
+        api.svgWidgets.rotatableCrosshairsWidget.updateCrosshairForApi(api);
+      }
     }
 
     superButtonRelease();
@@ -367,7 +383,10 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
 
       const api = apis[apiIndex];
 
-      if (!api.svgWidgets.crosshairsWidget) {
+      if (
+        !api.svgWidgets.crosshairsWidget &&
+        !api.svgWidgets.rotatableCrosshairsWidget
+      ) {
         // If we aren't using the crosshairs widget, bail out early.
         return;
       }
@@ -407,7 +426,20 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         worldPos[i] += halfSlabThickness * directionOfProjection[i];
       }
 
-      api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
+      if (api.svgWidgets.crosshairsWidget) {
+        api.svgWidgets.crosshairsWidget.moveCrosshairs(
+          worldPos,
+          apis,
+          apiIndex
+        );
+      }
+      if (api.svgWidgets.rotatableCrosshairsWidget) {
+        api.svgWidgets.rotatableCrosshairsWidget.moveCrosshairs(
+          worldPos,
+          apis,
+          apiIndex
+        );
+      }
     }
   };
 

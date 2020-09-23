@@ -1,5 +1,6 @@
 import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
+import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 
 const { States } = Constants;
@@ -48,6 +49,59 @@ function vtkInteractorStyleMPRRotate(publicAPI, model) {
 
     model.rotateStartPos[0] = Math.round(pos[0]);
     model.rotateStartPos[1] = Math.round(pos[1]);
+
+    const { apis, apiIndex } = model;
+    const api = apis[apiIndex];
+
+    if (
+      !api.svgWidgets.crosshairsWidget &&
+      !api.svgWidgets.rotatableCrosshairsWidget
+    ) {
+      // If we aren't using the crosshairs widget, bail out early.
+      return;
+    }
+
+    //const renderer = api.genericRenderWindow.getRenderer();
+    let cachedCrosshairWorldPosition = api.get('cachedCrosshairWorldPosition');
+
+    if (cachedCrosshairWorldPosition === undefined) {
+      // Crosshairs not initilised.
+      return;
+    }
+
+    const wPos = vtkCoordinate.newInstance();
+    wPos.setCoordinateSystemToWorld();
+    wPos.setValue(...cachedCrosshairWorldPosition);
+
+    const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(renderer);
+
+    const dPos = vtkCoordinate.newInstance();
+    dPos.setCoordinateSystemToDisplay();
+
+    dPos.setValue(doubleDisplayPosition[0], doubleDisplayPosition[1], 0);
+    let worldPos = dPos.getComputedWorldValue(renderer);
+
+    const camera = renderer.getActiveCamera();
+    const directionOfProjection = camera.getDirectionOfProjection();
+    const halfSlabThickness = api.getSlabThickness() / 2;
+
+    // Add half of the slab thickness to the world position, such that we select
+    //The center of the slice.
+
+    for (let i = 0; i < worldPos.length; i++) {
+      worldPos[i] += halfSlabThickness * directionOfProjection[i];
+    }
+
+    if (api.svgWidgets.crosshairsWidget) {
+      api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
+    }
+    if (api.svgWidgets.rotatableCrosshairsWidget) {
+      api.svgWidgets.rotatableCrosshairsWidget.moveCrosshairs(
+        worldPos,
+        apis,
+        apiIndex
+      );
+    }
   };
 
   const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;

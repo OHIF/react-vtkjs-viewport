@@ -4,9 +4,11 @@ import {
   View2D,
   getImageData,
   loadImageData,
-  vtkInteractorStyleRotatableMPRCrosshairs,
   vtkSVGRotatableCrosshairsWidget,
+  vtkInteractorStyleRotatableMPRCrosshairs,
   vtkSVGCrosshairsWidget,
+  vtkInteractorStyleMPRRotate,
+  vtkInteractorStyleMPRSlice,
 } from '@vtk-viewport';
 import { api as dicomwebClientApi } from 'dicomweb-client';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
@@ -65,6 +67,7 @@ class VTKRotatableCrosshairsExample extends Component {
   state = {
     volumes: [],
     displayCrosshairs: true,
+    crosshairsTool: true,
   };
 
   async componentDidMount() {
@@ -118,16 +121,15 @@ class VTKRotatableCrosshairsExample extends Component {
         'rotatableCrosshairsWidget'
       );
 
-      /*
-
       const istyle = vtkInteractorStyleRotatableMPRCrosshairs.newInstance();
 
-      // add istyle
+      // // add istyle
       api.setInteractorStyle({
         istyle,
         configuration: { apis, apiIndex: viewportIndex },
       });
-      */
+
+      //api.setInteractorStyle({ istyle });
 
       // set blend mode to MIP.
       const mapper = api.volumes[0].getMapper();
@@ -165,6 +167,31 @@ class VTKRotatableCrosshairsExample extends Component {
       renderWindow.render();
     });
   }
+
+  toggleTool = () => {
+    let { crosshairsTool } = this.state;
+    const apis = this.apis;
+
+    crosshairsTool = !crosshairsTool;
+
+    apis.forEach((api, apiIndex) => {
+      let istyle;
+
+      if (crosshairsTool) {
+        istyle = vtkInteractorStyleRotatableMPRCrosshairs.newInstance();
+      } else {
+        istyle = vtkInteractorStyleMPRRotate.newInstance();
+      }
+
+      // // add istyle
+      api.setInteractorStyle({
+        istyle,
+        configuration: { apis, apiIndex },
+      });
+    });
+
+    this.setState({ crosshairsTool });
+  };
 
   toggleCrosshairs = () => {
     const { displayCrosshairs } = this.state;
@@ -211,6 +238,11 @@ class VTKRotatableCrosshairsExample extends Component {
                 ? 'Hide Crosshairs'
                 : 'Show Crosshairs'}
             </button>
+            <button onClick={this.toggleTool}>
+              {this.state.crosshairsTool
+                ? 'Switch To Rotate'
+                : 'Switch To Crosshairs'}
+            </button>
           </div>
         </div>
         <div className="row">
@@ -240,19 +272,5 @@ class VTKRotatableCrosshairsExample extends Component {
     );
   }
 }
-
-// Test oblique orientation
-// orientation={{
-//   sliceNormal: [
-//     -0.10828626439623286,
-//     0.9374122377127276,
-//     -0.33095676685864234,
-//   ],
-//   viewUp: [
-//     -0.03670857846736908,
-//     0.32891687750816345,
-//     0.9436451196670532,
-//   ],
-// }}
 
 export default VTKRotatableCrosshairsExample;

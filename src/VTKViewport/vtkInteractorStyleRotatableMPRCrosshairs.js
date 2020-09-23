@@ -42,7 +42,11 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       worldPos[i] += halfSlabThickness * directionOfProjection[i];
     }
 
-    api.svgWidgets.crosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
+    api.svgWidgets.rotatableCrosshairsWidget.moveCrosshairs(
+      worldPos,
+      apis,
+      apiIndex
+    );
 
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
   }

@@ -45,6 +45,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     // const heightClient = svgContainer.getBoundingClientRect().height;
 
     const p = point.slice();
+
     p[0] = point[0] * scale;
     p[1] = height - point[1] * scale;
 
@@ -56,24 +57,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     // A "far" distance for line clipping algorithm.
     const farDistance = Math.sqrt(bottom * bottom + right * right);
 
-    const lines = [
-      // {
-      //   points: [
-      //     { x: p[0], y: top },
-      //     { x: p[0], y: bottom },
-      //   ],
-      //   color: null,
-      //   apiIndex: null,
-      // },
-      // {
-      //   points: [
-      //     { x: left, y: p[1] },
-      //     { x: right, y: p[1] },
-      //   ],
-      //   color: null,
-      //   apiIndex: null,
-      // },
-    ];
+    // TODO -> Move this calculation logic to the update function
+    // And then save the values so we can grab them with another func.
+    const lines = [];
 
     const thisApi = apis[apiIndex];
 
@@ -83,32 +69,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       'cachedCrosshairWorldPosition'
     );
 
-    // TEMP
-    const viewUpThisApi = thisApi.getViewUp();
-    const sliceNormalThisApi = thisApi.getSliceNormal();
-
-    let xAxisThisApi = [];
-
-    vec3.cross(xAxisThisApi, viewUpThisApi, sliceNormalThisApi);
-    vec3.normalize(xAxisThisApi, xAxisThisApi);
-
-    console.log(`==== THIS API (${apiIndex})=====`);
-
-    console.log(`Center: [${p[0]},${p[1]},${p[2]}]`);
-    console.log(
-      `viewUp: [${viewUpThisApi[0]},${viewUpThisApi[1]},${viewUpThisApi[2]}]`
-    );
-    console.log(
-      `xAxis: [${xAxisThisApi[0]},${xAxisThisApi[1]},${xAxisThisApi[2]}]`
-    );
-
-    // TEMP
-
     for (let i = 0; i < apis.length; i++) {
       if (i !== apiIndex) {
         const api = apis[i];
-
-        console.log(`API ${i}`);
 
         const viewUp = api.getViewUp();
         const sliceNormal = api.getSliceNormal();
@@ -117,10 +80,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
         vec3.cross(xAxis, viewUp, sliceNormal);
         vec3.normalize(xAxis, xAxis);
-
-        console.log('==== THIS API =====');
-        console.log(`viewUp: [${viewUp[0]},${viewUp[1]},${viewUp[2]}]`);
-        console.log(`xAxis: [${xAxis[0]},${xAxis[1]},${xAxis[2]}]`);
 
         // get a point in the plane.
         // Need a distant world position or we get rounding errors when mapping to screen and don't get nice right angles.
@@ -139,8 +98,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
           renderer
         );
-
-        debugger;
 
         let unitVectorFromCenter = [];
         vec2.subtract(unitVectorFromCenter, p, doubleDisplayPosition);
@@ -164,11 +121,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           bottom,
         ]); // returns 1 - "clipped"
 
-        debugger;
         const line = {
           points: [
             { x: negativeDistantPoint[0], y: negativeDistantPoint[1] },
-            // { x: doubleDisplayPosition[0], y: doubleDisplayPosition[1] },
             {
               x: distantPoint[0],
               y: distantPoint[1],
@@ -179,10 +134,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         };
 
         lines.push(line);
-
-        // lines[lineIndex].color = ;
-        // lines[lineIndex].apiIndex = i;
-        //lineIndex++; // Temp to test.
       }
     }
 
