@@ -5,7 +5,8 @@ import {
   getImageData,
   loadImageData,
   vtkInteractorStyleRotatableMPRCrosshairs,
-  vtkRotatableSVGCrosshairsWidget,
+  vtkSVGRotatableCrosshairsWidget,
+  vtkSVGCrosshairsWidget,
 } from '@vtk-viewport';
 import { api as dicomwebClientApi } from 'dicomweb-client';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
@@ -60,7 +61,7 @@ function createStudyImageIds(baseUrl, studySearchOptions) {
   });
 }
 
-class VTKCrosshairsExample extends Component {
+class VTKRotatableCrosshairsExample extends Component {
   state = {
     volumes: [],
     displayCrosshairs: true,
@@ -109,11 +110,13 @@ class VTKCrosshairsExample extends Component {
       const apis = this.apis;
       const renderWindow = api.genericRenderWindow.getRenderWindow();
 
-      // Add svg widget
+      // Add rotatable svg widget
       api.addSVGWidget(
-        vtkRotatableSVGCrosshairsWidget.newInstance(),
+        vtkSVGRotatableCrosshairsWidget.newInstance(),
         'rotatableCrosshairsWidget'
       );
+
+      /*
 
       const istyle = vtkInteractorStyleRotatableMPRCrosshairs.newInstance();
 
@@ -122,6 +125,7 @@ class VTKCrosshairsExample extends Component {
         istyle,
         configuration: { apis, apiIndex: viewportIndex },
       });
+      */
 
       // set blend mode to MIP.
       const mapper = api.volumes[0].getMapper();
@@ -135,11 +139,14 @@ class VTKCrosshairsExample extends Component {
 
       // Its up to the layout manager of an app to know how many viewports are being created.
       if (apis[0] && apis[1] && apis[2]) {
-        //const api = apis[0];
-
         const api = apis[0];
 
-        api.svgWidgets.crosshairsWidget.resetCrosshairs(apis, 0);
+        apis.forEach((api, index) => {
+          api.svgWidgets.rotatableCrosshairsWidget.setApiIndex(index);
+          api.svgWidgets.rotatableCrosshairsWidget.setApis(apis);
+        });
+
+        api.svgWidgets.rotatableCrosshairsWidget.resetCrosshairs(apis, 0);
       }
     };
   };
@@ -165,7 +172,7 @@ class VTKCrosshairsExample extends Component {
 
     apis.forEach(api => {
       const { svgWidgetManager, svgWidgets } = api;
-      svgWidgets.crosshairsWidget.setDisplay(shouldDisplayCrosshairs);
+      svgWidgets.rotatableCrosshairsWidget.setDisplay(shouldDisplayCrosshairs);
 
       svgWidgetManager.render();
     });
@@ -232,4 +239,4 @@ class VTKCrosshairsExample extends Component {
   }
 }
 
-export default VTKCrosshairsExample;
+export default VTKRotatableCrosshairsExample;

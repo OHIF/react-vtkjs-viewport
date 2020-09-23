@@ -17,15 +17,24 @@ function getWidgetNode(svgContainer, widgetId) {
 // ----------------------------------------------------------------------------
 
 function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
-  model.classHierarchy.push('vtkSVGCrosshairsWidget');
-  model.widgetId = `vtkSVGCrosshairsWidget-${instanceId++}`;
+  model.classHierarchy.push('vtkSVGRotatableCrosshairsWidget');
+  model.widgetId = `vtkSVGRotatableCrosshairsWidget-${instanceId++}`;
 
   publicAPI.render = (svgContainer, scale) => {
     const node = getWidgetNode(svgContainer, model.widgetId);
-    const { point, strokeColor, strokeWidth, strokeDashArray, padding } = model;
+    const {
+      point,
+      strokeColors,
+      strokeWidth,
+      strokeDashArray,
+      apis,
+      apiIndex,
+    } = model;
     if (point[0] === null || point[1] === null) {
       return;
     }
+
+    debugger;
 
     const width = parseInt(svgContainer.getAttribute('width'), 10);
     const height = parseInt(svgContainer.getAttribute('height'), 10);
@@ -39,10 +48,46 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     p[0] = point[0] * scale;
     p[1] = height - point[1] * scale;
 
-    const left = [0, height / scale / 2];
-    const top = [width / scale / 2, 0];
-    const right = [width / scale, height / scale / 2];
-    const bottom = [width / scale / 2, height / scale];
+    const left = 0;
+    const top = 0;
+    const right = width / scale;
+    const bottom = height / scale;
+
+    const lines = [
+      {
+        points: [
+          { x: p[0], y: top },
+          { x: p[0], y: bottom },
+        ],
+        color: null,
+      },
+      {
+        points: [
+          { x: left, y: p[1] },
+          { x: right, y: p[1] },
+        ],
+        color: null,
+      },
+    ];
+
+    const thisApi = apis[apiIndex];
+
+    let lineIndex = 0;
+
+    console.log(`this: ${apiIndex}`);
+
+    for (let i = 0; i < apis.length; i++) {
+      if (i !== apiIndex) {
+        const api = apis[i];
+
+        lines[lineIndex].color = strokeColors[i];
+        lineIndex++; // Temp to test.
+
+        console.log(`line: ${i}`);
+      }
+    }
+
+    debugger;
 
     if (model.display) {
       node.innerHTML = `
@@ -50,55 +95,33 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
        <g>
        <!-- TODO: Why is this <svg> necessary?? </svg> If I don't include it, nothing renders !-->
        <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
-       <!-- Top !-->
+       <!-- First Line!-->
         <line
-          x1="${p[0]}"
-          y1="${top[1]}"
-          x2="${p[0]}"
-          y2="${p[1] - padding}"
-          stroke="${strokeColor}"
+          x1="${lines[0].points[0].x}"
+          y1="${lines[0].points[0].y}"
+          x2="${lines[0].points[1].x}"
+          y2="${lines[0].points[1].y}"
+          stroke="${lines[0].color}"
           stroke-dasharray="${strokeDashArray}"
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="${strokeWidth}"
         ></line>
-        <!-- Right !-->
+        <!-- Second Line !-->
         <line
-          x1="${right[0]}"
-          y1="${p[1]}"
-          x2="${p[0] + padding}"
-          y2="${p[1]}"
+        x1="${lines[1].points[0].x}"
+        y1="${lines[1].points[0].y}"
+        x2="${lines[1].points[1].x}"
+        y2="${lines[1].points[1].y}"
           stroke-dasharray="${strokeDashArray}"
-          stroke="${strokeColor}"
+          stroke="${lines[1].color}"
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width=${strokeWidth}
         ></line>
-        <!-- Bottom !-->
-        <line
-          x1="${p[0]}"
-          y1="${bottom[1]}"
-          x2="${p[0]}"
-          y2="${p[1] + padding}"
-          stroke-dasharray="${strokeDashArray}"
-          stroke="${strokeColor}"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width=${strokeWidth}
-        ></line>
-        <!-- Left !-->
-        <line
-          x1="${left[0]}"
-          y1="${p[1]}"
-          x2="${p[0] - padding}"
-          y2="${p[1]}"
-          stroke-dasharray="${strokeDashArray}"
-          stroke="${strokeColor}"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width=${strokeWidth}
-        ></line>
-       </g>
+        <circle cx="${bottom - 20}" cy="${left + 20}" r="10" fill="${
+        strokeColors[apiIndex]
+      }" />
       </g>
             `;
     } else {
@@ -109,7 +132,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
   publicAPI.resetCrosshairs = (apis, apiIndex) => {
     const api = apis[apiIndex];
 
-    if (!api.svgWidgets.crosshairsWidget) {
+    if (!api.svgWidgets.rotatableCrosshairsWidget) {
       // If we aren't using the crosshairs widget, bail out early.
       return;
     }
@@ -179,7 +202,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       const displayPosition = wPos.getComputedDisplayValue(renderer);
 
       const { svgWidgetManager } = api;
-      api.svgWidgets.crosshairsWidget.setPoint(
+      api.svgWidgets.rotatableCrosshairsWidget.setPoint(
         displayPosition[0],
         displayPosition[1]
       );
@@ -189,7 +212,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
   };
 
   publicAPI.updateCrosshairForApi = api => {
-    if (!api.svgWidgets.crosshairsWidget) {
+    if (!api.svgWidgets.rotatableCrosshairsWidget) {
       // If we aren't using the crosshairs widget, bail out early.
       return;
     }
@@ -228,10 +251,10 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
 const DEFAULT_VALUES = {
   point: [null, null],
-  strokeColor: '#00ff00',
-  strokeWidth: 1,
+  apis: [null, null, null],
+  strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
+  strokeWidth: 2,
   strokeDashArray: '',
-  padding: 20,
   display: true,
 };
 
@@ -243,19 +266,24 @@ export function extend(publicAPI, model, initialValues = {}) {
   macro.obj(publicAPI, model);
   macro.get(publicAPI, model, ['widgetId']);
   macro.setGet(publicAPI, model, [
-    'strokeColor',
     'strokeWidth',
     'strokeDashArray',
     'display',
+    'apiIndex',
   ]);
-  macro.setGetArray(publicAPI, model, ['point', 'padding'], 2);
 
-  vtkSVGCrosshairsWidget(publicAPI, model);
+  macro.setGetArray(publicAPI, model, ['point'], 2);
+  macro.setGetArray(publicAPI, model, ['apis', 'strokeColors'], 3);
+
+  vtkSVGRotatableCrosshairsWidget(publicAPI, model);
 }
 
 // ----------------------------------------------------------------------------
 
-export const newInstance = macro.newInstance(extend, 'vtkSVGCrosshairsWidget');
+export const newInstance = macro.newInstance(
+  extend,
+  'vtkSVGRotatableCrosshairsWidget'
+);
 
 // ----------------------------------------------------------------------------
 
