@@ -107,6 +107,8 @@ class VTKRotatableCrosshairsExample extends Component {
     return api => {
       this.apis[viewportIndex] = api;
 
+      window.apis = this.apis;
+
       const apis = this.apis;
       const renderWindow = api.genericRenderWindow.getRenderWindow();
 
@@ -238,5 +240,19 @@ class VTKRotatableCrosshairsExample extends Component {
     );
   }
 }
+
+// Test oblique orientation
+// orientation={{
+//   sliceNormal: [
+//     -0.10828626439623286,
+//     0.9374122377127276,
+//     -0.33095676685864234,
+//   ],
+//   viewUp: [
+//     -0.03670857846736908,
+//     0.32891687750816345,
+//     0.9436451196670532,
+//   ],
+// }}
 
 export default VTKRotatableCrosshairsExample;

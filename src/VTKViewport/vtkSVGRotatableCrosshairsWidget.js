@@ -1,6 +1,7 @@
 import macro from 'vtk.js/Sources/macro';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
+import liangBarksyClip from '../helpers/liangBarksyClip';
 import { vec2, vec3 } from 'gl-matrix';
 
 let instanceId = 1;
@@ -43,8 +44,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     // const widthClient = svgContainer.getBoundingClientRect().width;
     // const heightClient = svgContainer.getBoundingClientRect().height;
 
-    debugger;
-
     const p = point.slice();
     p[0] = point[0] * scale;
     p[1] = height - point[1] * scale;
@@ -53,6 +52,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     const top = 0;
     const right = width / scale;
     const bottom = height / scale;
+
+    // A "far" distance for line clipping algorithm.
+    const farDistance = Math.sqrt(bottom * bottom + right * right);
 
     const lines = [
       // {
@@ -102,8 +104,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
     // TEMP
 
-    debugger;
-
     for (let i = 0; i < apis.length; i++) {
       if (i !== apiIndex) {
         const api = apis[i];
@@ -123,17 +123,18 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         console.log(`xAxis: [${xAxis[0]},${xAxis[1]},${xAxis[2]}]`);
 
         // get a point in the plane.
-        const referenceworldPointInPlane = [
-          crosshairWorldPosition[0] + (viewUp[0] + xAxis[0]) * 100,
-          crosshairWorldPosition[1] + (viewUp[1] + xAxis[1]) * 100,
-          crosshairWorldPosition[2] + (viewUp[2] + xAxis[2]) * 100,
+        // Need a distant world position or we get rounding errors when mapping to screen and don't get nice right angles.
+        const referenceWorldPointInPlane = [
+          crosshairWorldPosition[0] + (viewUp[0] + xAxis[0]) * 100000,
+          crosshairWorldPosition[1] + (viewUp[1] + xAxis[1]) * 100000,
+          crosshairWorldPosition[2] + (viewUp[2] + xAxis[2]) * 100000,
         ];
 
         // thisApi as we want to map it to the displayPosition of THIS api.
         const renderer = thisApi.genericRenderWindow.getRenderer();
         const wPos = vtkCoordinate.newInstance();
         wPos.setCoordinateSystemToWorld();
-        wPos.setValue(...referenceworldPointInPlane);
+        wPos.setValue(...referenceWorldPointInPlane);
 
         const doubleDisplayPosition = wPos.getComputedDoubleDisplayValue(
           renderer
@@ -141,14 +142,37 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
         debugger;
 
-        let directionFromCenter = [];
-        vec2.subtract(directionFromCenter, p, doubleDisplayPosition);
+        let unitVectorFromCenter = [];
+        vec2.subtract(unitVectorFromCenter, p, doubleDisplayPosition);
+        vec2.normalize(unitVectorFromCenter, unitVectorFromCenter);
+
+        const distantPoint = [
+          p[0] + unitVectorFromCenter[0] * farDistance,
+          p[1] + unitVectorFromCenter[1] * farDistance,
+        ];
+
+        const negativeDistantPoint = [
+          p[0] - unitVectorFromCenter[0] * farDistance,
+          p[1] - unitVectorFromCenter[1] * farDistance,
+        ];
+
+        // [xmin, ymin, xmax, ymax]
+        liangBarksyClip(negativeDistantPoint, distantPoint, [
+          left,
+          top,
+          right,
+          bottom,
+        ]); // returns 1 - "clipped"
 
         debugger;
         const line = {
           points: [
-            { x: p[0], y: p[1] },
-            { x: doubleDisplayPosition[0], y: doubleDisplayPosition[1] },
+            { x: negativeDistantPoint[0], y: negativeDistantPoint[1] },
+            // { x: doubleDisplayPosition[0], y: doubleDisplayPosition[1] },
+            {
+              x: distantPoint[0],
+              y: distantPoint[1],
+            },
           ],
           color: strokeColors[i],
           apiIndex: i,
