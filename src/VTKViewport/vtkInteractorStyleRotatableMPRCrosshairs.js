@@ -5,6 +5,12 @@ import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 
 const { States } = Constants;
 
+const operations = {
+  ROTATE_CROSSHAIRS: 0,
+  MOVE_CROSSHAIRS: 1,
+  PAN: 2,
+};
+
 // ----------------------------------------------------------------------------
 // Global methods
 // ----------------------------------------------------------------------------
@@ -16,6 +22,31 @@ const { States } = Constants;
 function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   // Set our className
   model.classHierarchy.push('vtkInteractorStyleRotatableMPRCrosshairs');
+
+  function selectOpperation(callData) {
+    // TODO:
+    // Click on line -> start a rotate of the other planes.
+    // Click on the center, drag crosshairs.
+    model.operation = { type: operations.MOVE_CROSSHAIRS };
+    // What is the fallback? Pan? Do nothing for now.
+  }
+
+  function performOperation(callData) {
+    const { operation } = model;
+    const { type } = operation;
+
+    switch (type) {
+      case operations.MOVE_CROSSHAIRS:
+        moveCrosshairs(callData);
+        break;
+      case operations.ROTATE_CROSSHAIRS:
+        rotateCrosshairs(callData);
+        break;
+      case operations.PAN:
+        pan(callData);
+        break;
+    }
+  }
 
   function moveCrosshairs(callData) {
     const { apis, apiIndex } = model;
@@ -54,7 +85,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     if (model.state === States.IS_WINDOW_LEVEL) {
-      moveCrosshairs(callData);
+      performOperation(callData);
     }
 
     if (superHandleMouseMove) {
@@ -66,7 +97,9 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   publicAPI.handleLeftButtonPress = callData => {
     if (!callData.shiftKey && !callData.controlKey) {
       if (model.volumeActor) {
-        moveCrosshairs(callData);
+        selectOpperation(callData);
+        performOperation(callData);
+
         publicAPI.startWindowLevel();
       }
     } else if (superHandleLeftButtonPress) {
@@ -78,6 +111,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   publicAPI.handleLeftButtonRelease = () => {
     switch (model.state) {
       case States.IS_WINDOW_LEVEL:
+        model.operation = null;
         publicAPI.endWindowLevel();
         break;
 
@@ -92,7 +126,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = {};
+const DEFAULT_VALUES = { operation: null };
 
 // ----------------------------------------------------------------------------
 
@@ -102,7 +136,13 @@ export function extend(publicAPI, model, initialValues = {}) {
   // Inheritance
   vtkInteractorStyleMPRSlice.extend(publicAPI, model, initialValues);
 
-  macro.setGet(publicAPI, model, ['callback', 'apis', 'apiIndex', 'onScroll']);
+  macro.setGet(publicAPI, model, [
+    'callback',
+    'apis',
+    'apiIndex',
+    'onScroll',
+    'operation',
+  ]);
 
   // Object specific methods
   vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model);

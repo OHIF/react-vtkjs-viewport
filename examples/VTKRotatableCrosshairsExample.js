@@ -6,9 +6,7 @@ import {
   loadImageData,
   vtkSVGRotatableCrosshairsWidget,
   vtkInteractorStyleRotatableMPRCrosshairs,
-  vtkSVGCrosshairsWidget,
-  vtkInteractorStyleMPRRotate,
-  vtkInteractorStyleMPRSlice,
+  vtkInteractorStyleMPRWindowLevel,
 } from '@vtk-viewport';
 import { api as dicomwebClientApi } from 'dicomweb-client';
 import vtkVolume from 'vtk.js/Sources/Rendering/Core/Volume';
@@ -180,7 +178,7 @@ class VTKRotatableCrosshairsExample extends Component {
       if (crosshairsTool) {
         istyle = vtkInteractorStyleRotatableMPRCrosshairs.newInstance();
       } else {
-        istyle = vtkInteractorStyleMPRRotate.newInstance();
+        istyle = vtkInteractorStyleMPRWindowLevel.newInstance();
       }
 
       // // add istyle
@@ -240,7 +238,7 @@ class VTKRotatableCrosshairsExample extends Component {
             </button>
             <button onClick={this.toggleTool}>
               {this.state.crosshairsTool
-                ? 'Switch To Rotate'
+                ? 'Switch To WL/Zoom/Pan/Scroll'
                 : 'Switch To Crosshairs'}
             </button>
           </div>
