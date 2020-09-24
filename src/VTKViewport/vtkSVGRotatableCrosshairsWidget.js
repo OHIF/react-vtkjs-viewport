@@ -152,6 +152,19 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     const left = 0;
     const bottom = height / scale;
 
+    // split up lines.
+
+    // const p = point.slice();
+
+    // p[0] = point[0] * scale;
+    // p[1] = height - point[1] * scale;
+
+    // debugger;
+
+    // const [firstLine, secondLine] = referenceLines;
+
+    // const firstLineDirection = refer;
+
     if (model.display) {
       node.innerHTML = `
       <g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
