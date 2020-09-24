@@ -2,6 +2,7 @@ import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
+import { vec2 } from 'gl-matrix';
 
 const { States } = Constants;
 
@@ -24,11 +25,34 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   model.classHierarchy.push('vtkInteractorStyleRotatableMPRCrosshairs');
 
   function selectOpperation(callData) {
+    const { apis, apiIndex } = model;
+    const api = apis[apiIndex];
+    const position = [callData.position.x, callData.position.y];
+
+    const { rotatableCrosshairsWidget } = api.svgWidgets;
+
+    if (!rotatableCrosshairsWidget) {
+      throw new Error(
+        'Must use rotatable crosshair svg widget with this istyle.'
+      );
+    }
+
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+    const point = rotatableCrosshairsWidget.getPoint();
+    const centerRadius = rotatableCrosshairsWidget.getCenterRadius();
+
+    const distanceFromCenter = vec2.distance(point, position);
+
+    if (distanceFromCenter < centerRadius) {
+      model.operation = { type: operations.MOVE_CROSSHAIRS };
+      return;
+    }
+
     // TODO:
     // Click on line -> start a rotate of the other planes.
-    // Click on the center, drag crosshairs.
-    model.operation = { type: operations.MOVE_CROSSHAIRS };
+
     // What is the fallback? Pan? Do nothing for now.
+    model.operation = { type: null };
   }
 
   function performOperation(callData) {
@@ -111,7 +135,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   publicAPI.handleLeftButtonRelease = () => {
     switch (model.state) {
       case States.IS_WINDOW_LEVEL:
-        model.operation = null;
+        model.operation = { type: null };
         publicAPI.endWindowLevel();
         break;
 
@@ -126,7 +150,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = { operation: null };
+const DEFAULT_VALUES = { operation: { type: null } };
 
 // ----------------------------------------------------------------------------
 

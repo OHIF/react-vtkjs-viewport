@@ -22,8 +22,8 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
   model.classHierarchy.push('vtkSVGRotatableCrosshairsWidget');
   model.widgetId = `vtkSVGRotatableCrosshairsWidget-${instanceId++}`;
 
-  model.calculateReferenceLines = () => {
-    const { point, strokeColors, apis, apiIndex } = model;
+  model.calculateReferenceLines = (apiIndex, point) => {
+    const { strokeColors, apis } = model;
     if (point[0] === null || point[1] === null) {
       return;
     }
@@ -33,8 +33,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     const { svgWidgetManager } = thisApi;
     const [width, height] = svgWidgetManager.getSize();
     const scale = svgWidgetManager.getScale();
-
-    debugger;
 
     const p = point.slice();
 
@@ -145,13 +143,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       return;
     }
 
-    // TODO Move out of render function
-    model.calculateReferenceLines();
-
     const thisApi = apis[apiIndex];
     const referenceLines = thisApi.svgWidgets.rotatableCrosshairsWidget.getReferenceLines();
 
-    debugger;
     const width = parseInt(svgContainer.getAttribute('width'), 10);
     const height = parseInt(svgContainer.getAttribute('height'), 10);
 
@@ -239,7 +233,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     }
 
     // Set camera focal point to world coordinate for linked views
-    apis.forEach((api, viewportIndex) => {
+    apis.forEach((api, apiIndex) => {
       api.set('cachedCrosshairWorldPosition', worldPos);
 
       // We are basically doing the same as getSlice but with the world coordinate
@@ -275,6 +269,8 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         displayPosition[0],
         displayPosition[1]
       );
+
+      model.calculateReferenceLines(apiIndex, displayPosition);
 
       svgWidgetManager.render();
     });
@@ -324,6 +320,7 @@ const DEFAULT_VALUES = {
   referenceLines: [null, null],
   strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
   strokeWidth: 2,
+  centerRadius: 20,
   strokeDashArray: '',
   display: true,
 };
@@ -341,6 +338,7 @@ export function extend(publicAPI, model, initialValues = {}) {
     'display',
     'apiIndex',
     'referenceLines',
+    'centerRadius',
   ]);
 
   macro.setGetArray(publicAPI, model, ['point', 'referenceLines'], 2);
