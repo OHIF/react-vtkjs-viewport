@@ -2,7 +2,8 @@ import macro from 'vtk.js/Sources/macro';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
-import { vec2 } from 'gl-matrix';
+import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
+import { vec2, vec3 } from 'gl-matrix';
 
 const { States } = Constants;
 
@@ -130,8 +131,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     let pointToPreviousPosition = [];
     let pointToNewPosition = [];
 
-    debugger;
-
     vec2.subtract(
       pointToPreviousPosition,
       [prevPosition.x, prevPosition.y],
@@ -140,9 +139,52 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     vec2.subtract(pointToNewPosition, [newPosition.x, newPosition.y], point);
 
+    // Get angle, axis and center
+
     const angle = vec2.angle(pointToPreviousPosition, pointToNewPosition);
 
-    debugger;
+    // Axis is the opposite direction of the plane normal for this API.
+
+    const sliceNormal = api.getSliceNormal();
+    const axis = [-sliceNormal[0], -sliceNormal[1], -sliceNormal[2]];
+
+    // Build a rotation matrix.
+    const {
+      matrix: rotationMatrix,
+    } = vtkMatrixBuilder.buildFromRadian().rotate(angle, axis);
+
+    // TODO: Rotate other apis
+
+    apis.forEach((api, index) => {
+      if (index !== apiIndex) {
+        // get normal and viewUp.
+
+        const sliceNormalForApi = api.getSliceNormal();
+        const viewUpForApi = api.getViewUp();
+
+        const newSliceNormalForApi = [];
+        const newViewUpForApi = [];
+
+        vec3.transformMat4(
+          newSliceNormalForApi,
+          sliceNormalForApi,
+          rotationMatrix
+        );
+        vec3.transformMat4(newViewUpForApi, viewUpForApi, rotationMatrix);
+
+        api.setOrientation(newSliceNormalForApi, newSliceNormalForApi);
+      }
+    });
+
+    apis.forEach((api, index) => {
+      const { rotatableCrosshairsWidget } = api.svgWidgets;
+
+      rotatableCrosshairsWidget.updateCrosshairForApi(api);
+    });
+
+    // TODO -> call update for crosshairs for those apis
+
+    operation.prevPosition = newPosition;
   }
 
   function moveCrosshairs(callData) {

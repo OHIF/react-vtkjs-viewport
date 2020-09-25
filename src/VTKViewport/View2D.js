@@ -200,6 +200,7 @@ export default class View2D extends Component {
 
     const boundUpdateVOI = this.updateVOI.bind(this);
     const boundGetOrienation = this.getOrientation.bind(this);
+    const boundSetOrientation = this.setOrientation.bind(this);
     const boundGetViewUp = this.getViewUp.bind(this);
     const boundGetSliceNormal = this.getSliceNormal.bind(this);
     const boundSetInteractorStyle = this.setInteractorStyle.bind(this);
@@ -243,6 +244,7 @@ export default class View2D extends Component {
         updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
         getOrientation: boundGetOrienation,
+        setOrientation: boundSetOrientation,
         getViewUp: boundGetViewUp,
         getSliceNormal: boundGetSliceNormal,
         setInteractorStyle: boundSetInteractorStyle,
@@ -278,6 +280,13 @@ export default class View2D extends Component {
     const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
 
     return currentIStyle.getSliceNormal();
+  }
+
+  setOrientation(sliceNormal, viewUp) {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    currentIStyle.setSliceOrientation(sliceNormal, viewUp);
   }
 
   getApiProperty(propertyName) {
