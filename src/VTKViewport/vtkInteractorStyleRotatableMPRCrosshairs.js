@@ -25,9 +25,9 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   model.classHierarchy.push('vtkInteractorStyleRotatableMPRCrosshairs');
 
   function selectOpperation(callData) {
-    const { apis, apiIndex } = model;
+    const { apis, apiIndex, lineGrabDistance } = model;
     const api = apis[apiIndex];
-    const position = [callData.position.x, callData.position.y];
+    const { position } = callData;
 
     const { rotatableCrosshairsWidget } = api.svgWidgets;
 
@@ -41,18 +41,55 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const point = rotatableCrosshairsWidget.getPoint();
     const centerRadius = rotatableCrosshairsWidget.getCenterRadius();
 
-    const distanceFromCenter = vec2.distance(point, position);
+    const distanceFromCenter = vec2.distance(point, [position.x, position.y]);
 
     if (distanceFromCenter < centerRadius) {
+      // Click on center -> move the crosshairs.
       model.operation = { type: operations.MOVE_CROSSHAIRS };
+
       return;
     }
 
-    // TODO:
-    // Click on line -> start a rotate of the other planes.
+    const distanceFromFirstLine = distanceFromLine(lines[0], position);
+    const distanceFromSecondLine = distanceFromLine(lines[1], position);
+
+    if (
+      distanceFromFirstLine <= lineGrabDistance ||
+      distanceFromSecondLine <= lineGrabDistance
+    ) {
+      // Click on line -> start a rotate of the other planes.
+
+      model.operation = {
+        type: operations.ROTATE_CROSSHAIRS,
+        closeLine: distanceFromFirstLine < distanceFromSecondLine ? 0 : 1,
+        prevPosition: position,
+      };
+
+      return;
+    }
 
     // What is the fallback? Pan? Do nothing for now.
     model.operation = { type: null };
+  }
+
+  function distanceFromLine(line, point) {
+    const [a, b] = line.points;
+    const c = point;
+
+    // Get area from all 3 points...
+    const areOfTriangle = Math.abs(
+      (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2
+    );
+
+    // And area also equals 1/2 base * height, where height is the distance!
+    // So:
+    const base = vec2.distance([a.x, a.y], [b.x, b.y]);
+    const height = (2.0 * areOfTriangle) / base;
+
+    // Note we don't have to worry about finite line length
+    // As the lines go across the whole canvas.
+
+    return height;
   }
 
   function performOperation(callData) {
@@ -70,6 +107,42 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         pan(callData);
         break;
     }
+  }
+
+  function rotateCrosshairs(callData) {
+    const { operation } = model;
+    const { prevPosition } = operation;
+
+    const newPosition = callData.position;
+
+    if (newPosition.x === prevPosition.x && newPosition.y === prevPosition.y) {
+      // No change, exit early.
+      return;
+    }
+
+    const { apis, apiIndex } = model;
+    const api = apis[apiIndex];
+
+    const { rotatableCrosshairsWidget } = api.svgWidgets;
+
+    const point = rotatableCrosshairsWidget.getPoint();
+
+    let pointToPreviousPosition = [];
+    let pointToNewPosition = [];
+
+    debugger;
+
+    vec2.subtract(
+      pointToPreviousPosition,
+      [prevPosition.x, prevPosition.y],
+      point
+    );
+
+    vec2.subtract(pointToNewPosition, [newPosition.x, newPosition.y], point);
+
+    const angle = vec2.angle(pointToPreviousPosition, pointToNewPosition);
+
+    debugger;
   }
 
   function moveCrosshairs(callData) {
@@ -150,7 +223,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = { operation: { type: null } };
+const DEFAULT_VALUES = { operation: { type: null }, lineGrabDistance: 12 };
 
 // ----------------------------------------------------------------------------
 
@@ -166,6 +239,7 @@ export function extend(publicAPI, model, initialValues = {}) {
     'apiIndex',
     'onScroll',
     'operation',
+    'lineGrabDistance',
   ]);
 
   // Object specific methods

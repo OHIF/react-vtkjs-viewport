@@ -172,10 +172,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       p
     );
 
-    debugger;
-
-    debugger;
-
     if (model.display) {
       node.innerHTML = `
       <g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
