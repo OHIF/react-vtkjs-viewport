@@ -3,6 +3,7 @@ import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import liangBarksyClip from '../helpers/liangBarksyClip';
 import { vec2, vec3 } from 'gl-matrix';
+import { projectVector2D } from 'vtk.js/Sources/Common/Core/Math';
 
 let instanceId = 1;
 
@@ -138,6 +139,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       strokeDashArray,
       apis,
       apiIndex,
+      centerRadius,
     } = model;
     if (point[0] === null || point[1] === null) {
       return;
@@ -154,16 +156,25 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
     // split up lines.
 
-    // const p = point.slice();
+    const p = point.slice();
 
-    // p[0] = point[0] * scale;
-    // p[1] = height - point[1] * scale;
+    p[0] = point[0] * scale;
+    p[1] = height - point[1] * scale;
 
-    // debugger;
+    const [firstLine, secondLine] = referenceLines;
 
-    // const [firstLine, secondLine] = referenceLines;
+    const [firstLinePart1, firstLinePart2] = model.getSplitReferenceLine(
+      firstLine,
+      p
+    );
+    const [secondLinePart1, secondLinePart2] = model.getSplitReferenceLine(
+      secondLine,
+      p
+    );
 
-    // const firstLineDirection = refer;
+    debugger;
+
+    debugger;
 
     if (model.display) {
       node.innerHTML = `
@@ -171,24 +182,48 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
        <g>
        <!-- TODO: Why is this <svg> necessary?? </svg> If I don't include it, nothing renders !-->
        <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
-       <!-- First Line!-->
+       <!-- First Line first half!-->
         <line
-          x1="${referenceLines[0].points[0].x}"
-          y1="${referenceLines[0].points[0].y}"
-          x2="${referenceLines[0].points[1].x}"
-          y2="${referenceLines[0].points[1].y}"
+          x1="${firstLinePart1[0].x}"
+          y1="${firstLinePart1[0].y}"
+          x2="${firstLinePart1[1].x}"
+          y2="${firstLinePart1[1].y}"
           stroke="${referenceLines[0].color}"
           stroke-dasharray="${strokeDashArray}"
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="${strokeWidth}"
         ></line>
-        <!-- Second Line !-->
+        <!-- First Line second half!-->
         <line
-        x1="${referenceLines[1].points[0].x}"
-        y1="${referenceLines[1].points[0].y}"
-        x2="${referenceLines[1].points[1].x}"
-        y2="${referenceLines[1].points[1].y}"
+          x1="${firstLinePart2[0].x}"
+          y1="${firstLinePart2[0].y}"
+          x2="${firstLinePart2[1].x}"
+          y2="${firstLinePart2[1].y}"
+          stroke="${referenceLines[0].color}"
+          stroke-dasharray="${strokeDashArray}"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="${strokeWidth}"
+        ></line>
+        <!-- Second Line part 1 !-->
+        <line
+          x1="${secondLinePart1[0].x}"
+          y1="${secondLinePart1[0].y}"
+          x2="${secondLinePart1[1].x}"
+          y2="${secondLinePart1[1].y}"
+          stroke-dasharray="${strokeDashArray}"
+          stroke="${referenceLines[1].color}"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width=${strokeWidth}
+        ></line>
+        <!-- Second Line part 2 !-->
+        <line
+          x1="${secondLinePart2[0].x}"
+          y1="${secondLinePart2[0].y}"
+          x2="${secondLinePart2[1].x}"
+          y2="${secondLinePart2[1].y}"
           stroke-dasharray="${strokeDashArray}"
           stroke="${referenceLines[1].color}"
           stroke-linecap="round"
@@ -203,6 +238,35 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     } else {
       node.innerHTML = '';
     }
+  };
+
+  model.getSplitReferenceLine = (referenceLine, center) => {
+    const { centerRadius } = model;
+
+    const lineDirection = [];
+    vec2.subtract(
+      lineDirection,
+      [referenceLine.points[1].x, referenceLine.points[1].y],
+      [referenceLine.points[0].x, referenceLine.points[0].y]
+    );
+    vec2.normalize(lineDirection, lineDirection);
+
+    const linePart1 = [
+      {
+        x: center[0] + lineDirection[0] * centerRadius,
+        y: center[1] + lineDirection[1] * centerRadius,
+      },
+      referenceLine.points[1],
+    ];
+    const linePart2 = [
+      {
+        x: center[0] - lineDirection[0] * centerRadius,
+        y: center[1] - lineDirection[1] * centerRadius,
+      },
+      referenceLine.points[0],
+    ];
+
+    return [linePart1, linePart2];
   };
 
   publicAPI.resetCrosshairs = (apis, apiIndex) => {
