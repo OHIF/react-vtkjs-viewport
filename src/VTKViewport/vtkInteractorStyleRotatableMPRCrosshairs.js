@@ -48,6 +48,10 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       // Click on center -> move the crosshairs.
       model.operation = { type: operations.MOVE_CROSSHAIRS };
 
+      lines.forEach(line => {
+        line.selected = true;
+      });
+
       return;
     }
 
@@ -68,9 +72,13 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     ) {
       // Click on line -> start a rotate of the other planes.
 
+      const selectedLineIndex =
+        distanceFromFirstLine < distanceFromSecondLine ? 0 : 1;
+
+      lines[selectedLineIndex].selected = true;
+
       model.operation = {
         type: operations.ROTATE_CROSSHAIRS,
-        closeLine: distanceFromFirstLine < distanceFromSecondLine ? 0 : 1,
         prevPosition: position,
       };
 
@@ -185,7 +193,19 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       }
     });
 
-    // Move crosshairs.
+    updateCrosshairs(callData);
+
+    operation.prevPosition = newPosition;
+  }
+
+  function updateCrosshairs(callData) {
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    const point = rotatableCrosshairsWidget.getPoint();
+
     const renderer = callData.pokedRenderer;
     const dPos = vtkCoordinate.newInstance();
     dPos.setCoordinateSystemToDisplay();
@@ -210,8 +230,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       apis,
       apiIndex
     );
-
-    operation.prevPosition = newPosition;
   }
 
   function moveCrosshairs(callData) {
@@ -248,10 +266,82 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
   }
 
+  function handlePassiveMouseMove(callData) {
+    const { apis, apiIndex, lineGrabDistance } = model;
+    const thisApi = apis[apiIndex];
+    let { position } = callData;
+
+    const selectedLines = [false, false];
+
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    if (!rotatableCrosshairsWidget) {
+      throw new Error(
+        'Must use rotatable crosshair svg widget with this istyle.'
+      );
+    }
+
+    let shouldUpdate;
+
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+    const point = rotatableCrosshairsWidget.getPoint();
+    const centerRadius = rotatableCrosshairsWidget.getCenterRadius();
+
+    const distanceFromCenter = vec2.distance(point, [position.x, position.y]);
+
+    if (distanceFromCenter > centerRadius) {
+      const { svgWidgetManager } = thisApi;
+      const size = svgWidgetManager.getSize();
+      const scale = svgWidgetManager.getScale();
+      const height = size[1];
+
+      // Map to the click point to the same coords as the SVG.
+      const p = { x: position.x * scale, y: height - position.y * scale };
+
+      const distanceFromFirstLine = distanceFromLine(lines[0], p); //position);
+      const distanceFromSecondLine = distanceFromLine(lines[1], p); //;
+
+      if (
+        distanceFromFirstLine <= lineGrabDistance ||
+        distanceFromSecondLine <= lineGrabDistance
+      ) {
+        // Click on line -> start a rotate of the other planes.
+
+        const selectedLineIndex =
+          distanceFromFirstLine < distanceFromSecondLine ? 0 : 1;
+
+        selectedLines[selectedLineIndex] = true;
+      }
+    } else {
+      // Highlight both lines.
+      selectedLines[0] = true;
+      selectedLines[1] = true;
+    }
+
+    console.log(selectedLines);
+
+    lines.forEach((line, index) => {
+      const selected = selectedLines[index];
+
+      // If changed, update and flag should update.
+      if (line.selected !== selected) {
+        line.selected = selected;
+        shouldUpdate = true;
+      }
+    });
+
+    if (shouldUpdate) {
+      console.log(shouldUpdate);
+      updateCrosshairs(callData);
+    }
+  }
+
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
     if (model.state === States.IS_WINDOW_LEVEL) {
       performOperation(callData);
+    } else {
+      handlePassiveMouseMove(callData);
     }
 
     if (superHandleMouseMove) {
@@ -274,11 +364,10 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   };
 
   publicAPI.superHandleLeftButtonRelease = publicAPI.handleLeftButtonRelease;
-  publicAPI.handleLeftButtonRelease = () => {
+  publicAPI.handleLeftButtonRelease = callData => {
     switch (model.state) {
       case States.IS_WINDOW_LEVEL:
-        model.operation = { type: null };
-        publicAPI.endWindowLevel();
+        mouseUp(callData);
         break;
 
       default:
@@ -286,13 +375,38 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         break;
     }
   };
+
+  function mouseUp(callData) {
+    model.operation = { type: null };
+
+    // Unselect lines
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    if (!rotatableCrosshairsWidget) {
+      throw new Error(
+        'Must use rotatable crosshair svg widget with this istyle.'
+      );
+    }
+
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+
+    lines.forEach(line => {
+      line.selected = false;
+    });
+
+    updateCrosshairs(callData);
+
+    publicAPI.endWindowLevel();
+  }
 }
 
 // ----------------------------------------------------------------------------
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = { operation: { type: null }, lineGrabDistance: 12 };
+const DEFAULT_VALUES = { operation: { type: null }, lineGrabDistance: 20 };
 
 // ----------------------------------------------------------------------------
 

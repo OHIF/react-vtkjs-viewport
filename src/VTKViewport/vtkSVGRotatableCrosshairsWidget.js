@@ -56,6 +56,10 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       'cachedCrosshairWorldPosition'
     );
 
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    const oldReferenceLines = rotatableCrosshairsWidget.getReferenceLines();
+
     for (let i = 0; i < apis.length; i++) {
       if (i !== apiIndex) {
         const api = apis[i];
@@ -107,6 +111,16 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           bottom, // ymax
         ]);
 
+        const oldReferenceLine = oldReferenceLines.find(
+          refLine => refLine && refLine.apiIndex === i
+        );
+
+        let selected = false;
+
+        if (oldReferenceLine) {
+          selected = oldReferenceLine.selected;
+        }
+
         const referenceLine = {
           points: [
             { x: negativeDistantPoint[0], y: negativeDistantPoint[1] },
@@ -117,13 +131,14 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           ],
           color: strokeColors[i],
           apiIndex: i,
+          selected,
         };
 
         referenceLines.push(referenceLine);
       }
     }
 
-    thisApi.svgWidgets.rotatableCrosshairsWidget.setReferenceLines(
+    rotatableCrosshairsWidget.setReferenceLines(
       referenceLines[0],
       referenceLines[1]
     );
@@ -138,6 +153,8 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       strokeDashArray,
       apis,
       apiIndex,
+      selectedStrokeWidth,
+      centerRadius,
     } = model;
     if (point[0] === null || point[1] === null) {
       return;
@@ -170,73 +187,75 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       p
     );
 
-    const testMouseOver = () => {
-      console.log('TEST');
-      debugger;
-    };
+    const firstLineStrokeWidth = firstLine.selected
+      ? selectedStrokeWidth
+      : strokeWidth;
+    const secondLineStrokeWidth = secondLine.selected
+      ? selectedStrokeWidth
+      : strokeWidth;
 
-    // onmouseover="this.style.stroke='#FFF'"
-    // onmouseout="this.style.stroke='${referenceLines[0].color}'"
+    const firstLineClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-0`;
+    const secondLineClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-1`;
+    const centerClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-center`;
 
     if (model.display) {
       node.innerHTML = `
       <g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
        <g>
-       <!-- TODO: Why is this <svg> necessary?? </svg> If I don't include it, nothing renders !-->
        <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
        <!-- First Line first half!-->
-        <line
-          x1="${firstLinePart1[0].x}"
-          y1="${firstLinePart1[0].y}"
-          x2="${firstLinePart1[1].x}"
-          y2="${firstLinePart1[1].y}"
+        <g
+
           stroke="${referenceLines[0].color}"
           stroke-dasharray="${strokeDashArray}"
           stroke-linecap="round"
           stroke-linejoin="round"
-          stroke-width="${strokeWidth}"
-        ></line>
-        <!-- First Line second half!-->
-        <line
-          x1="${firstLinePart2[0].x}"
-          y1="${firstLinePart2[0].y}"
-          x2="${firstLinePart2[1].x}"
-          y2="${firstLinePart2[1].y}"
-          stroke="${referenceLines[0].color}"
-          stroke-dasharray="${strokeDashArray}"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="${strokeWidth}"
-        ></line>
-        <!-- Second Line part 1 !-->
-        <line
-          x1="${secondLinePart1[0].x}"
-          y1="${secondLinePart1[0].y}"
-          x2="${secondLinePart1[1].x}"
-          y2="${secondLinePart1[1].y}"
-          stroke-dasharray="${strokeDashArray}"
-          stroke="${referenceLines[1].color}"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width=${strokeWidth}
-        ></line>
-        <!-- Second Line part 2 !-->
-        <line
-          x1="${secondLinePart2[0].x}"
-          y1="${secondLinePart2[0].y}"
-          x2="${secondLinePart2[1].x}"
-          y2="${secondLinePart2[1].y}"
+          stroke-width="${firstLineStrokeWidth}"
+        >
+          <line
+            x1="${firstLinePart1[0].x}"
+            y1="${firstLinePart1[0].y}"
+            x2="${firstLinePart1[1].x}"
+            y2="${firstLinePart1[1].y}"
+            class="${firstLineClassName}"
+          ></line>
+          <!-- First Line second half!-->
+          <line
+            x1="${firstLinePart2[0].x}"
+            y1="${firstLinePart2[0].y}"
+            x2="${firstLinePart2[1].x}"
+            y2="${firstLinePart2[1].y}"
+            class="${firstLineClassName}"
+          ></line>
+        </g>
+        <g
           stroke-dasharray="${strokeDashArray}"
           stroke="${referenceLines[1].color}"
           stroke-linecap="round"
           stroke-linejoin="round"
-          stroke-width=${strokeWidth}
-        ></line>
+          stroke-width=${secondLineStrokeWidth}
+        >
+          <!-- Second Line part 1 !-->
+          <line
+            x1="${secondLinePart1[0].x}"
+            y1="${secondLinePart1[0].y}"
+            x2="${secondLinePart1[1].x}"
+            y2="${secondLinePart1[1].y}"
+            class="${secondLineClassName}"
+          ></line>
+          <!-- Second Line part 2 !-->
+          <line
+            x1="${secondLinePart2[0].x}"
+            y1="${secondLinePart2[0].y}"
+            x2="${secondLinePart2[1].x}"
+            y2="${secondLinePart2[1].y}"
+            class="${secondLineClassName}"
+          ></line>
+        </g>
         <circle cx="${bottom - 20}" cy="${left + 20}" r="10" fill="${
         strokeColors[apiIndex]
       }" />
-      </g>
-            `;
+      </g>`;
     } else {
       node.innerHTML = '';
     }
@@ -399,6 +418,7 @@ const DEFAULT_VALUES = {
   referenceLines: [null, null],
   strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
   strokeWidth: 2,
+  selectedStrokeWidth: 5,
   centerRadius: 20,
   strokeDashArray: '',
   display: true,
@@ -413,6 +433,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   macro.get(publicAPI, model, ['widgetId']);
   macro.setGet(publicAPI, model, [
     'strokeWidth',
+    'selectedStrokeWidth',
     'strokeDashArray',
     'display',
     'apiIndex',
