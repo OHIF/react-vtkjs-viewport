@@ -165,6 +165,8 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const sliceNormal = thisApi.getSliceNormal();
     const axis = [-sliceNormal[0], -sliceNormal[1], -sliceNormal[2]];
 
+    const { matrix } = vtkMatrixBuilder.buildFromRadian().rotate(angle, axis);
+
     // Rotate other apis
     apis.forEach((api, index) => {
       if (index !== apiIndex) {
@@ -176,18 +178,8 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         const newSliceNormalForApi = [];
         const newViewUpForApi = [];
 
-        const rotationQuat = quat.create();
-
-        quat.setAxisAngle(rotationQuat, axis, angle);
-        quat.normalize(rotationQuat, rotationQuat);
-
-        // rotate the ViewUp with the rotation
-        vec3.transformQuat(newViewUpForApi, viewUpForApi, rotationQuat);
-        vec3.transformQuat(
-          newSliceNormalForApi,
-          sliceNormalForApi,
-          rotationQuat
-        );
+        vec3.transformMat4(newSliceNormalForApi, sliceNormalForApi, matrix);
+        vec3.transformMat4(newViewUpForApi, viewUpForApi, matrix);
 
         api.setOrientation(newSliceNormalForApi, newViewUpForApi);
       }
