@@ -27,10 +27,10 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
   function selectOpperation(callData) {
     const { apis, apiIndex, lineGrabDistance } = model;
-    const api = apis[apiIndex];
-    const { position } = callData;
+    const thisApi = apis[apiIndex];
+    let { position } = callData;
 
-    const { rotatableCrosshairsWidget } = api.svgWidgets;
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
 
     if (!rotatableCrosshairsWidget) {
       throw new Error(
@@ -51,8 +51,16 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       return;
     }
 
-    const distanceFromFirstLine = distanceFromLine(lines[0], position);
-    const distanceFromSecondLine = distanceFromLine(lines[1], position);
+    const { svgWidgetManager } = thisApi;
+    const size = svgWidgetManager.getSize();
+    const scale = svgWidgetManager.getScale();
+    const height = size[1];
+
+    // Map to the click point to the same coords as the SVG.
+    const p = { x: position.x * scale, y: height - position.y * scale };
+
+    const distanceFromFirstLine = distanceFromLine(lines[0], p); //position);
+    const distanceFromSecondLine = distanceFromLine(lines[1], p); //;
 
     if (
       distanceFromFirstLine <= lineGrabDistance ||
@@ -78,14 +86,14 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const c = point;
 
     // Get area from all 3 points...
-    const areOfTriangle = Math.abs(
+    const areaOfTriangle = Math.abs(
       (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2
     );
 
     // And area also equals 1/2 base * height, where height is the distance!
     // So:
     const base = vec2.distance([a.x, a.y], [b.x, b.y]);
-    const height = (2.0 * areOfTriangle) / base;
+    const height = (2.0 * areaOfTriangle) / base;
 
     // Note we don't have to worry about finite line length
     // As the lines go across the whole canvas.
@@ -141,12 +149,17 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     // Get vector from center of crosshairs to new position.
     vec2.subtract(pointToNewPosition, [newPosition.x, newPosition.y], point);
 
-    debugger;
-
     // Get angle of rotation from previous reference line position to the new position.
-    const angle = vec2.angle(pointToPreviousPosition, pointToNewPosition);
+    let angle = vec2.angle(pointToPreviousPosition, pointToNewPosition);
 
-    debugger;
+    // Use the determinant to find the sign of the angle.
+    const determinant =
+      pointToNewPosition[0] * pointToPreviousPosition[1] -
+      pointToNewPosition[1] * pointToPreviousPosition[0];
+
+    if (determinant < 0) {
+      angle *= -1;
+    }
 
     // Axis is the opposite direction of the plane normal for this API.
     const sliceNormal = thisApi.getSliceNormal();
@@ -180,12 +193,31 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       }
     });
 
-    // Call update for each api.
-    apis.forEach((api, index) => {
-      const { rotatableCrosshairsWidget } = api.svgWidgets;
+    // Move crosshairs.
+    const renderer = callData.pokedRenderer;
+    const dPos = vtkCoordinate.newInstance();
+    dPos.setCoordinateSystemToDisplay();
 
-      rotatableCrosshairsWidget.updateCrosshairForApi(api);
-    });
+    dPos.setValue(point[0], point[1], 0);
+    let worldPos = dPos.getComputedWorldValue(renderer);
+
+    const camera = renderer.getActiveCamera();
+    const directionOfProjection = camera.getDirectionOfProjection();
+
+    const halfSlabThickness = thisApi.getSlabThickness() / 2;
+
+    // Add half of the slab thickness to the world position, such that we select
+    // The center of the slice.
+
+    for (let i = 0; i < worldPos.length; i++) {
+      worldPos[i] += halfSlabThickness * directionOfProjection[i];
+    }
+
+    thisApi.svgWidgets.rotatableCrosshairsWidget.moveCrosshairs(
+      worldPos,
+      apis,
+      apiIndex
+    );
 
     operation.prevPosition = newPosition;
   }

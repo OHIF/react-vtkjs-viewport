@@ -71,9 +71,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         // get a point in the plane.
         // Need a distant world position or we get rounding errors when mapping to screen and don't get nice right angles.
         const referenceWorldPointInPlane = [
-          crosshairWorldPosition[0] + (viewUp[0] + xAxis[0]) * 100000,
-          crosshairWorldPosition[1] + (viewUp[1] + xAxis[1]) * 100000,
-          crosshairWorldPosition[2] + (viewUp[2] + xAxis[2]) * 100000,
+          crosshairWorldPosition[0] + (viewUp[0] + xAxis[0]) * 1000000,
+          crosshairWorldPosition[1] + (viewUp[1] + xAxis[1]) * 1000000,
+          crosshairWorldPosition[2] + (viewUp[2] + xAxis[2]) * 1000000,
         ];
 
         // thisApi as we want to map it to the displayPosition of THIS api.
@@ -100,13 +100,12 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           p[1] - unitVectorFromCenter[1] * farDistance,
         ];
 
-        // [xmin, ymin, xmax, ymax]
         liangBarksyClip(negativeDistantPoint, distantPoint, [
-          left,
-          top,
-          right,
-          bottom,
-        ]); // returns 1 - "clipped"
+          left, //xmin
+          top, // ymin
+          right, // xmax
+          bottom, // ymax
+        ]);
 
         const referenceLine = {
           points: [
@@ -132,14 +131,13 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
   publicAPI.render = (svgContainer, scale) => {
     const node = getWidgetNode(svgContainer, model.widgetId);
-    const {
+    let {
       point,
       strokeColors,
       strokeWidth,
       strokeDashArray,
       apis,
       apiIndex,
-      centerRadius,
     } = model;
     if (point[0] === null || point[1] === null) {
       return;
@@ -171,6 +169,14 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       secondLine,
       p
     );
+
+    const testMouseOver = () => {
+      console.log('TEST');
+      debugger;
+    };
+
+    // onmouseover="this.style.stroke='#FFF'"
+    // onmouseout="this.style.stroke='${referenceLines[0].color}'"
 
     if (model.display) {
       node.innerHTML = `
@@ -335,7 +341,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       wPos.setCoordinateSystemToWorld();
       wPos.setValue(...worldPos);
 
-      const displayPosition = wPos.getComputedDisplayValue(renderer);
+      const displayPosition = wPos.getComputedDoubleDisplayValue(renderer);
 
       const { svgWidgetManager } = api;
       api.svgWidgets.rotatableCrosshairsWidget.setPoint(
