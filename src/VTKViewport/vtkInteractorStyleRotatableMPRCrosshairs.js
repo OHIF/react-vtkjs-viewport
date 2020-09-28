@@ -3,7 +3,7 @@ import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice.js';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
-import { vec2, vec3 } from 'gl-matrix';
+import { vec2, vec3, quat } from 'gl-matrix';
 
 const { States } = Constants;
 
@@ -122,39 +122,37 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     }
 
     const { apis, apiIndex } = model;
-    const api = apis[apiIndex];
+    const thisApi = apis[apiIndex];
 
-    const { rotatableCrosshairsWidget } = api.svgWidgets;
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
 
     const point = rotatableCrosshairsWidget.getPoint();
 
     let pointToPreviousPosition = [];
     let pointToNewPosition = [];
 
+    // Get vector from center of crosshairs to previous position.
     vec2.subtract(
       pointToPreviousPosition,
       [prevPosition.x, prevPosition.y],
       point
     );
 
+    // Get vector from center of crosshairs to new position.
     vec2.subtract(pointToNewPosition, [newPosition.x, newPosition.y], point);
 
-    // Get angle, axis and center
+    debugger;
 
+    // Get angle of rotation from previous reference line position to the new position.
     const angle = vec2.angle(pointToPreviousPosition, pointToNewPosition);
 
-    // Axis is the opposite direction of the plane normal for this API.
+    debugger;
 
-    const sliceNormal = api.getSliceNormal();
+    // Axis is the opposite direction of the plane normal for this API.
+    const sliceNormal = thisApi.getSliceNormal();
     const axis = [-sliceNormal[0], -sliceNormal[1], -sliceNormal[2]];
 
-    // Build a rotation matrix.
-    const {
-      matrix: rotationMatrix,
-    } = vtkMatrixBuilder.buildFromRadian().rotate(angle, axis);
-
-    // TODO: Rotate other apis
-
+    // Rotate other apis
     apis.forEach((api, index) => {
       if (index !== apiIndex) {
         // get normal and viewUp.
@@ -165,24 +163,29 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         const newSliceNormalForApi = [];
         const newViewUpForApi = [];
 
-        vec3.transformMat4(
+        const rotationQuat = quat.create();
+
+        quat.setAxisAngle(rotationQuat, axis, angle);
+        quat.normalize(rotationQuat, rotationQuat);
+
+        // rotate the ViewUp with the rotation
+        vec3.transformQuat(newViewUpForApi, viewUpForApi, rotationQuat);
+        vec3.transformQuat(
           newSliceNormalForApi,
           sliceNormalForApi,
-          rotationMatrix
+          rotationQuat
         );
-        vec3.transformMat4(newViewUpForApi, viewUpForApi, rotationMatrix);
 
-        api.setOrientation(newSliceNormalForApi, newSliceNormalForApi);
+        api.setOrientation(newSliceNormalForApi, newViewUpForApi);
       }
     });
 
+    // Call update for each api.
     apis.forEach((api, index) => {
       const { rotatableCrosshairsWidget } = api.svgWidgets;
 
       rotatableCrosshairsWidget.updateCrosshairForApi(api);
     });
-
-    // TODO -> call update for crosshairs for those apis
 
     operation.prevPosition = newPosition;
   }
