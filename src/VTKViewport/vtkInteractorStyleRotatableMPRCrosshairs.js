@@ -10,7 +10,8 @@ const { States } = Constants;
 const operations = {
   ROTATE_CROSSHAIRS: 0,
   MOVE_CROSSHAIRS: 1,
-  PAN: 2,
+  MOVE_REFERENCE_LINE: 2,
+  PAN: 3,
 };
 
 // ----------------------------------------------------------------------------
@@ -63,6 +64,28 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     // Map to the click point to the same coords as the SVG.
     const p = { x: position.x * scale, y: height - position.y * scale };
 
+    // Check each rotation handle
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      const line = lines[lineIndex];
+      const lineRotateHandles = line.rotateHandles;
+      const { points } = lineRotateHandles;
+
+      for (let i = 0; i < points.length; i++) {
+        const distance = vec2.distance([points[i].x, points[i].y], [p.x, p.y]);
+
+        if (distance < lineGrabDistance) {
+          model.operation = {
+            type: operations.ROTATE_CROSSHAIRS,
+            prevPosition: position,
+          };
+
+          lineRotateHandles.selected = true;
+
+          return;
+        }
+      }
+    }
+
     const distanceFromFirstLine = distanceFromLine(lines[0], p); //position);
     const distanceFromSecondLine = distanceFromLine(lines[1], p); //;
 
@@ -77,12 +100,14 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
       lines[selectedLineIndex].selected = true;
 
-      model.operation = {
-        type: operations.ROTATE_CROSSHAIRS,
-        prevPosition: position,
-      };
+      // TODO -> MOVE LINE
 
-      return;
+      // model.operation = {
+      //   type: operations.ROTATE_CROSSHAIRS,
+      //   prevPosition: position,
+      // };
+
+      // return;
     }
 
     // What is the fallback? Pan? Do nothing for now.
@@ -271,6 +296,9 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const thisApi = apis[apiIndex];
     let { position } = callData;
 
+    // Note: If rotate selected, don't select line.
+    const selectedRotateHandles = [false, false];
+
     const selectedLines = [false, false];
 
     const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
@@ -298,19 +326,43 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       // Map to the click point to the same coords as the SVG.
       const p = { x: position.x * scale, y: height - position.y * scale };
 
-      const distanceFromFirstLine = distanceFromLine(lines[0], p); //position);
-      const distanceFromSecondLine = distanceFromLine(lines[1], p); //;
+      let selectedRotationHandle = false;
 
-      if (
-        distanceFromFirstLine <= lineGrabDistance ||
-        distanceFromSecondLine <= lineGrabDistance
-      ) {
-        // Click on line -> start a rotate of the other planes.
+      // Check each rotation handle
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const line = lines[lineIndex];
+        const lineRotateHandles = line.rotateHandles;
+        const { points } = lineRotateHandles;
 
-        const selectedLineIndex =
-          distanceFromFirstLine < distanceFromSecondLine ? 0 : 1;
+        for (let i = 0; i < points.length; i++) {
+          const distance = vec2.distance(
+            [points[i].x, points[i].y],
+            [p.x, p.y]
+          );
 
-        selectedLines[selectedLineIndex] = true;
+          if (distance < lineGrabDistance) {
+            selectedRotateHandles[lineIndex] = true;
+            selectedRotationHandle = true;
+            // Don't need to check both points if one is found to be valid.
+            break;
+          }
+        }
+      }
+
+      // If a rotation handle isn't selected, see if we should select lines.
+      if (!selectedRotationHandle) {
+        const distanceFromFirstLine = distanceFromLine(lines[0], p);
+        const distanceFromSecondLine = distanceFromLine(lines[1], p);
+
+        if (
+          distanceFromFirstLine <= lineGrabDistance ||
+          distanceFromSecondLine <= lineGrabDistance
+        ) {
+          const selectedLineIndex =
+            distanceFromFirstLine < distanceFromSecondLine ? 0 : 1;
+
+          selectedLines[selectedLineIndex] = true;
+        }
       }
     } else {
       // Highlight both lines.
@@ -320,10 +372,17 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     lines.forEach((line, index) => {
       const selected = selectedLines[index];
+      const rotateSelected = selectedRotateHandles[index];
+      const rotateHandles = line.rotateHandles;
 
       // If changed, update and flag should update.
       if (line.selected !== selected) {
         line.selected = selected;
+        shouldUpdate = true;
+      }
+
+      if (rotateHandles.selected !== rotateSelected) {
+        rotateHandles.selected = rotateSelected;
         shouldUpdate = true;
       }
     });
@@ -391,6 +450,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     lines.forEach(line => {
       line.selected = false;
+      line.rotateHandles.selected = false;
     });
 
     updateCrosshairs(callData);

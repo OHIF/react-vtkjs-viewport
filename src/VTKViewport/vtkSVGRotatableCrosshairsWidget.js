@@ -45,6 +45,8 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     const right = width / scale;
     const bottom = height / scale;
 
+    const quarterSmallestDimension = Math.min(width, height) / 4;
+
     // A "far" distance for line clipping algorithm.
     const farDistance = Math.sqrt(bottom * bottom + right * right);
 
@@ -115,11 +117,23 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           refLine => refLine && refLine.apiIndex === i
         );
 
-        let selected = false;
+        let lineSelected = false;
+        let rotateSelected = false;
 
         if (oldReferenceLine) {
-          selected = oldReferenceLine.selected;
+          lineSelected = oldReferenceLine.selected;
+          rotateSelected = oldReferenceLine.rotateHandles.selected;
         }
+
+        const firstRotateHandle = {
+          x: p[0] + quarterSmallestDimension * unitVectorFromCenter[0],
+          y: p[1] + quarterSmallestDimension * unitVectorFromCenter[1],
+        };
+
+        const secondRotateHandle = {
+          x: p[0] - quarterSmallestDimension * unitVectorFromCenter[0],
+          y: p[1] - quarterSmallestDimension * unitVectorFromCenter[1],
+        };
 
         const referenceLine = {
           points: [
@@ -129,9 +143,13 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
               y: distantPoint[1],
             },
           ],
+          rotateHandles: {
+            selected: rotateSelected,
+            points: [firstRotateHandle, secondRotateHandle],
+          },
           color: strokeColors[i],
           apiIndex: i,
-          selected,
+          selected: lineSelected,
         };
 
         referenceLines.push(referenceLine);
@@ -154,7 +172,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       apis,
       apiIndex,
       selectedStrokeWidth,
-      centerRadius,
     } = model;
     if (point[0] === null || point[1] === null) {
       return;
@@ -178,6 +195,15 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
     const [firstLine, secondLine] = referenceLines;
 
+    const {
+      points: firstLineRotateHandles,
+      selected: firstLineRotateSelected,
+    } = firstLine.rotateHandles;
+    const {
+      points: secondLineRotateHandles,
+      selected: secondLineRotateSelected,
+    } = secondLine.rotateHandles;
+
     const [firstLinePart1, firstLinePart2] = model.getSplitReferenceLine(
       firstLine,
       p
@@ -194,16 +220,18 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       ? selectedStrokeWidth
       : strokeWidth;
 
-    const firstLineClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-0`;
-    const secondLineClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-1`;
-    const centerClassName = `vtkjsRotatableCrosshairWidget-${apiIndex}-center`;
+    const firstLineRotateWidth = firstLineRotateSelected
+      ? selectedStrokeWidth
+      : strokeWidth;
+    const secondLineRotateWidth = secondLineRotateSelected
+      ? selectedStrokeWidth
+      : strokeWidth;
 
     if (model.display) {
       node.innerHTML = `
       <g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
        <g>
        <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
-       <!-- First Line first half!-->
         <g
 
           stroke="${referenceLines[0].color}"
@@ -212,21 +240,36 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           stroke-linejoin="round"
           stroke-width="${firstLineStrokeWidth}"
         >
+        <!-- First Line part 1!-->
           <line
             x1="${firstLinePart1[0].x}"
             y1="${firstLinePart1[0].y}"
             x2="${firstLinePart1[1].x}"
             y2="${firstLinePart1[1].y}"
-            class="${firstLineClassName}"
           ></line>
-          <!-- First Line second half!-->
+          <!-- First Line part 2!-->
           <line
             x1="${firstLinePart2[0].x}"
             y1="${firstLinePart2[0].y}"
             x2="${firstLinePart2[1].x}"
             y2="${firstLinePart2[1].y}"
-            class="${firstLineClassName}"
           ></line>
+        </g>
+        <g
+          stroke="${referenceLines[0].color}"
+          stroke-dasharray="${strokeDashArray}"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="${firstLineRotateWidth}"
+        >
+            <!--First line rotateHandle 0 -->
+            <circle cx="${firstLineRotateHandles[0].x}" cy="${
+        firstLineRotateHandles[0].y
+      }" r="10" fill="none" />
+            <!--First line rotateHandle 1 -->
+            <circle cx="${firstLineRotateHandles[1].x}" cy="${
+        firstLineRotateHandles[1].y
+      }" r="10" fill="none" />
         </g>
         <g
           stroke-dasharray="${strokeDashArray}"
@@ -241,7 +284,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
             y1="${secondLinePart1[0].y}"
             x2="${secondLinePart1[1].x}"
             y2="${secondLinePart1[1].y}"
-            class="${secondLineClassName}"
           ></line>
           <!-- Second Line part 2 !-->
           <line
@@ -249,13 +291,30 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
             y1="${secondLinePart2[0].y}"
             x2="${secondLinePart2[1].x}"
             y2="${secondLinePart2[1].y}"
-            class="${secondLineClassName}"
           ></line>
-        </g>
-        <circle cx="${bottom - 20}" cy="${left + 20}" r="10" fill="${
+      </g>
+      <g
+        stroke-dasharray="${strokeDashArray}"
+        stroke="${referenceLines[1].color}"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width=${secondLineRotateWidth}
+      >
+        <!--Second line rotateHandle 0 -->
+        <circle cx="${secondLineRotateHandles[0].x}" cy="${
+        secondLineRotateHandles[0].y
+      }" r="10" fill="none" />
+        <!--Second line rotateHandle 1 -->
+        <circle cx="${secondLineRotateHandles[1].x}" cy="${
+        secondLineRotateHandles[1].y
+      }" r="10" fill="none" />
+      </g>
+      <circle cx="${bottom - 20}" cy="${left + 20}" r="10" fill="${
         strokeColors[apiIndex]
       }" />
-      </g>`;
+      </g>
+
+      `;
     } else {
       node.innerHTML = '';
     }
