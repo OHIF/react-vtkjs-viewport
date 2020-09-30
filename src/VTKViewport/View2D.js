@@ -299,7 +299,7 @@ export default class View2D extends Component {
     const renderWindow = this.genericRenderWindow.getRenderWindow();
     const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
 
-    this.updateRotationRelativeToOrientation(sliceNormal, viewUp);
+    this.updateRotationRelativeToOrientation(sliceNormal);
 
     currentIStyle.setSliceOrientation(sliceNormal, viewUp);
   }
@@ -426,26 +426,9 @@ export default class View2D extends Component {
     this.setState({ rotation: { theta, phi } });
   }
 
-  updateRotationRelativeToOrientation(newNormal, newViewUp) {
+  updateRotationRelativeToOrientation(newNormal) {
     const { orientation } = this.props;
-    const {
-      sliceNormal: originalSliceNormal,
-      viewUp: originalViewUp,
-    } = orientation;
-
-    // const dotNormalOntoOldNormal = vec2.dot(newNormal, originalSliceNormal);
-
-    // const newNormalProjectedOnOriginalNormal = [
-    //   dotNormalOntoOldNormal * originalSliceNormal[0],
-    //   dotNormalOntoOldNormal * originalSliceNormal[1],
-    //   dotNormalOntoOldNormal * originalSliceNormal[2],
-    // ];
-
-    // const normalFlattenedToViewUp = [
-    //   newNormal[0] - newNormalProjectedOnOriginalNormal[0],
-    //   newNormal[1] - newNormalProjectedOnOriginalNormal[1],
-    //   newNormal[2] - newNormalProjectedOnOriginalNormal[2],
-    // ];
+    const { sliceNormal: originalSliceNormal } = orientation;
 
     // convert to spherical coords;
 
