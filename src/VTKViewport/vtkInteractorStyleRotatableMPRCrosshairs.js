@@ -102,12 +102,16 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
       // TODO -> MOVE LINE
 
-      // model.operation = {
-      //   type: operations.ROTATE_CROSSHAIRS,
-      //   prevPosition: position,
-      // };
+      const snapToLineIndex = selectedLineIndex === 0 ? 1 : 0;
 
-      // return;
+      // Get the line
+
+      model.operation = {
+        type: operations.MOVE_REFERENCE_LINE,
+        snapToLineIndex,
+      };
+
+      return;
     }
 
     // What is the fallback? Pan? Do nothing for now.
@@ -140,6 +144,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     switch (type) {
       case operations.MOVE_CROSSHAIRS:
+      case operations.MOVE_REFERENCE_LINE:
         moveCrosshairs(callData);
         break;
       case operations.ROTATE_CROSSHAIRS:
@@ -257,11 +262,73 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     );
   }
 
+  function snapPosToLine(position, lineIndex) {
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+    const { svgWidgetManager } = thisApi;
+    const size = svgWidgetManager.getSize();
+    const scale = svgWidgetManager.getScale();
+    const height = size[1];
+
+    // Map to the click point to the same coords as the SVG.
+    const p = { x: position.x * scale, y: height - position.y * scale };
+
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+    const line = lines[lineIndex];
+    const points = line.points;
+
+    // Project p onto line to get new crosshair position
+    let line0toP = [];
+    let line0toline1 = [];
+
+    vec2.sub(line0toP, [p.x, p.y], [points[0].x, points[0].y]);
+    vec2.sub(
+      line0toline1,
+      [points[1].x, points[1].y],
+      [points[0].x, points[0].y]
+    );
+
+    const magnitudeOfLine = vec2.distance(
+      [points[0].x, points[0].y],
+      [points[1].x, points[1].y]
+    );
+
+    const unitVectorAlongLine = [
+      line0toline1[0] / magnitudeOfLine,
+      line0toline1[1] / magnitudeOfLine,
+    ];
+
+    const dotProduct = vec2.dot(line0toP, line0toline1);
+
+    const distanceAlongLine = dotProduct / magnitudeOfLine;
+
+    const newCenterSVG = [
+      points[0].x + unitVectorAlongLine[0] * distanceAlongLine,
+      points[0].y + unitVectorAlongLine[1] * distanceAlongLine,
+    ];
+
+    // Convert back to display coords.
+    return {
+      x: newCenterSVG[0] / scale,
+      y: (height - newCenterSVG[1]) / scale,
+    };
+  }
+
   function moveCrosshairs(callData) {
     const { apis, apiIndex } = model;
     const api = apis[apiIndex];
+    const { operation } = model;
+    const { snapToLineIndex } = operation;
 
-    const pos = callData.position;
+    let pos;
+
+    if (snapToLineIndex !== undefined) {
+      pos = snapPosToLine(callData.position, snapToLineIndex);
+    } else {
+      pos = callData.position;
+    }
+
     const renderer = callData.pokedRenderer;
 
     const dPos = vtkCoordinate.newInstance();
