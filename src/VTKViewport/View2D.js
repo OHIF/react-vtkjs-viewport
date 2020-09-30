@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import cornerstoneTools from 'cornerstone-tools';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
@@ -7,6 +8,7 @@ import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkSVGWidgetManager from './vtkSVGWidgetManager';
+import { vec2 } from 'gl-matrix';
 
 import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
@@ -16,7 +18,11 @@ import createLabelPipeline from './createLabelPipeline';
 import { uuidv4 } from './../helpers';
 import setGlobalOpacity from './setGlobalOpacity';
 
+const throttle = cornerstoneTools.importInternal('util/throttle');
+
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
+
+const radiansToDegrees = 360 / (2.0 * Math.PI);
 
 export default class View2D extends Component {
   static propTypes = {
@@ -62,6 +68,7 @@ export default class View2D extends Component {
     this.interactorStyleSubs = [];
     this.state = {
       voi: this.getVOI(props.volumes[0]),
+      rotation: { theta: 0, phi: 0 },
     };
 
     this.apiProperties = {};
@@ -220,6 +227,12 @@ export default class View2D extends Component {
     const boundOutlineRendering = this.setOutlineRendering.bind(this);
     const boundRequestNewSegmentation = this.requestNewSegmentation.bind(this);
 
+    this.throttledUpdateRotationOverlay = throttle(
+      this.updateRotationOverlay,
+      16,
+      { trailing: true }
+    ); // ~ 60 fps
+
     this.svgWidgets = {};
 
     if (this.props.onCreated) {
@@ -285,6 +298,8 @@ export default class View2D extends Component {
   setOrientation(sliceNormal, viewUp) {
     const renderWindow = this.genericRenderWindow.getRenderWindow();
     const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    this.updateRotationRelativeToOrientation(sliceNormal, viewUp);
 
     currentIStyle.setSliceOrientation(sliceNormal, viewUp);
   }
@@ -405,6 +420,73 @@ export default class View2D extends Component {
 
   updateVOI(windowWidth, windowCenter) {
     this.setState({ voi: { windowWidth, windowCenter } });
+  }
+
+  updateRotationOverlay(theta, phi) {
+    this.setState({ rotation: { theta, phi } });
+  }
+
+  updateRotationRelativeToOrientation(newNormal, newViewUp) {
+    const { orientation } = this.props;
+    const {
+      sliceNormal: originalSliceNormal,
+      viewUp: originalViewUp,
+    } = orientation;
+
+    // const dotNormalOntoOldNormal = vec2.dot(newNormal, originalSliceNormal);
+
+    // const newNormalProjectedOnOriginalNormal = [
+    //   dotNormalOntoOldNormal * originalSliceNormal[0],
+    //   dotNormalOntoOldNormal * originalSliceNormal[1],
+    //   dotNormalOntoOldNormal * originalSliceNormal[2],
+    // ];
+
+    // const normalFlattenedToViewUp = [
+    //   newNormal[0] - newNormalProjectedOnOriginalNormal[0],
+    //   newNormal[1] - newNormalProjectedOnOriginalNormal[1],
+    //   newNormal[2] - newNormalProjectedOnOriginalNormal[2],
+    // ];
+
+    // convert to spherical coords;
+
+    // All unit vectors so no reason to calculate r for the speherical coords.
+
+    // Get original offset of normal relative to Z axis.
+    let [thetaOriginal, phiOriginal] = [
+      Math.acos(originalSliceNormal[2]), // r === 1
+      Math.atan2(originalSliceNormal[1], originalSliceNormal[0]),
+    ];
+
+    // Get new offset of normal relative to Z axis.
+    let [thetaNew, phiNew] = [
+      Math.acos(newNormal[2]), // r === 1
+      Math.atan2(newNormal[1], newNormal[0]),
+    ];
+
+    // Convert to degrees for the UI.
+    thetaOriginal *= radiansToDegrees;
+    phiOriginal *= radiansToDegrees;
+    thetaNew *= radiansToDegrees;
+    phiNew *= radiansToDegrees;
+
+    // Get the relative angle to the original orientation.
+    let thetaRelative = thetaNew - thetaOriginal;
+    let phiRelative = phiNew - phiOriginal;
+
+    // Rescale to the right ranges (0 <= theta <= pi, 0 <= phi < 2*pi)
+    if (thetaRelative > 180) {
+      thetaRelative -= 180;
+    } else if (thetaRelative < 0) {
+      thetaRelative = 180 - Math.abs(thetaRelative);
+    }
+
+    if (phiRelative >= 360) {
+      phiRelative -= 360;
+    } else if (phiRelative < 0) {
+      phiRelative = 360 - Math.abs(phiRelative);
+    }
+
+    this.throttledUpdateRotationOverlay(thetaRelative, phiRelative);
   }
 
   getOrientation() {
@@ -673,11 +755,16 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
     const voi = this.state.voi;
+    const rotation = this.state.rotation;
 
     return (
       <div style={style}>
         <div ref={this.container} style={style} />
-        <ViewportOverlay {...this.props.dataDetails} voi={voi} />
+        <ViewportOverlay
+          {...this.props.dataDetails}
+          voi={voi}
+          rotation={rotation}
+        />
       </div>
     );
   }

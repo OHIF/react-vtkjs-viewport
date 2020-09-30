@@ -318,8 +318,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       selectedLines[1] = true;
     }
 
-    console.log(selectedLines);
-
     lines.forEach((line, index) => {
       const selected = selectedLines[index];
 
@@ -331,7 +329,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     });
 
     if (shouldUpdate) {
-      console.log(shouldUpdate);
       updateCrosshairs(callData);
     }
   }
