@@ -41,7 +41,7 @@ export default class View2D extends Component {
       visible: true,
       renderOutline: true,
       segmentsDefaultProperties: [],
-      onNewSegmentationRequested: () => { }
+      onNewSegmentationRequested: () => {},
     },
   };
 
@@ -61,7 +61,7 @@ export default class View2D extends Component {
     };
     this.interactorStyleSubs = [];
     this.state = {
-      voi: this.getVOI(props.volumes[0])
+      voi: this.getVOI(props.volumes[0]),
     };
 
     this.apiProperties = {};
@@ -478,7 +478,7 @@ export default class View2D extends Component {
 
     if (
       prevProps.paintFilterLabelMapImageData !==
-      this.props.paintFilterLabelMapImageData &&
+        this.props.paintFilterLabelMapImageData &&
       this.props.paintFilterLabelMapImageData
     ) {
       this.subs.labelmap.unsubscribe();
@@ -510,12 +510,13 @@ export default class View2D extends Component {
 
       this.labelmap = labelmap;
 
-      this.props.labelmapRenderingOptions.segmentsDefaultProperties
-        .forEach((properties, segmentNumber) => {
+      this.props.labelmapRenderingOptions.segmentsDefaultProperties.forEach(
+        (properties, segmentNumber) => {
           if (properties) {
             this.setSegmentVisibility(segmentNumber, properties.visible);
           }
-        });
+        }
+      );
 
       // Add actors.
       if (this.labelmap && this.labelmap.actor) {
@@ -544,7 +545,7 @@ export default class View2D extends Component {
     if (
       prevProps.labelmapRenderingOptions &&
       prevProps.labelmapRenderingOptions.visible !==
-      this.props.labelmapRenderingOptions.visible
+        this.props.labelmapRenderingOptions.visible
     ) {
       this.labelmap.actor.setVisibility(
         prevProps.labelmapRenderingOptions.visible

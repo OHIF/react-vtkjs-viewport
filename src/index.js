@@ -1,4 +1,5 @@
 import View2D from './VTKViewport/View2D';
+import View2DImageMapper from './VTKViewport/View2DImageMapper';
 import View3D from './VTKViewport/View3D';
 import vtkInteractorStyleMPRSlice from './VTKViewport/vtkInteractorStyleMPRSlice.js';
 import vtkInteractorStyleMPRWindowLevel from './VTKViewport/vtkInteractorStyleMPRWindowLevel.js';
@@ -15,6 +16,7 @@ import EVENTS from './events.js';
 
 export {
   View2D,
+  View2DImageMapper,
   View3D,
   ViewportOverlay,
   ViewportData,
