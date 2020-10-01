@@ -7,7 +7,6 @@ import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
 import VTKLoadImageDataExample from './VTKLoadImageDataExample.js';
 import VTKCrosshairsExample from './VTKCrosshairsExample.js';
-import VTK4UpExample from './VTK4UpExample.js';
 import VTKMPRRotateExample from './VTKMPRRotateExample.js';
 import VTKVolumeRenderingExample from './VTKVolumeRenderingExample.js';
 
@@ -52,7 +51,8 @@ function Index() {
     {
       title: 'Volume Rendering',
       url: '/volume-rendering',
-      text: 'Demonstrates how to perform volume rendering for a CT volume.',
+      text:
+        'Demonstrates how to perform volume rendering for a CT volume.',
     },
     {
       title: 'Image Segmentation via Paint Widget',
@@ -73,11 +73,6 @@ function Index() {
         'Demonstrates how to set up the Crosshairs interactor style and SVG Widget',
     },
     {
-      title: 'MPR 4UP Example',
-      url: '/4up',
-      text: 'Demonstrates a 4UP view',
-    },
-    {
       title: 'MPR Rotate Example',
       url: '/rotate',
       text: 'Demonstrates how to set up the MPR Rotate interactor style',
@@ -90,7 +85,7 @@ function Index() {
     },
   ];
 
-  const exampleComponents = examples.map((e) => {
+  const exampleComponents = examples.map(e => {
     return <ExampleEntry key={e.title} {...e} />;
   });
 
@@ -148,10 +143,8 @@ function AppRouter() {
   const synced = () =>
     Example({ children: <VTKCornerstonePaintingSyncExample /> });
   const crosshairs = () => Example({ children: <VTKCrosshairsExample /> });
-  const fourUp = () => Example({ children: <VTK4UpExample /> });
   const rotateMPR = () => Example({ children: <VTKMPRRotateExample /> });
-  const volumeRendering = () =>
-    Example({ children: <VTKVolumeRenderingExample /> });
+  const volumeRendering = () => Example({ children: <VTKVolumeRenderingExample /> });
 
   return (
     <Router>
@@ -162,7 +155,6 @@ function AppRouter() {
         <Route exact path="/painting" render={painting} />
         <Route exact path="/cornerstone-sync-painting" render={synced} />
         <Route exact path="/crosshairs" render={crosshairs} />
-        <Route exact path="/4up" render={fourUp} />
         <Route exact path="/rotate" render={rotateMPR} />
         <Route exact path="/volume-rendering" render={volumeRendering} />
         <Route exact path="/cornerstone-load-image-data" render={loadImage} />
