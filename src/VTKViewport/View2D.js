@@ -58,6 +58,7 @@ export default class View2D extends Component {
     this.genericRenderWindow = null;
     this.widgetManager = vtkWidgetManager.newInstance();
     this.container = React.createRef();
+
     this.subs = {
       interactor: createSub(),
       data: createSub(),
