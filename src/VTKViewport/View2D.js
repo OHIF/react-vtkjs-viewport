@@ -8,7 +8,6 @@ import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
 import vtkPaintWidget from 'vtk.js/Sources/Widgets/Widgets3D/PaintWidget';
 import vtkSVGWidgetManager from './vtkSVGWidgetManager';
-import { vec2 } from 'gl-matrix';
 
 import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
@@ -39,6 +38,7 @@ export default class View2D extends Component {
     onDestroyed: PropTypes.func,
     orientation: PropTypes.object,
     labelmapRenderingOptions: PropTypes.object,
+    showRotation: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -49,6 +49,7 @@ export default class View2D extends Component {
       segmentsDefaultProperties: [],
       onNewSegmentationRequested: () => {},
     },
+    showRotation: false,
   };
 
   constructor(props) {
@@ -172,11 +173,18 @@ export default class View2D extends Component {
     filters = [this.paintFilter];
     widgets = [this.paintWidget];
 
+    // Make throttled function for rotation update.
+    this.throttledUpdateRotationOverlay = throttle(
+      this.updateRotationOverlay,
+      16,
+      { trailing: true }
+    ); // ~ 60 fps
+
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
 
-      istyle.setSliceOrientation(orientation.sliceNormal, orientation.viewUp);
+      this.setOrientation(orientation.sliceNormal, orientation.viewUp);
     } else {
       istyle.setSliceNormal(0, 0, 1);
     }
@@ -226,12 +234,6 @@ export default class View2D extends Component {
     const boundSetOutlineThickness = this.setOutlineThickness.bind(this);
     const boundOutlineRendering = this.setOutlineRendering.bind(this);
     const boundRequestNewSegmentation = this.requestNewSegmentation.bind(this);
-
-    this.throttledUpdateRotationOverlay = throttle(
-      this.updateRotationOverlay,
-      16,
-      { trailing: true }
-    ); // ~ 60 fps
 
     this.svgWidgets = {};
 
@@ -738,7 +740,7 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
     const voi = this.state.voi;
-    const rotation = this.state.rotation;
+    const rotation = this.props.showRotation ? this.state.rotation : null;
 
     return (
       <div style={style}>

@@ -249,6 +249,7 @@ class VTKRotatableCrosshairsExample extends Component {
               volumes={this.state.volumes}
               onCreated={this.storeApi(0)}
               orientation={{ sliceNormal: [0, 1, 0], viewUp: [0, 0, 1] }}
+              showRotation={true}
             />
           </div>
           <div className="col-sm-4">
@@ -256,6 +257,7 @@ class VTKRotatableCrosshairsExample extends Component {
               volumes={this.state.volumes}
               onCreated={this.storeApi(1)}
               orientation={{ sliceNormal: [1, 0, 0], viewUp: [0, 0, 1] }}
+              showRotation={true}
             />
           </div>
           <div className="col-sm-4">
@@ -263,6 +265,7 @@ class VTKRotatableCrosshairsExample extends Component {
               volumes={this.state.volumes}
               onCreated={this.storeApi(2)}
               orientation={{ sliceNormal: [0, 0, 1], viewUp: [0, -1, 0] }}
+              showRotation={true}
             />
           </div>
         </div>
