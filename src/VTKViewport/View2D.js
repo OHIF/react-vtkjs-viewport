@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import cornerstoneTools from 'cornerstone-tools';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
@@ -16,7 +17,11 @@ import createLabelPipeline from './createLabelPipeline';
 import { uuidv4 } from './../helpers';
 import setGlobalOpacity from './setGlobalOpacity';
 
+const throttle = cornerstoneTools.importInternal('util/throttle');
+
 const minSlabThickness = 0.1; // TODO -> Should this be configurable or not?
+
+const radiansToDegrees = 360 / (2.0 * Math.PI);
 
 export default class View2D extends Component {
   static propTypes = {
@@ -33,6 +38,7 @@ export default class View2D extends Component {
     onDestroyed: PropTypes.func,
     orientation: PropTypes.object,
     labelmapRenderingOptions: PropTypes.object,
+    showRotation: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -41,8 +47,9 @@ export default class View2D extends Component {
       visible: true,
       renderOutline: true,
       segmentsDefaultProperties: [],
-      onNewSegmentationRequested: () => { }
+      onNewSegmentationRequested: () => {},
     },
+    showRotation: false,
   };
 
   constructor(props) {
@@ -51,6 +58,7 @@ export default class View2D extends Component {
     this.genericRenderWindow = null;
     this.widgetManager = vtkWidgetManager.newInstance();
     this.container = React.createRef();
+
     this.subs = {
       interactor: createSub(),
       data: createSub(),
@@ -61,7 +69,8 @@ export default class View2D extends Component {
     };
     this.interactorStyleSubs = [];
     this.state = {
-      voi: this.getVOI(props.volumes[0])
+      voi: this.getVOI(props.volumes[0]),
+      rotation: { theta: 0, phi: 0 },
     };
 
     this.apiProperties = {};
@@ -165,11 +174,18 @@ export default class View2D extends Component {
     filters = [this.paintFilter];
     widgets = [this.paintWidget];
 
+    // Make throttled function for rotation update.
+    this.throttledUpdateRotationOverlay = throttle(
+      this.updateRotationOverlay,
+      16,
+      { trailing: true }
+    ); // ~ 60 fps
+
     // Set orientation based on props
     if (this.props.orientation) {
       const { orientation } = this.props;
 
-      istyle.setSliceOrientation(orientation.sliceNormal, orientation.viewUp);
+      this.setOrientation(orientation.sliceNormal, orientation.viewUp);
     } else {
       istyle.setSliceNormal(0, 0, 1);
     }
@@ -200,6 +216,9 @@ export default class View2D extends Component {
 
     const boundUpdateVOI = this.updateVOI.bind(this);
     const boundGetOrienation = this.getOrientation.bind(this);
+    const boundSetOrientation = this.setOrientation.bind(this);
+    const boundGetViewUp = this.getViewUp.bind(this);
+    const boundGetSliceNormal = this.getSliceNormal.bind(this);
     const boundSetInteractorStyle = this.setInteractorStyle.bind(this);
     const boundGetSlabThickness = this.getSlabThickness.bind(this);
     const boundSetSlabThickness = this.setSlabThickness.bind(this);
@@ -241,6 +260,9 @@ export default class View2D extends Component {
         updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
         getOrientation: boundGetOrienation,
+        setOrientation: boundSetOrientation,
+        getViewUp: boundGetViewUp,
+        getSliceNormal: boundGetSliceNormal,
         setInteractorStyle: boundSetInteractorStyle,
         getSlabThickness: boundGetSlabThickness,
         setSlabThickness: boundSetSlabThickness,
@@ -260,6 +282,29 @@ export default class View2D extends Component {
 
       this.props.onCreated(api);
     }
+  }
+
+  getViewUp() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    return currentIStyle.getViewUp();
+  }
+
+  getSliceNormal() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    return currentIStyle.getSliceNormal();
+  }
+
+  setOrientation(sliceNormal, viewUp) {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const currentIStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    this.updateRotationRelativeToOrientation(sliceNormal);
+
+    currentIStyle.setSliceOrientation(sliceNormal, viewUp);
   }
 
   getApiProperty(propertyName) {
@@ -380,6 +425,56 @@ export default class View2D extends Component {
     this.setState({ voi: { windowWidth, windowCenter } });
   }
 
+  updateRotationOverlay(theta, phi) {
+    this.setState({ rotation: { theta, phi } });
+  }
+
+  updateRotationRelativeToOrientation(newNormal) {
+    const { orientation } = this.props;
+    const { sliceNormal: originalSliceNormal } = orientation;
+
+    // convert to spherical coords;
+
+    // All unit vectors so no reason to calculate r for the speherical coords.
+
+    // Get original offset of normal relative to Z axis.
+    let [thetaOriginal, phiOriginal] = [
+      Math.acos(originalSliceNormal[2]), // r === 1
+      Math.atan2(originalSliceNormal[1], originalSliceNormal[0]),
+    ];
+
+    // Get new offset of normal relative to Z axis.
+    let [thetaNew, phiNew] = [
+      Math.acos(newNormal[2]), // r === 1
+      Math.atan2(newNormal[1], newNormal[0]),
+    ];
+
+    // Convert to degrees for the UI.
+    thetaOriginal *= radiansToDegrees;
+    phiOriginal *= radiansToDegrees;
+    thetaNew *= radiansToDegrees;
+    phiNew *= radiansToDegrees;
+
+    // Get the relative angle to the original orientation.
+    let thetaRelative = thetaNew - thetaOriginal;
+    let phiRelative = phiNew - phiOriginal;
+
+    // Rescale to the right ranges (0 <= theta <= pi, 0 <= phi < 2*pi)
+    if (thetaRelative > 180) {
+      thetaRelative -= 180;
+    } else if (thetaRelative < 0) {
+      thetaRelative = 180 - Math.abs(thetaRelative);
+    }
+
+    if (phiRelative >= 360) {
+      phiRelative -= 360;
+    } else if (phiRelative < 0) {
+      phiRelative = 360 - Math.abs(phiRelative);
+    }
+
+    this.throttledUpdateRotationOverlay(thetaRelative, phiRelative);
+  }
+
   getOrientation() {
     return this.props.orientation;
   }
@@ -478,7 +573,7 @@ export default class View2D extends Component {
 
     if (
       prevProps.paintFilterLabelMapImageData !==
-      this.props.paintFilterLabelMapImageData &&
+        this.props.paintFilterLabelMapImageData &&
       this.props.paintFilterLabelMapImageData
     ) {
       this.subs.labelmap.unsubscribe();
@@ -510,12 +605,13 @@ export default class View2D extends Component {
 
       this.labelmap = labelmap;
 
-      this.props.labelmapRenderingOptions.segmentsDefaultProperties
-        .forEach((properties, segmentNumber) => {
+      this.props.labelmapRenderingOptions.segmentsDefaultProperties.forEach(
+        (properties, segmentNumber) => {
           if (properties) {
             this.setSegmentVisibility(segmentNumber, properties.visible);
           }
-        });
+        }
+      );
 
       // Add actors.
       if (this.labelmap && this.labelmap.actor) {
@@ -544,7 +640,7 @@ export default class View2D extends Component {
     if (
       prevProps.labelmapRenderingOptions &&
       prevProps.labelmapRenderingOptions.visible !==
-      this.props.labelmapRenderingOptions.visible
+        this.props.labelmapRenderingOptions.visible
     ) {
       this.labelmap.actor.setVisibility(
         prevProps.labelmapRenderingOptions.visible
@@ -645,11 +741,16 @@ export default class View2D extends Component {
 
     const style = { width: '100%', height: '100%', position: 'relative' };
     const voi = this.state.voi;
+    const rotation = this.props.showRotation ? this.state.rotation : null;
 
     return (
       <div style={style}>
         <div ref={this.container} style={style} />
-        <ViewportOverlay {...this.props.dataDetails} voi={voi} />
+        <ViewportOverlay
+          {...this.props.dataDetails}
+          voi={voi}
+          rotation={rotation}
+        />
       </div>
     );
   }

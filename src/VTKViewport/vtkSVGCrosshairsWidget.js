@@ -140,10 +140,7 @@ function vtkSVGCrosshairsWidget(publicAPI, model) {
   };
 
   publicAPI.moveCrosshairs = (worldPos, apis) => {
-    if (
-      worldPos === undefined ||
-      apis === undefined
-    ) {
+    if (worldPos === undefined || apis === undefined) {
       console.error(
         'worldPos, apis must be defined in order to update crosshairs.'
       );

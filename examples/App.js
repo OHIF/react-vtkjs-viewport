@@ -7,6 +7,7 @@ import VTKMPRPaintingExample from './VTKMPRPaintingExample.js';
 import VTKCornerstonePaintingSyncExample from './VTKCornerstonePaintingSyncExample.js';
 import VTKLoadImageDataExample from './VTKLoadImageDataExample.js';
 import VTKCrosshairsExample from './VTKCrosshairsExample.js';
+import VTKRotatableCrosshairsExample from './VTKRotatableCrosshairsExample.js';
 import VTKMPRRotateExample from './VTKMPRRotateExample.js';
 import VTKVolumeRenderingExample from './VTKVolumeRenderingExample.js';
 
@@ -51,8 +52,7 @@ function Index() {
     {
       title: 'Volume Rendering',
       url: '/volume-rendering',
-      text:
-        'Demonstrates how to perform volume rendering for a CT volume.',
+      text: 'Demonstrates how to perform volume rendering for a CT volume.',
     },
     {
       title: 'Image Segmentation via Paint Widget',
@@ -71,6 +71,12 @@ function Index() {
       url: '/crosshairs',
       text:
         'Demonstrates how to set up the Crosshairs interactor style and SVG Widget',
+    },
+    {
+      title: 'MPR Rotatable Crosshairs Example',
+      url: '/rotatable-crosshairs',
+      text:
+        'Demonstrates how to set up the Rotatable Crosshairs interactor style and SVG Widget',
     },
     {
       title: 'MPR Rotate Example',
@@ -143,8 +149,11 @@ function AppRouter() {
   const synced = () =>
     Example({ children: <VTKCornerstonePaintingSyncExample /> });
   const crosshairs = () => Example({ children: <VTKCrosshairsExample /> });
+  const rotatableCrosshairs = () =>
+    Example({ children: <VTKRotatableCrosshairsExample /> });
   const rotateMPR = () => Example({ children: <VTKMPRRotateExample /> });
-  const volumeRendering = () => Example({ children: <VTKVolumeRenderingExample /> });
+  const volumeRendering = () =>
+    Example({ children: <VTKVolumeRenderingExample /> });
 
   return (
     <Router>
@@ -155,6 +164,11 @@ function AppRouter() {
         <Route exact path="/painting" render={painting} />
         <Route exact path="/cornerstone-sync-painting" render={synced} />
         <Route exact path="/crosshairs" render={crosshairs} />
+        <Route
+          exact
+          path="/rotatable-crosshairs"
+          render={rotatableCrosshairs}
+        />
         <Route exact path="/rotate" render={rotateMPR} />
         <Route exact path="/volume-rendering" render={volumeRendering} />
         <Route exact path="/cornerstone-load-image-data" render={loadImage} />
