@@ -158,8 +158,13 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     switch (type) {
       case operations.MOVE_CROSSHAIRS:
+        moveCrosshairs(callData.position, callData.pokedRenderer);
+        break;
       case operations.MOVE_REFERENCE_LINE:
-        moveCrosshairs(callData);
+        const { snapToLineIndex } = operation;
+        const pos = snapPosToLine(callData.position, snapToLineIndex);
+
+        moveCrosshairs(pos, callData.pokedRenderer);
         break;
       case operations.ROTATE_CROSSHAIRS:
         rotateCrosshairs(callData);
@@ -173,7 +178,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   function pan(callData) {
     // Pan handled in class above, just call update for crosshairs.
 
-    console.log('PANNING');
+    console.log('UPDATE CROSSHAIRS');
     updateCrosshairs(callData);
   }
 
@@ -336,21 +341,9 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     };
   }
 
-  function moveCrosshairs(callData) {
+  function moveCrosshairs(pos, renderer) {
     const { apis, apiIndex } = model;
     const api = apis[apiIndex];
-    const { operation } = model;
-    const { snapToLineIndex } = operation;
-
-    let pos;
-
-    if (snapToLineIndex !== undefined) {
-      pos = snapPosToLine(callData.position, snapToLineIndex);
-    } else {
-      pos = callData.position;
-    }
-
-    const renderer = callData.pokedRenderer;
 
     const dPos = vtkCoordinate.newInstance();
     dPos.setCoordinateSystemToDisplay();
@@ -377,6 +370,89 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     );
 
     publicAPI.invokeInteractionEvent({ type: 'InteractionEvent' });
+  }
+
+  function scrollCrosshairs(lineIndex, direction) {
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+    const { svgWidgetManager } = thisApi;
+    const size = svgWidgetManager.getSize();
+    const scale = svgWidgetManager.getScale();
+    const height = size[1];
+    const renderer = thisApi.genericRenderWindow.getRenderer();
+
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    if (!rotatableCrosshairsWidget) {
+      throw new Error(
+        'Must use rotatable crosshair svg widget with this istyle.'
+      );
+    }
+
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+    const otherLineIndex = lineIndex === 0 ? 1 : 0;
+
+    const point = rotatableCrosshairsWidget.getPoint();
+    const p = [point[0] * scale, height - point[1] * scale];
+
+    debugger;
+
+    // Get the unit vector to move the line in.
+
+    const linePoints = lines[otherLineIndex].points;
+    let lowToHighPoints;
+
+    // If line is horizontal (<1 pix difference in height), move right when scroll forward.
+    if (Math.abs(linePoints[0].y - linePoints[1].y) < 1.0) {
+      if (linePoints[0].x < linePoints[1].x) {
+        lowToHighPoints = [linePoints[0], linePoints[1]];
+      } else {
+        lowToHighPoints = [linePoints[1], linePoints[0]];
+      }
+    }
+    // If end is higher on screen, scroll moves crosshairs that way.
+    else if (linePoints[0].y < linePoints[1].y) {
+      lowToHighPoints = [linePoints[0], linePoints[1]];
+    } else {
+      lowToHighPoints = [linePoints[1], linePoints[0]];
+    }
+
+    const unitVector = [];
+    vec2.subtract(
+      unitVector,
+      [lowToHighPoints[1].x, lowToHighPoints[1].y],
+      [lowToHighPoints[0].x, lowToHighPoints[0].y]
+    );
+    vec2.normalize(unitVector, unitVector);
+
+    if (direction === 'forwards') {
+      unitVector[0] *= -1;
+      unitVector[1] *= -1;
+    }
+
+    console.log();
+    console.log(direction);
+    console.log(unitVector);
+
+    console.log(p);
+
+    // TODO -> get unit vector of other line, and size of other line.
+    // Calculate scroll distance increment ( one slice at a time)?
+
+    const newCenterPointSVG = [p[0] + unitVector[0], p[1] + unitVector[1]];
+
+    // translate to the display coordinates.
+    const displayCoordinate = {
+      x: newCenterPointSVG[0] / scale,
+      y: (height - newCenterPointSVG[1]) / scale,
+    };
+
+    // Move point.
+    moveCrosshairs(
+      displayCoordinate,
+      //{ x: newCenterPointSVG[0], y: newCenterPointSVG[1] },
+      renderer
+    );
   }
 
   function handlePassiveMouseMove(callData) {
@@ -592,14 +668,25 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
     const lines = rotatableCrosshairsWidget.getReferenceLines();
 
-    debugger;
+    let activeLineIndex;
 
-    const direction = publicAPI.getSlice() - slice;
+    lines.forEach((line, lineIndex) => {
+      if (line.active) {
+        activeLineIndex = lineIndex;
+      }
+    });
 
-    if (!model.disableNormalMPRScroll) {
-      superScrollToSlice(slice);
+    if (activeLineIndex === undefined) {
+      if (!model.disableNormalMPRScroll) {
+        superScrollToSlice(slice);
+      }
+    } else {
+      const direction = publicAPI.getSlice() - slice;
+
+      const scrollDirection = direction > 0 ? 'forwards' : 'backwards';
+
+      scrollCrosshairs(activeLineIndex, scrollDirection);
     }
-    debugger;
   };
 }
 
