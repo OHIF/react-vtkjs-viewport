@@ -74,7 +74,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     sliceCenter: [],
   };
 
-  function updateScrollManipulator() {
+  publicAPI.updateScrollManipulator = () => {
     const range = publicAPI.getSliceRange();
     model.scrollManipulator.removeScrollListener();
     // The Scroll listener has min, max, step, and getValue setValue as params.
@@ -86,7 +86,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       publicAPI.getSlice,
       publicAPI.scrollToSlice
     );
-  }
+  };
 
   function setManipulators() {
     publicAPI.removeAllMouseManipulators();
@@ -94,7 +94,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     publicAPI.addMouseManipulator(model.panManipulator);
     publicAPI.addMouseManipulator(model.zoomManipulator);
     publicAPI.addMouseManipulator(model.scrollManipulator);
-    updateScrollManipulator();
+    publicAPI.updateScrollManipulator();
   }
 
   function isCameraViewInitialized(camera) {
@@ -219,7 +219,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const camera = renderer.getActiveCamera();
 
       cameraSub = camera.onModified(() => {
-        updateScrollManipulator();
+        publicAPI.updateScrollManipulator();
         publicAPI.modified();
       });
 
@@ -328,7 +328,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
         setViewUpInternal(viewportData.getCurrentViewUp());
       }
 
-      updateScrollManipulator();
+      publicAPI.updateScrollManipulator();
       // NOTE: Disabling this because it makes it more difficult to switch
       // interactor styles. Need to find a better way to do this!
       //publicAPI.setSliceNormal(...publicAPI.getSliceNormal());

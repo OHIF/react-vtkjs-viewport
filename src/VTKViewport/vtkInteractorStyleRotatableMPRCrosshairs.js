@@ -4,6 +4,7 @@ import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import { vec2, vec3, quat } from 'gl-matrix';
+import { HashedModuleIdsPlugin } from 'webpack';
 
 const { States } = Constants;
 
@@ -562,13 +563,48 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     publicAPI.endWindowLevel();
     publicAPI.endPan();
   }
+
+  publicAPI.updateScrollManipulator = () => {
+    console.log('I HAVE CONTROLL');
+
+    const range = publicAPI.getSliceRange();
+    model.scrollManipulator.removeScrollListener();
+    // The Scroll listener has min, max, step, and getValue setValue as params.
+    // Internally, it checks that the result of the GET has changed, and only calls SET if it is new.
+    model.scrollManipulator.setScrollListener(
+      range[0],
+      range[1],
+      1,
+      publicAPI.getSlice,
+      publicAPI.scrollToSlice
+    );
+  };
+
+  const superScrollToSlice = publicAPI.scrollToSlice;
+  publicAPI.scrollToSlice = slice => {
+    const direction = publicAPI.getSlice() - slice;
+
+    if (!model.disableNormalMPRScroll) {
+      superScrollToSlice(slice);
+    }
+
+    debugger;
+  };
+
+  // publicAPI.scrollToSlice = (slice)  => {
+
+  // }
 }
 
 // ----------------------------------------------------------------------------
 // Object factory
 // ----------------------------------------------------------------------------
 
-const DEFAULT_VALUES = { operation: { type: null }, lineGrabDistance: 20 };
+const DEFAULT_VALUES = {
+  operation: { type: null },
+  lineGrabDistance: 20,
+  disableNormalMPRScroll: true,
+};
 
 // ----------------------------------------------------------------------------
 
