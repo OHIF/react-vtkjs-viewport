@@ -81,6 +81,14 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
           lineRotateHandles.selected = true;
 
+          if (lineIndex === 0) {
+            lines[0].active = true;
+            lines[1].active = false;
+          } else {
+            lines[0].active = false;
+            lines[1].active = true;
+          }
+
           return;
         }
       }
@@ -99,20 +107,26 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         distanceFromFirstLine < distanceFromSecondLine ? 0 : 1;
 
       lines[selectedLineIndex].selected = true;
+      lines[selectedLineIndex].active = true;
 
-      // TODO -> MOVE LINE
+      // Deactivate other line if active
+      const otherLineIndex = selectedLineIndex === 0 ? 1 : 0;
 
-      const snapToLineIndex = selectedLineIndex === 0 ? 1 : 0;
+      lines[otherLineIndex].active = false;
 
-      // Get the line
+      // Set operation data.
 
       model.operation = {
         type: operations.MOVE_REFERENCE_LINE,
-        snapToLineIndex,
+        snapToLineIndex: selectedLineIndex === 0 ? 1 : 0,
       };
 
       return;
     }
+
+    lines.forEach(line => {
+      line.active = false;
+    });
 
     // What is the fallback? Pan? Do nothing for now.
     model.operation = { type: null };
@@ -563,34 +577,30 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     publicAPI.endPan();
   }
 
-  publicAPI.updateScrollManipulator = () => {
-    console.log('I HAVE CONTROLL');
+  const superScrollToSlice = publicAPI.scrollToSlice;
+  publicAPI.scrollToSlice = slice => {
+    const { apis, apiIndex, lineGrabDistance } = model;
+    const thisApi = apis[apiIndex];
 
-    const range = publicAPI.getSliceRange();
-    model.scrollManipulator.removeScrollListener();
-    // The Scroll listener has min, max, step, and getValue setValue as params.
-    // Internally, it checks that the result of the GET has changed, and only calls SET if it is new.
-    model.scrollManipulator.setScrollListener(
-      range[0],
-      range[1],
-      1,
-      publicAPI.getSlice,
-      publicAPI.scrollToSlice
-    );
+    const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
+
+    if (!rotatableCrosshairsWidget) {
+      throw new Error(
+        'Must use rotatable crosshair svg widget with this istyle.'
+      );
+    }
+
+    const lines = rotatableCrosshairsWidget.getReferenceLines();
+
+    debugger;
+
+    const direction = publicAPI.getSlice() - slice;
+
+    if (!model.disableNormalMPRScroll) {
+      superScrollToSlice(slice);
+    }
+    debugger;
   };
-
-  // const superScrollToSlice = publicAPI.scrollToSlice;
-  // publicAPI.scrollToSlice = slice => {
-  //   const direction = publicAPI.getSlice() - slice;
-
-  //   if (!model.disableNormalMPRScroll)
-  //   superScrollToSlice(slice);
-  //   debugger;
-  // };
-
-  // publicAPI.scrollToSlice = (slice)  => {
-
-  // }
 }
 
 // ----------------------------------------------------------------------------
@@ -600,7 +610,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 const DEFAULT_VALUES = {
   operation: { type: null },
   lineGrabDistance: 20,
-  disableNormalMPRScroll: true,
+  disableNormalMPRScroll: false,
 };
 
 // ----------------------------------------------------------------------------

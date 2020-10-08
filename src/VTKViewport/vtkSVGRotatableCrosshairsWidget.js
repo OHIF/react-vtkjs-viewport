@@ -119,10 +119,12 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
         let lineSelected = false;
         let rotateSelected = false;
+        let lineActive = false;
 
         if (oldReferenceLine) {
           lineSelected = oldReferenceLine.selected;
           rotateSelected = oldReferenceLine.rotateHandles.selected;
+          lineActive = oldReferenceLine.active;
         }
 
         const firstRotateHandle = {
@@ -150,6 +152,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           color: strokeColors[i],
           apiIndex: i,
           selected: lineSelected,
+          active: lineActive,
         };
 
         referenceLines.push(referenceLine);
@@ -167,6 +170,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     let {
       point,
       strokeColors,
+      activeStrokeColors,
       strokeWidth,
       strokeDashArray,
       apis,
@@ -213,12 +217,17 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       p
     );
 
-    const firstLineStrokeWidth = firstLine.selected
-      ? selectedStrokeWidth
-      : strokeWidth;
-    const secondLineStrokeWidth = secondLine.selected
-      ? selectedStrokeWidth
-      : strokeWidth;
+    const firstLineStrokeColor = strokeColors[firstLine.apiIndex];
+    const secondLineStrokeColor = strokeColors[secondLine.apiIndex];
+
+    const firstLineStrokeWidth =
+      firstLine.selected || firstLine.active
+        ? selectedStrokeWidth
+        : strokeWidth;
+    const secondLineStrokeWidth =
+      secondLine.selected || secondLine.active
+        ? selectedStrokeWidth
+        : strokeWidth;
 
     const firstLineRotateWidth = firstLineRotateSelected
       ? selectedStrokeWidth
@@ -234,7 +243,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
        <svg version="1.1" viewBox="0 0 ${width} ${height}" width=${width} height=${height} style="width: 100%; height: 100%">
         <g
 
-          stroke="${referenceLines[0].color}"
+          stroke="${firstLineStrokeColor}"
           stroke-dasharray="${strokeDashArray}"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -273,7 +282,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         </g>
         <g
           stroke-dasharray="${strokeDashArray}"
-          stroke="${referenceLines[1].color}"
+          stroke="${secondLineStrokeColor}"
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width=${secondLineStrokeWidth}
@@ -476,6 +485,8 @@ const DEFAULT_VALUES = {
   apis: [null, null, null],
   referenceLines: [null, null],
   strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
+  //activeStrokeColors: ['#e66343', '#ebe978', '#78de95'],
+  activeStrokeColors: ['#ffffff', '#ffffff', '#ffffff'],
   strokeWidth: 2,
   selectedStrokeWidth: 5,
   centerRadius: 20,
@@ -501,7 +512,12 @@ export function extend(publicAPI, model, initialValues = {}) {
   ]);
 
   macro.setGetArray(publicAPI, model, ['point', 'referenceLines'], 2);
-  macro.setGetArray(publicAPI, model, ['apis', 'strokeColors'], 3);
+  macro.setGetArray(
+    publicAPI,
+    model,
+    ['apis', 'strokeColors', 'activeStrokeColors'],
+    3
+  );
 
   vtkSVGRotatableCrosshairsWidget(publicAPI, model);
 }
