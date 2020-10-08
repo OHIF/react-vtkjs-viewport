@@ -580,16 +580,14 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     );
   };
 
-  const superScrollToSlice = publicAPI.scrollToSlice;
-  publicAPI.scrollToSlice = slice => {
-    const direction = publicAPI.getSlice() - slice;
+  // const superScrollToSlice = publicAPI.scrollToSlice;
+  // publicAPI.scrollToSlice = slice => {
+  //   const direction = publicAPI.getSlice() - slice;
 
-    if (!model.disableNormalMPRScroll) {
-      superScrollToSlice(slice);
-    }
-
-    debugger;
-  };
+  //   if (!model.disableNormalMPRScroll)
+  //   superScrollToSlice(slice);
+  //   debugger;
+  // };
 
   // publicAPI.scrollToSlice = (slice)  => {
 
