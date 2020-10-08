@@ -156,6 +156,13 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     }
   }
 
+  function pan(callData) {
+    // Pan handled in class above, just call update for crosshairs.
+
+    console.log('PANNING');
+    updateCrosshairs(callData);
+  }
+
   function rotateCrosshairs(callData) {
     const { operation } = model;
     const { prevPosition } = operation;
@@ -461,7 +468,11 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
-    if (model.state === States.IS_WINDOW_LEVEL) {
+    if (
+      model.state === States.IS_WINDOW_LEVEL ||
+      model.state === States.IS_PAN
+    ) {
+      console.log('Handle drag');
       performOperation(callData);
     } else {
       handlePassiveMouseMove(callData);
@@ -472,18 +483,44 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     }
   };
 
-  const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;
+  //const superHandleLeftButtonPress = publicAPI.handleLeftButtonPress;
   publicAPI.handleLeftButtonPress = callData => {
-    if (!callData.shiftKey && !callData.controlKey) {
-      if (model.volumeActor) {
-        selectOpperation(callData);
-        performOperation(callData);
+    if (model.volumeActor) {
+      selectOpperation(callData);
+      performOperation(callData);
 
-        publicAPI.startWindowLevel();
-      }
-    } else if (superHandleLeftButtonPress) {
-      superHandleLeftButtonPress(callData);
+      publicAPI.startWindowLevel();
     }
+  };
+
+  const superHandleMiddleButtonPress = publicAPI.handleMiddleButtonPress;
+
+  publicAPI.handleMiddleButtonPress = callData => {
+    superHandleMiddleButtonPress(callData);
+
+    updateCrosshairs(callData);
+
+    // Middle click performs pan.
+    model.operation = {
+      type: operations.PAN,
+    };
+
+    console.log('START PAN');
+
+    publicAPI.startWindowLevel();
+
+    performOperation(callData);
+  };
+
+  const superHandleMiddleButtonRelease = publicAPI.handleMiddleButtonRelease;
+
+  publicAPI.handleMiddleButtonRelease = callData => {
+    if (model.state === States.IS_PAN) {
+      console.log('MIDDLE MOUSE UP');
+      mouseUp(callData);
+    }
+
+    superHandleMiddleButtonRelease();
   };
 
   publicAPI.superHandleLeftButtonRelease = publicAPI.handleLeftButtonRelease;
@@ -523,6 +560,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     updateCrosshairs(callData);
 
     publicAPI.endWindowLevel();
+    publicAPI.endPan();
   }
 }
 
