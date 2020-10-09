@@ -207,6 +207,17 @@ class VTKRotatableCrosshairsExample extends Component {
     this.setState({ displayCrosshairs: shouldDisplayCrosshairs });
   };
 
+  resetCrosshairs = () => {
+    const apis = this.apis;
+
+    apis.forEach(api => {
+      api.resetOrientation();
+    });
+
+    // Reset the crosshairs
+    apis[0].svgWidgets.rotatableCrosshairsWidget.resetCrosshairs(apis, 0);
+  };
+
   render() {
     if (!this.state.volumes || !this.state.volumes.length) {
       return <h4>Loading...</h4>;
@@ -241,6 +252,7 @@ class VTKRotatableCrosshairsExample extends Component {
                 ? 'Switch To WL/Zoom/Pan/Scroll'
                 : 'Switch To Crosshairs'}
             </button>
+            <button onClick={this.resetCrosshairs}>reset crosshairs</button>
           </div>
         </div>
         <div className="row">
