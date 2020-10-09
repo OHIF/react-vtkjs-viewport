@@ -47,6 +47,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
     const quarterSmallestDimension = Math.min(width, height) / 4;
 
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+
     // A "far" distance for line clipping algorithm.
     const farDistance = Math.sqrt(bottom * bottom + right * right);
 
@@ -170,7 +173,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     let {
       point,
       strokeColors,
-      activeStrokeColors,
       strokeWidth,
       strokeDashArray,
       apis,
@@ -318,7 +320,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         secondLineRotateHandles[1].y
       }" r="10" fill="none" />
       </g>
-      <circle cx="${bottom - 20}" cy="${left + 20}" r="10" fill="${
+      <circle cx="${width - 20}" cy="${20}" r="10" fill="${
         strokeColors[apiIndex]
       }" />
       </g>
@@ -485,8 +487,6 @@ const DEFAULT_VALUES = {
   apis: [null, null, null],
   referenceLines: [null, null],
   strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
-  //activeStrokeColors: ['#e66343', '#ebe978', '#78de95'],
-  activeStrokeColors: ['#ffffff', '#ffffff', '#ffffff'],
   strokeWidth: 2,
   selectedStrokeWidth: 5,
   centerRadius: 20,
@@ -512,12 +512,7 @@ export function extend(publicAPI, model, initialValues = {}) {
   ]);
 
   macro.setGetArray(publicAPI, model, ['point', 'referenceLines'], 2);
-  macro.setGetArray(
-    publicAPI,
-    model,
-    ['apis', 'strokeColors', 'activeStrokeColors'],
-    3
-  );
+  macro.setGetArray(publicAPI, model, ['apis', 'strokeColors'], 3);
 
   vtkSVGRotatableCrosshairsWidget(publicAPI, model);
 }
