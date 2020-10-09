@@ -156,30 +156,23 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const { operation } = model;
     const { type } = operation;
 
+    let snapToLineIndex;
+    let pos;
+
     switch (type) {
       case operations.MOVE_CROSSHAIRS:
         moveCrosshairs(callData.position, callData.pokedRenderer);
         break;
       case operations.MOVE_REFERENCE_LINE:
-        const { snapToLineIndex } = operation;
-        const pos = snapPosToLine(callData.position, snapToLineIndex);
+        snapToLineIndex = operation.snapToLineIndex;
+        pos = snapPosToLine(callData.position, snapToLineIndex);
 
         moveCrosshairs(pos, callData.pokedRenderer);
         break;
       case operations.ROTATE_CROSSHAIRS:
         rotateCrosshairs(callData);
         break;
-      case operations.PAN:
-        pan(callData);
-        break;
     }
-  }
-
-  function pan(callData) {
-    // Pan handled in class above, just call update for crosshairs.
-
-    console.log('UPDATE CROSSHAIRS');
-    updateCrosshairs(callData);
   }
 
   function rotateCrosshairs(callData) {
@@ -375,7 +368,8 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
   function scrollCrosshairs(lineIndex, direction) {
     const { apis, apiIndex } = model;
     const thisApi = apis[apiIndex];
-    const { svgWidgetManager } = thisApi;
+    const { svgWidgetManager, volumes } = thisApi;
+    const volume = volumes[0];
     const size = svgWidgetManager.getSize();
     const scale = svgWidgetManager.getScale();
     const height = size[1];
@@ -393,9 +387,8 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const otherLineIndex = lineIndex === 0 ? 1 : 0;
 
     const point = rotatableCrosshairsWidget.getPoint();
+    // Transform point to SVG coordinates
     const p = [point[0] * scale, height - point[1] * scale];
-
-    debugger;
 
     // Get the unit vector to move the line in.
 
@@ -430,16 +423,14 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       unitVector[1] *= -1;
     }
 
-    console.log();
-    console.log(direction);
-    console.log(unitVector);
+    const displayCoordintateScrollIncrement = getDisplayCoordinateScrollIncrement(
+      point
+    );
 
-    console.log(p);
-
-    // TODO -> get unit vector of other line, and size of other line.
-    // Calculate scroll distance increment ( one slice at a time)?
-
-    const newCenterPointSVG = [p[0] + unitVector[0], p[1] + unitVector[1]];
+    const newCenterPointSVG = [
+      p[0] + unitVector[0] * displayCoordintateScrollIncrement,
+      p[1] + unitVector[1] * displayCoordintateScrollIncrement,
+    ];
 
     // translate to the display coordinates.
     const displayCoordinate = {
@@ -453,6 +444,37 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       //{ x: newCenterPointSVG[0], y: newCenterPointSVG[1] },
       renderer
     );
+  }
+
+  function getDisplayCoordinateScrollIncrement(point) {
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+    const { volumes, genericRenderWindow } = thisApi;
+    const renderer = genericRenderWindow.getRenderer();
+    const volume = volumes[0];
+    const diagonalWorldLength = volume
+      .getMapper()
+      .getInputData()
+      .getSpacing()
+      .map(v => v * v)
+      .reduce((a, b) => a + b, 0);
+
+    const dPos = vtkCoordinate.newInstance();
+    dPos.setCoordinateSystemToDisplay();
+    dPos.setValue(point[0], point[1], 0);
+
+    let worldPosCenter = dPos.getComputedWorldValue(renderer);
+
+    dPos.setValue(point[0] + 1, point[1], 0);
+
+    let worldPosOnePixelOver = dPos.getComputedWorldValue(renderer);
+
+    const distanceOfOnePixelInWorld = vec2.distance(
+      worldPosCenter,
+      worldPosOnePixelOver
+    );
+
+    return diagonalWorldLength / distanceOfOnePixelInWorld;
   }
 
   function handlePassiveMouseMove(callData) {
@@ -558,11 +580,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
   const superHandleMouseMove = publicAPI.handleMouseMove;
   publicAPI.handleMouseMove = callData => {
-    if (
-      model.state === States.IS_WINDOW_LEVEL ||
-      model.state === States.IS_PAN
-    ) {
-      console.log('Handle drag');
+    if (model.state === States.IS_WINDOW_LEVEL) {
       performOperation(callData);
     } else {
       handlePassiveMouseMove(callData);
@@ -581,36 +599,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
       publicAPI.startWindowLevel();
     }
-  };
-
-  const superHandleMiddleButtonPress = publicAPI.handleMiddleButtonPress;
-
-  publicAPI.handleMiddleButtonPress = callData => {
-    superHandleMiddleButtonPress(callData);
-
-    updateCrosshairs(callData);
-
-    // Middle click performs pan.
-    model.operation = {
-      type: operations.PAN,
-    };
-
-    console.log('START PAN');
-
-    publicAPI.startWindowLevel();
-
-    performOperation(callData);
-  };
-
-  const superHandleMiddleButtonRelease = publicAPI.handleMiddleButtonRelease;
-
-  publicAPI.handleMiddleButtonRelease = callData => {
-    if (model.state === States.IS_PAN) {
-      console.log('MIDDLE MOUSE UP');
-      mouseUp(callData);
-    }
-
-    superHandleMiddleButtonRelease();
   };
 
   publicAPI.superHandleLeftButtonRelease = publicAPI.handleLeftButtonRelease;
@@ -650,7 +638,6 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     updateCrosshairs(callData);
 
     publicAPI.endWindowLevel();
-    publicAPI.endPan();
   }
 
   const superScrollToSlice = publicAPI.scrollToSlice;
