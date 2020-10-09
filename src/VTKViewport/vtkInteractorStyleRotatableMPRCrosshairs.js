@@ -702,6 +702,7 @@ export function extend(publicAPI, model, initialValues = {}) {
     'onScroll',
     'operation',
     'lineGrabDistance',
+    'disableNormalMPRScroll',
   ]);
 
   // Object specific methods
