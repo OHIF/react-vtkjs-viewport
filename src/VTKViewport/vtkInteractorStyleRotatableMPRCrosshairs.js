@@ -214,7 +214,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       pointToNewPosition[0] * pointToPreviousPosition[1] -
       pointToNewPosition[1] * pointToPreviousPosition[0];
 
-    if (determinant < 0) {
+    if (determinant > 0) {
       angle *= -1;
     }
 

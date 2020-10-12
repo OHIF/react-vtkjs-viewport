@@ -47,9 +47,6 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
     const quarterSmallestDimension = Math.min(width, height) / 4;
 
-    const halfWidth = width / 2;
-    const halfHeight = height / 2;
-
     // A "far" distance for line clipping algorithm.
     const farDistance = Math.sqrt(bottom * bottom + right * right);
 
@@ -95,8 +92,15 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
           renderer
         );
 
+        // convert to svg coordinates:
+
+        const doubleSVGPosition = [
+          doubleDisplayPosition[0] * scale,
+          height - doubleDisplayPosition[1] * scale,
+        ];
+
         let unitVectorFromCenter = [];
-        vec2.subtract(unitVectorFromCenter, p, doubleDisplayPosition);
+        vec2.subtract(unitVectorFromCenter, p, doubleSVGPosition);
         vec2.normalize(unitVectorFromCenter, unitVectorFromCenter);
 
         const distantPoint = [
