@@ -31,6 +31,8 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const thisApi = apis[apiIndex];
     let { position } = callData;
 
+    setOtherApisInactive();
+
     const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
 
     if (!rotatableCrosshairsWidget) {
@@ -81,6 +83,7 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
 
           lineRotateHandles.selected = true;
 
+          // Set this line active.
           if (lineIndex === 0) {
             lines[0].active = true;
             lines[1].active = false;
@@ -128,8 +131,33 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       line.active = false;
     });
 
+    setOtherApisInactive();
+
     // What is the fallback? Pan? Do nothing for now.
     model.operation = { type: null };
+  }
+
+  function setOtherApisInactive() {
+    // Set other apis inactive
+
+    const { apis, apiIndex } = model;
+
+    apis.forEach((api, index) => {
+      if (index !== apiIndex) {
+        const { rotatableCrosshairsWidget } = api.svgWidgets;
+
+        if (!rotatableCrosshairsWidget) {
+          throw new Error(
+            'Must use rotatable crosshair svg widget with this istyle.'
+          );
+        }
+
+        const lines = rotatableCrosshairsWidget.getReferenceLines();
+
+        lines[0].active = false;
+        lines[1].active = false;
+      }
+    });
   }
 
   function distanceFromLine(line, point) {

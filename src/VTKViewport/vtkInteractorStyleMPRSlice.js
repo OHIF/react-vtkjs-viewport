@@ -255,24 +255,11 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     }
   }
 
-  function updateRotatableCrosshairs(callData) {
+  function updateRotatableCrosshairs() {
     const { apis, apiIndex } = model;
     const thisApi = apis[apiIndex];
     const { rotatableCrosshairsWidget } = thisApi.svgWidgets;
-    const renderer = callData.pokedRenderer;
     const worldPos = thisApi.get('cachedCrosshairWorldPosition');
-
-    const camera = renderer.getActiveCamera();
-    const directionOfProjection = camera.getDirectionOfProjection();
-
-    const halfSlabThickness = thisApi.getSlabThickness() / 2;
-
-    // Add half of the slab thickness to the world position, such that we select
-    // The center of the slice.
-
-    for (let i = 0; i < worldPos.length; i++) {
-      worldPos[i] += halfSlabThickness * directionOfProjection[i];
-    }
 
     rotatableCrosshairsWidget.moveCrosshairs(worldPos, apis, apiIndex);
   }

@@ -126,7 +126,10 @@ class VTKRotatableCrosshairsExample extends Component {
       // // add istyle
       api.setInteractorStyle({
         istyle,
-        configuration: { apis, apiIndex: viewportIndex },
+        configuration: {
+          apis,
+          apiIndex: viewportIndex,
+        },
       });
 
       //api.setInteractorStyle({ istyle });
