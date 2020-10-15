@@ -165,6 +165,7 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       // should be set after pos and distance
       camera.setDirectionOfProjection(..._normal);
       camera.setViewAngle(angle);
+
       camera.setThicknessFromFocalPoint(model.slabThickness);
 
       publicAPI.setCenterOfRotation(center);
@@ -279,6 +280,15 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     if (superHandleMouseMove) {
       superHandleMouseMove(callData);
     }
+
+    const { apis, apiIndex } = model;
+    const thisApi = apis[apiIndex];
+
+    // This stops the clipping range being randomly reset.
+    const renderer = thisApi.genericRenderWindow.getRenderer();
+    const camera = renderer.getActiveCamera();
+
+    camera.setThicknessFromFocalPoint(model.slabThickness);
 
     if (model.state === States.IS_PAN) {
       const { apis, apiIndex } = model;

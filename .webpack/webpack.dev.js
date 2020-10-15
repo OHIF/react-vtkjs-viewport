@@ -36,6 +36,12 @@ const ENTRY_EXAMPLES = path.join(__dirname, './../examples/index.js');
 const SRC_PATH = path.join(__dirname, './../src');
 const OUT_PATH = path.join(__dirname, './../dist');
 
+// Add this additional call so we can yarn link vtk.js
+// const shaderLoader = {
+//   test: /\.glsl$/i,
+//   loader: 'shader-loader',
+// };
+
 module.exports = {
   entry: {
     examples: ENTRY_EXAMPLES,
@@ -70,6 +76,7 @@ module.exports = {
         ],
       },
     ].concat(vtkRules),
+    //.concat(shaderLoader),
   },
   resolve: {
     modules: [path.resolve(__dirname, './../node_modules'), SRC_PATH],
