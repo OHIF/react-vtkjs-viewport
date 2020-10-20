@@ -179,6 +179,7 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       strokeColors,
       strokeWidth,
       strokeDashArray,
+      rotateHandleRadius,
       apis,
       apiIndex,
       selectedStrokeWidth,
@@ -242,6 +243,27 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
       ? selectedStrokeWidth
       : strokeWidth;
 
+    const firstLineShowCrosshairs =
+      firstLine.selected || firstLineRotateSelected;
+    const secondLineShowCrosshairs =
+      secondLine.selected || secondLineRotateSelected;
+
+    const firstLineRotateHandleRadius = firstLineShowCrosshairs
+      ? rotateHandleRadius
+      : 0;
+
+    const secondLineRotateHandleRadius = secondLineShowCrosshairs
+      ? rotateHandleRadius
+      : 0;
+
+    const firstLineRotateHandleFill = firstLineRotateSelected
+      ? referenceLines[0].color
+      : 'none';
+
+    const secondLineRotateHandleFill = secondLineRotateSelected
+      ? referenceLines[1].color
+      : 'none';
+
     if (model.display) {
       node.innerHTML = `
       <g id="container" fill-opacity="1" stroke-dasharray="none" stroke="none" stroke-opacity="1" fill="none">
@@ -280,11 +302,11 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
             <!--First line rotateHandle 0 -->
             <circle cx="${firstLineRotateHandles[0].x}" cy="${
         firstLineRotateHandles[0].y
-      }" r="10" fill="none" />
+      }" r="${firstLineRotateHandleRadius}" fill="${firstLineRotateHandleFill}" />
             <!--First line rotateHandle 1 -->
             <circle cx="${firstLineRotateHandles[1].x}" cy="${
         firstLineRotateHandles[1].y
-      }" r="10" fill="none" />
+      }" r="${firstLineRotateHandleRadius}" fill="${firstLineRotateHandleFill}" />
         </g>
         <g
           stroke-dasharray="${strokeDashArray}"
@@ -318,11 +340,11 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
         <!--Second line rotateHandle 0 -->
         <circle cx="${secondLineRotateHandles[0].x}" cy="${
         secondLineRotateHandles[0].y
-      }" r="10" fill="none" />
+      }" r="${secondLineRotateHandleRadius}" fill="${secondLineRotateHandleFill}" />
         <!--Second line rotateHandle 1 -->
         <circle cx="${secondLineRotateHandles[1].x}" cy="${
         secondLineRotateHandles[1].y
-      }" r="10" fill="none" />
+      }" r="${secondLineRotateHandleRadius}" fill="${secondLineRotateHandleFill}" />
       </g>
       <circle cx="${width - 20}" cy="${20}" r="10" fill="${
         strokeColors[apiIndex]
@@ -491,8 +513,9 @@ const DEFAULT_VALUES = {
   apis: [null, null, null],
   referenceLines: [null, null],
   strokeColors: ['#e83a0e', '#ede90c', '#07e345'],
-  strokeWidth: 2,
-  selectedStrokeWidth: 5,
+  strokeWidth: 1,
+  rotateHandleRadius: 5,
+  selectedStrokeWidth: 3,
   centerRadius: 20,
   strokeDashArray: '',
   display: true,
