@@ -437,6 +437,39 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
       p[1] + unitVector[1] * displayCoordintateScrollIncrement,
     ];
 
+    // Clip to box defined by the crosshairs extent
+
+    let lowX;
+    let highX;
+    let lowY;
+    let highY;
+
+    if (lowToHighPoints[0].x < lowToHighPoints[1].x) {
+      lowX = lowToHighPoints[0].x;
+      highX = lowToHighPoints[1].x;
+    } else {
+      lowX = lowToHighPoints[1].x;
+      highX = lowToHighPoints[0].x;
+    }
+
+    if (lowToHighPoints[0].y < lowToHighPoints[1].y) {
+      lowY = lowToHighPoints[0].y;
+      highY = lowToHighPoints[1].y;
+    } else {
+      lowY = lowToHighPoints[1].y;
+      highY = lowToHighPoints[0].y;
+    }
+
+    newCenterPointSVG[0] = Math.min(
+      Math.max(newCenterPointSVG[0], lowX),
+      highX
+    );
+
+    newCenterPointSVG[1] = Math.min(
+      Math.max(newCenterPointSVG[1], lowY),
+      highY
+    );
+
     // translate to the display coordinates.
     const displayCoordinate = {
       x: newCenterPointSVG[0] / scale,
