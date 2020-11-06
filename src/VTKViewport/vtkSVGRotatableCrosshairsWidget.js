@@ -429,6 +429,9 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
     // Set camera focal point to world coordinate for linked views
     apis.forEach((api, apiIndex) => {
       api.set('cachedCrosshairWorldPosition', worldPos);
+      if (api.get('initialCachedCrosshairWorldPosition') === undefined) {
+        api.set('initialCachedCrosshairWorldPosition', worldPos);
+      }
 
       // We are basically doing the same as getSlice but with the world coordinate
       // that we want to jump to instead of the camera focal point.
