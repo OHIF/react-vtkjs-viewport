@@ -285,39 +285,57 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
         const sliceNormalForApi = api.getSliceNormal();
         const viewUpForApi = api.getViewUp();
         api.setOrientation(sliceNormalForApi, viewUpForApi);
-
-        /* After rotating the focal point line of sight coordinate is not on the crosshair.
-        Find nearest point of the crosshair to the line of sight of the camera*/
-
-        /*p1 = cameraPositionForApi
-        p2 = cameraFocalPointForApi
-        q = crosshairPointForApi*/
-
-        /*Vector3 u = p2 - p1;
-        Vector3 pq = q - p1;
-        Vector3 w2 = pq - vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / u2);
-
-        Vector3 point = q - w2;*/
-
-        const cameraFocalPointForApi = cameraForApi.getFocalPoint();
-        const cameraPositionForApi = cameraForApi.getPosition();
-
-        const u = [];
-        vtkMath.subtract(cameraFocalPointForApi, cameraPositionForApi, u);
-        const pq = [];
-        vtkMath.subtract(crosshairPointForApi, cameraPositionForApi, pq);
-        const uLength2 = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
-        vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / uLength2);
-        const w2 = [];
-        vtkMath.subtract(pq, u, w2);
-        const point = [];
-        vtkMath.subtract(crosshairPointForApi, w2, point);
-
-        cameraForApi.setFocalPoint(point[0], point[1], point[2]);
       }
     });
 
     updateCrosshairs(callData);
+
+    /*
+    After the rotations and update of the crosshairs, the focal point of the
+    camera has a shift along the line of sight coordinate respect to the
+    crosshair (i.e., the focal point is not on the same slice of the crosshair).
+    We calculate the new focal point coordinates as the nearest point between
+    the line of sight of the camera and the crosshair coordinates:
+
+      p1 = cameraPositionForApi
+      p2 = cameraFocalPointForApi
+      q = crosshairPointForApi
+
+      Vector3 u = p2 - p1;
+      Vector3 pq = q - p1;
+      Vector3 w2 = pq - vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / u2);
+
+      Vector3 newFocalPoint = q - w2;
+    */
+
+    apis.forEach(api => {
+      const cameraForApi = api.genericRenderWindow
+        .getRenderWindow()
+        .getInteractor()
+        .getCurrentRenderer()
+        .getActiveCamera();
+
+      const crosshairPointForApi = api.get('cachedCrosshairWorldPosition');
+      const cameraFocalPointForApi = cameraForApi.getFocalPoint();
+      const cameraPositionForApi = cameraForApi.getPosition();
+
+      const u = [];
+      vtkMath.subtract(cameraFocalPointForApi, cameraPositionForApi, u);
+      const pq = [];
+      vtkMath.subtract(crosshairPointForApi, cameraPositionForApi, pq);
+      const uLength2 = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
+      vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / uLength2);
+      const w2 = [];
+      vtkMath.subtract(pq, u, w2);
+      const newFocalPointForApi = [];
+      vtkMath.subtract(crosshairPointForApi, w2, newFocalPointForApi);
+
+      cameraForApi.setFocalPoint(
+        newFocalPointForApi[0],
+        newFocalPointForApi[1],
+        newFocalPointForApi[2]
+      );
+    });
 
     operation.prevPosition = newPosition;
   }
