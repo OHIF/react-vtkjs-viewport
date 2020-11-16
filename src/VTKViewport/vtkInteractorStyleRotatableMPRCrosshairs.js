@@ -4,6 +4,7 @@ import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder';
 import { vec2, vec3, quat } from 'gl-matrix';
+import vtkMath from 'vtk.js/Sources/Common/Core/Math';
 
 const { States } = Constants;
 
@@ -250,27 +251,91 @@ function vtkInteractorStyleRotatableMPRCrosshairs(publicAPI, model) {
     const sliceNormal = thisApi.getSliceNormal();
     const axis = [-sliceNormal[0], -sliceNormal[1], -sliceNormal[2]];
 
-    const { matrix } = vtkMatrixBuilder.buildFromRadian().rotate(angle, axis);
-
     // Rotate other apis
     apis.forEach((api, index) => {
       if (index !== apiIndex) {
-        // get normal and viewUp.
+        const cameraForApi = api.genericRenderWindow
+          .getRenderWindow()
+          .getInteractor()
+          .getCurrentRenderer()
+          .getActiveCamera();
+
+        const crosshairPointForApi = api.get('cachedCrosshairWorldPosition');
+        const initialCrosshairPointForApi = api.get(
+          'initialCachedCrosshairWorldPosition'
+        );
+
+        const center = [];
+        vtkMath.subtract(
+          crosshairPointForApi,
+          initialCrosshairPointForApi,
+          center
+        );
+        const translate = [];
+        vtkMath.add(crosshairPointForApi, center, translate);
+
+        const { matrix } = vtkMatrixBuilder
+          .buildFromRadian()
+          .translate(translate[0], translate[1], translate[2])
+          .rotate(angle, axis)
+          .translate(-translate[0], -translate[1], -translate[2]);
+
+        cameraForApi.applyTransform(matrix);
 
         const sliceNormalForApi = api.getSliceNormal();
         const viewUpForApi = api.getViewUp();
-
-        const newSliceNormalForApi = [];
-        const newViewUpForApi = [];
-
-        vec3.transformMat4(newSliceNormalForApi, sliceNormalForApi, matrix);
-        vec3.transformMat4(newViewUpForApi, viewUpForApi, matrix);
-
-        api.setOrientation(newSliceNormalForApi, newViewUpForApi);
+        api.setOrientation(sliceNormalForApi, viewUpForApi);
       }
     });
 
     updateCrosshairs(callData);
+
+    /*
+    After the rotations and update of the crosshairs, the focal point of the
+    camera has a shift along the line of sight coordinate respect to the
+    crosshair (i.e., the focal point is not on the same slice of the crosshair).
+    We calculate the new focal point coordinates as the nearest point between
+    the line of sight of the camera and the crosshair coordinates:
+
+      p1 = cameraPositionForApi
+      p2 = cameraFocalPointForApi
+      q = crosshairPointForApi
+
+      Vector3 u = p2 - p1;
+      Vector3 pq = q - p1;
+      Vector3 w2 = pq - vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / u2);
+
+      Vector3 newFocalPoint = q - w2;
+    */
+
+    apis.forEach(api => {
+      const cameraForApi = api.genericRenderWindow
+        .getRenderWindow()
+        .getInteractor()
+        .getCurrentRenderer()
+        .getActiveCamera();
+
+      const crosshairPointForApi = api.get('cachedCrosshairWorldPosition');
+      const cameraFocalPointForApi = cameraForApi.getFocalPoint();
+      const cameraPositionForApi = cameraForApi.getPosition();
+
+      const u = [];
+      vtkMath.subtract(cameraFocalPointForApi, cameraPositionForApi, u);
+      const pq = [];
+      vtkMath.subtract(crosshairPointForApi, cameraPositionForApi, pq);
+      const uLength2 = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
+      vtkMath.multiplyScalar(u, vtkMath.dot(pq, u) / uLength2);
+      const w2 = [];
+      vtkMath.subtract(pq, u, w2);
+      const newFocalPointForApi = [];
+      vtkMath.subtract(crosshairPointForApi, w2, newFocalPointForApi);
+
+      cameraForApi.setFocalPoint(
+        newFocalPointForApi[0],
+        newFocalPointForApi[1],
+        newFocalPointForApi[2]
+      );
+    });
 
     operation.prevPosition = newPosition;
   }
