@@ -13,6 +13,7 @@ import ViewportOverlay from '../ViewportOverlay/ViewportOverlay.js';
 import { ViewTypes } from 'vtk.js/Sources/Widgets/Core/WidgetManager/Constants';
 import { createSub } from '../lib/createSub.js';
 import realsApproximatelyEqual from '../lib/math/realsApproximatelyEqual';
+import { toLowHighRange } from '../lib/windowLevelRangeConverter';
 import createLabelPipeline from './createLabelPipeline';
 import { uuidv4 } from './../helpers';
 import setGlobalOpacity from './setGlobalOpacity';
@@ -68,8 +69,10 @@ export default class View2D extends Component {
       paintEnd: createSub(),
     };
     this.interactorStyleSubs = [];
+    const initialVOI = this.getVOI(props.volumes[0]);
     this.state = {
-      voi: this.getVOI(props.volumes[0]),
+      voi: Object.assign({}, initialVOI),
+      initialVOI: Object.assign({}, initialVOI),
       rotation: { theta: 0, phi: 0 },
     };
 
@@ -218,6 +221,7 @@ export default class View2D extends Component {
     const boundGetOrienation = this.getOrientation.bind(this);
     const boundSetOrientation = this.setOrientation.bind(this);
     const boundResetOrientation = this.resetOrientation.bind(this);
+    const boundResetWindowLevel = this.resetWindowLevel.bind(this);
     const boundGetViewUp = this.getViewUp.bind(this);
     const boundGetSliceNormal = this.getSliceNormal.bind(this);
     const boundSetInteractorStyle = this.setInteractorStyle.bind(this);
@@ -263,6 +267,7 @@ export default class View2D extends Component {
         getOrientation: boundGetOrienation,
         setOrientation: boundSetOrientation,
         resetOrientation: boundResetOrientation,
+        resetWindowLevel: boundResetWindowLevel,
         getViewUp: boundGetViewUp,
         getSliceNormal: boundGetSliceNormal,
         setInteractorStyle: boundSetInteractorStyle,
@@ -314,7 +319,6 @@ export default class View2D extends Component {
       sliceNormal: [0, 0, 1],
       viewUp: [0, -1, 0],
     };
-
     // Reset orientation.
     this.setOrientation(orientation.sliceNormal, orientation.viewUp);
 
@@ -324,6 +328,31 @@ export default class View2D extends Component {
     const range = currentIStyle.getSliceRange();
 
     currentIStyle.setSlice((range[0] + range[1]) / 2);
+  }
+
+  resetWindowLevel() {
+    const renderWindow = this.genericRenderWindow.getRenderWindow();
+    const interactorStyle = renderWindow.getInteractor().getInteractorStyle();
+
+    const volumeActor = interactorStyle.getVolumeActor();
+    if (volumeActor) {
+      const lowHigh = toLowHighRange(
+        this.state.initialVOI.windowWidth,
+        this.state.initialVOI.windowCenter
+      );
+
+      volumeActor
+        .getProperty()
+        .getRGBTransferFunction(0)
+        .setMappingRange(lowHigh.lower, lowHigh.upper);
+
+      this.updateVOI(
+        this.state.initialVOI.windowWidth,
+        this.state.initialVOI.windowCenter
+      );
+
+      renderWindow.render();
+    }
   }
 
   getApiProperty(propertyName) {
