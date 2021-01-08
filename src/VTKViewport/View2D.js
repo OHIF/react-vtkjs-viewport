@@ -218,6 +218,7 @@ export default class View2D extends Component {
     this.genericRenderWindow.resize();
 
     const boundUpdateVOI = this.updateVOI.bind(this);
+    const boundSetInitialVOI = this.setInitialVOI.bind(this);
     const boundGetOrienation = this.getOrientation.bind(this);
     const boundSetOrientation = this.setOrientation.bind(this);
     const boundResetOrientation = this.resetOrientation.bind(this);
@@ -264,6 +265,7 @@ export default class View2D extends Component {
         _component: this,
         updateImage: boundUpdateImage,
         updateVOI: boundUpdateVOI,
+        setInitialVOI: boundSetInitialVOI,
         getOrientation: boundGetOrienation,
         setOrientation: boundSetOrientation,
         resetOrientation: boundResetOrientation,
@@ -471,6 +473,10 @@ export default class View2D extends Component {
 
   updateVOI(windowWidth, windowCenter) {
     this.setState({ voi: { windowWidth, windowCenter } });
+  }
+
+  setInitialVOI(windowWidth, windowCenter) {
+    this.setState({ initialVOI: { windowWidth, windowCenter } });
   }
 
   updateRotationOverlay(theta, phi) {
