@@ -15,9 +15,9 @@ import vtkVolumeMapper from 'vtk.js/Sources/Rendering/Core/VolumeMapper';
 const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
 
 const studyInstanceUID =
-  '1.3.12.2.1107.5.2.32.35162.30000015050317233592200000046';
-const mrSeriesInstanceUID =
-  '1.3.12.2.1107.5.2.32.35162.1999123112191238897317963.0.0.0';
+  '1.3.6.1.4.1.14519.5.2.1.7009.2403.334240657131972136850343327463';
+const ctSeriesInstanceUID =
+  '1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561';
 
 const searchInstanceOptions = {
   studyInstanceUID,
@@ -76,7 +76,7 @@ class VTKRotatableCrosshairsExample extends Component {
     const imageIds = await createStudyImageIds(url, searchInstanceOptions);
 
     let ctImageIds = imageIds.filter(imageId =>
-      imageId.includes(mrSeriesInstanceUID)
+      imageId.includes(ctSeriesInstanceUID)
     );
 
     const ctImageDataObject = loadDataset(ctImageIds, 'ctDisplaySet');

@@ -12,21 +12,6 @@ import './initCornerstone.js';
 
 window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
 
-//const url = 'http://localhost:44301/wadors'
-//const url = 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs'
-//const url = 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs';
-//const studyInstanceUID =
-// '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969';
-//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.373729467545468642229382466905';
-//const ctSeriesInstanceUID =
-// '1.3.6.1.4.1.14519.5.2.1.2744.7002.453958960749354309542907936863'
-//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.182837959725425690842769990419';
-//const petSeriesInstanceUID =
-//  '1.3.6.1.4.1.14519.5.2.1.2744.7002.117357550898198415937979788256';
-//const searchInstanceOptions = {
-//  studyInstanceUID,
-//};
-
 const voi = {
   windowWidth: 1000,
   windowCenter: 300 + 1024,
