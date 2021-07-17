@@ -77,13 +77,15 @@ export default class View2D extends Component {
   }
 
   updatePaintbrush() {
-    const manip = this.paintWidget.getManipulator();
     const handle = this.paintWidget.getWidgetState().getHandle();
-    const camera = this.paintRenderer.getActiveCamera();
-    const normal = camera.getDirectionOfProjection();
-    manip.setNormal(...normal);
-    manip.setOrigin(...camera.getFocalPoint());
-    handle.rotateFromDirections(handle.getDirection(), normal);
+    if (typeof handle.rotateFromDirections === 'function') {
+      const manip = this.paintWidget.getManipulator();
+      const camera = this.paintRenderer.getActiveCamera();
+      const normal = camera.getDirectionOfProjection();
+      manip.setNormal(...normal);
+      manip.setOrigin(...camera.getFocalPoint());
+      handle.rotateFromDirections(handle.getDirection(), normal);
+    }
   }
 
   componentDidMount() {
