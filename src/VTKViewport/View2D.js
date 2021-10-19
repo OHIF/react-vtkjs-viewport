@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import cornerstoneTools from 'cornerstone-tools';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
+import 'vtk.js/Sources/Rendering/Profiles/Volume';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
@@ -195,6 +196,7 @@ export default class View2D extends Component {
     const camera = this.renderer.getActiveCamera();
 
     camera.setParallelProjection(true);
+    camera.orthogonalizeViewUp();
     this.renderer.resetCamera();
 
     istyle.setVolumeActor(this.props.volumes[0]);
