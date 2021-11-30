@@ -4,6 +4,9 @@ import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import liangBarksyClip from '../helpers/liangBarksyClip';
 import { vec2, vec3 } from 'gl-matrix';
 import { projectVector2D } from 'vtk.js/Sources/Common/Core/Math';
+import { helpers } from '../helpers/index';
+
+const { isAntiParallel } = helpers;
 
 let instanceId = 1;
 
@@ -441,13 +444,20 @@ function vtkSVGRotatableCrosshairsWidget(publicAPI, model) {
 
       const istyle = renderWindow.getInteractor().getInteractorStyle();
       const sliceNormal = istyle.getSliceNormal();
-      const transform = vtkMatrixBuilder
-        .buildFromDegree()
-        .identity()
-        .rotateFromDirections(sliceNormal, [1, 0, 0]);
 
       const mutatedWorldPos = worldPos.slice();
-      transform.apply(mutatedWorldPos);
+
+      // Special handling if sliceNormal is [-1,0,0] as rotateFromDirections returns zero matrix.
+      if (isAntiParallel(sliceNormal, [1, 0, 0])) {
+        mutatedWorldPos[0] = mutatedWorldPos[0] * -1;
+      } else {
+        const transform = vtkMatrixBuilder
+          .buildFromDegree()
+          .identity()
+          .rotateFromDirections(sliceNormal, [1, 0, 0]);
+        transform.apply(mutatedWorldPos);
+      }
+
       const slice = mutatedWorldPos[0];
 
       istyle.setSlice(slice);

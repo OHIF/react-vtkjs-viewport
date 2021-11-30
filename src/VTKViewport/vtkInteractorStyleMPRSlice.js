@@ -9,9 +9,11 @@ import vtkMouseRangeManipulator from 'vtk.js/Sources/Interaction/Manipulators/Mo
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate';
 import Constants from 'vtk.js/Sources/Rendering/Core/InteractorStyle/Constants';
 import ViewportData from './ViewportData';
+import { helpers } from '../helpers/index';
 import EVENTS from '../events';
 
 const { States } = Constants;
+const { isAntiParallel } = helpers;
 
 // ----------------------------------------------------------------------------
 // Global methods
@@ -362,13 +364,19 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
     const sliceNormal = publicAPI.getSliceNormal();
 
     // Get rotation matrix from normal to +X (since bounds is aligned to XYZ)
-    const transform = vtkMatrixBuilder
-      .buildFromDegree()
-      .identity()
-      .rotateFromDirections(sliceNormal, [1, 0, 0]);
-
+    // Special handling if sliceNormal is [-1,0,0] as rotateFromDirections returns zero matrix.
     const fp = camera.getFocalPoint();
-    transform.apply(fp);
+    if (isAntiParallel(sliceNormal, [1, 0, 0])) {
+      fp[0] = fp[0] * -1;
+    } else {
+      const transform = vtkMatrixBuilder
+        .buildFromDegree()
+        .identity()
+        .rotateFromDirections(sliceNormal, [1, 0, 0]);
+
+      transform.apply(fp);
+    }
+
     return fp[0];
   };
 
@@ -534,12 +542,17 @@ function vtkInteractorStyleMPRSlice(publicAPI, model) {
       const points = boundsToCorners(bounds);
 
       // Get rotation matrix from normal to +X (since bounds is aligned to XYZ)
-      const transform = vtkMatrixBuilder
-        .buildFromDegree()
-        .identity()
-        .rotateFromDirections(sliceNormal, [1, 0, 0]);
+      // Special handling if sliceNormal is [-1,0,0] as rotateFromDirections returns zero matrix.
+      if (isAntiParallel(sliceNormal, [1, 0, 0])) {
+        points.forEach(pt => (pt[0] = pt[0] * -1));
+      } else {
+        const transform = vtkMatrixBuilder
+          .buildFromDegree()
+          .identity()
+          .rotateFromDirections(sliceNormal, [1, 0, 0]);
 
-      points.forEach(pt => transform.apply(pt));
+        points.forEach(pt => transform.apply(pt));
+      }
 
       // range is now maximum X distance
       let minX = Infinity;
