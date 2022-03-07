@@ -22,11 +22,11 @@
     "prepublishOnly": "yarn run build && yarn run build:release"
   },
   "peerDependencies": {
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "vtk.js": "^11.14.0",
     "cornerstone-core": "^2.5.0",
-    "cornerstone-tools": "^6.0.0"
+    "cornerstone-tools": "^6.0.0",
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0",
+    "vtk.js": "^11.14.0"
   },
   "dependencies": {
     "date-fns": "^2.2.1",
@@ -74,9 +74,9 @@
     "postcss-loader": "^3.0.0",
     "prettier": "^1.18.2",
     "prop-types": "^15.7.2",
-    "react": "^16.8.6",
+    "react": "^17.0.2",
     "react-cornerstone-viewport": "^4.1.1",
-    "react-dom": "^16.8.6",
+    "react-dom": "^17.0.2",
     "react-resize-detector": "^4.2.0",
     "react-router-dom": "^5.0.1",
     "semantic-release": "15.13.24",
