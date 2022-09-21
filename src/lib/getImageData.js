@@ -1,10 +1,14 @@
 import { vec3 } from 'gl-matrix';
 import vtkImageData from 'vtk.js/Sources/Common/DataModel/ImageData';
 import vtkDataArray from 'vtk.js/Sources/Common/Core/DataArray';
+import vtkMath from 'vtk.js/Sources/Common/Core/Math';
 
 import buildMetadata from './data/buildMetadata.js';
 import imageDataCache from './data/imageDataCache.js';
 import sortDatasetsByImagePosition from './data/sortDatasetsByImagePosition.js';
+
+//Tolerance for ImageOrientationPatient
+const iopTolerance = 1e-6;
 
 export default function getImageData(imageIds, displaySetInstanceUid) {
   const cachedImageDataObject = imageDataCache.get(displaySetInstanceUid);
@@ -15,10 +19,31 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
 
   const { metaData0, metaDataMap, imageMetaData0 } = buildMetadata(imageIds);
 
-  const { rowCosines, columnCosines } = metaData0;
+  let { rowCosines, columnCosines } = metaData0;
+
+  //correct for the 32bit float header issue before orthogonalizing
+  //https://github.com/OHIF/Viewers/issues/2847
+  for (let i = 0; i < rowCosines.length; i++) {
+    if (Math.abs(rowCosines[i]) < iopTolerance) {
+      rowCosines[i] = 0;
+    }
+    if (Math.abs(columnCosines[i]) < iopTolerance) {
+      columnCosines[i] = 0;
+    }
+  }
   const rowCosineVec = vec3.fromValues(...rowCosines);
   const colCosineVec = vec3.fromValues(...columnCosines);
   const scanAxisNormal = vec3.cross([], rowCosineVec, colCosineVec);
+
+  let direction = [rowCosineVec, colCosineVec, scanAxisNormal];
+  vtkMath.orthogonalize3x3(direction, direction);
+
+  //setDirection expects orthogonal matrix
+  const orthogonalizedDirection = [
+    ...direction[0],
+    ...direction[1],
+    ...direction[2],
+  ];
 
   const { spacing, origin, sortedDatasets } = sortDatasetsByImagePosition(
     scanAxisNormal,
@@ -65,11 +90,9 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   });
 
   const imageData = vtkImageData.newInstance();
-  const direction = [...rowCosineVec, ...colCosineVec, ...scanAxisNormal];
-
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
   imageData.setSpacing(xSpacing, ySpacing, zSpacing);
-  imageData.setDirection(direction);
+  imageData.setDirection(orthogonalizedDirection);
   imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
