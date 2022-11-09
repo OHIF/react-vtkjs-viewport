@@ -35,15 +35,12 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const colCosineVec = vec3.fromValues(...columnCosines);
   const scanAxisNormal = vec3.cross([], rowCosineVec, colCosineVec);
 
-  let direction = [rowCosineVec, colCosineVec, scanAxisNormal];
-  vtkMath.orthogonalize3x3(direction, direction);
-
   //setDirection expects orthogonal matrix
-  const orthogonalizedDirection = [
-    ...direction[0],
-    ...direction[1],
-    ...direction[2],
-  ];
+  let direction = [];
+  vtkMath.orthogonalize3x3(
+    [rowCosineVec, colCosineVec, scanAxisNormal],
+    direction
+  );
 
   const { spacing, origin, sortedDatasets } = sortDatasetsByImagePosition(
     scanAxisNormal,
@@ -92,7 +89,7 @@ export default function getImageData(imageIds, displaySetInstanceUid) {
   const imageData = vtkImageData.newInstance();
   imageData.setDimensions(xVoxels, yVoxels, zVoxels);
   imageData.setSpacing(xSpacing, ySpacing, zSpacing);
-  imageData.setDirection(orthogonalizedDirection);
+  imageData.setDirection(direction);
   imageData.setOrigin(...origin);
   imageData.getPointData().setScalars(scalarArray);
 
