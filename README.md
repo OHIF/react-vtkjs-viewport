@@ -1,3 +1,6 @@
+## 🔔🔔🔔🔔 Attention: Cornerstone.js has evolved! We're excited to introduce [Cornerstone3D](https://github.com/cornerstonejs/cornerstone3D) 🚀. Expect advanced rendering, stellar performance, and a modern toolset. 🌐 Navigate to the new repository for the latest updates and improvements.
+
+
 # react-vtkjs-viewport
 
 > VTK.js image viewport component for React 
