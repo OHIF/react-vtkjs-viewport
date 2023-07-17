@@ -14,6 +14,7 @@ import getImageData from './lib/getImageData.js';
 import loadImageData from './lib/loadImageData.js';
 import invertVolume from './lib/invertVolume.js';
 import EVENTS from './events.js';
+import imageDataCache from './lib/data/imageDataCache.js';
 
 export {
   View2D,
@@ -22,6 +23,7 @@ export {
   ViewportData,
   getImageData,
   loadImageData,
+  imageDataCache,
   vtkInteractorStyleMPRWindowLevel,
   vtkInteractorStyleMPRCrosshairs,
   vtkInteractorStyleRotatableMPRCrosshairs,
