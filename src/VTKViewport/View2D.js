@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import cornerstoneTools from 'cornerstone-tools';
 import vtkGenericRenderWindow from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow';
 import vtkRenderer from 'vtk.js/Sources/Rendering/Core/Renderer';
+import 'vtk.js/Sources/Rendering/Profiles/Volume';
 import vtkWidgetManager from 'vtk.js/Sources/Widgets/Core/WidgetManager';
 import vtkInteractorStyleMPRSlice from './vtkInteractorStyleMPRSlice';
 import vtkPaintFilter from 'vtk.js/Sources/Filters/General/PaintFilter';
@@ -77,13 +78,15 @@ export default class View2D extends Component {
   }
 
   updatePaintbrush() {
-    const manip = this.paintWidget.getManipulator();
     const handle = this.paintWidget.getWidgetState().getHandle();
-    const camera = this.paintRenderer.getActiveCamera();
-    const normal = camera.getDirectionOfProjection();
-    manip.setNormal(...normal);
-    manip.setOrigin(...camera.getFocalPoint());
-    handle.rotateFromDirections(handle.getDirection(), normal);
+    if (typeof handle.rotateFromDirections === 'function') {
+      const manip = this.paintWidget.getManipulator();
+      const camera = this.paintRenderer.getActiveCamera();
+      const normal = camera.getDirectionOfProjection();
+      manip.setNormal(...normal);
+      manip.setOrigin(...camera.getFocalPoint());
+      handle.rotateFromDirections(handle.getDirection(), normal);
+    }
   }
 
   componentDidMount() {
@@ -193,6 +196,7 @@ export default class View2D extends Component {
     const camera = this.renderer.getActiveCamera();
 
     camera.setParallelProjection(true);
+    camera.orthogonalizeViewUp();
     this.renderer.resetCamera();
 
     istyle.setVolumeActor(this.props.volumes[0]);
